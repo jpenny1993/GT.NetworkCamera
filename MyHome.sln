@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyHome", "src\MyHome\MyHome.csproj", "{FC587035-A3BE-43F9-993A-B9E56EAB3258}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gadgeteer.WebServer", "src\Gadgeteer.WebServer\Gadgeteer.WebServer.csproj", "{FBCCBCF6-D89B-441A-AA9B-BF557714025D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FC587035-A3BE-43F9-993A-B9E56EAB3258}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC587035-A3BE-43F9-993A-B9E56EAB3258}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC587035-A3BE-43F9-993A-B9E56EAB3258}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{FC587035-A3BE-43F9-993A-B9E56EAB3258}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC587035-A3BE-43F9-993A-B9E56EAB3258}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC587035-A3BE-43F9-993A-B9E56EAB3258}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{FBCCBCF6-D89B-441A-AA9B-BF557714025D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBCCBCF6-D89B-441A-AA9B-BF557714025D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBCCBCF6-D89B-441A-AA9B-BF557714025D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBCCBCF6-D89B-441A-AA9B-BF557714025D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
