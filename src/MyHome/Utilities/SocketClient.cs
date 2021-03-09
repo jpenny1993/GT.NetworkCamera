@@ -4,9 +4,9 @@ using System.Net.Sockets;
 using System.Text;
 using Microsoft.SPOT;
 
-namespace MyHome
+namespace MyHome.Utilities
 {
-    public class SocketClient
+    public sealed class SocketClient
     {
         private Socket _socketConnection;
         private int _recieveTimeOut;

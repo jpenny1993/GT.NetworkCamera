@@ -25,7 +25,6 @@ namespace MyHome
         private FileManager _fileManager;
         private NetworkManager _networkManager;
         private WebsiteManager _websiteManager;
-        private WebEvent[] _webEvents;
 
         // This method is run when the mainboard is powered up or reset.   
         void ProgramStarted()
@@ -56,7 +55,7 @@ namespace MyHome
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
             _networkManager.Enable();
 
-            _websiteManager = new WebsiteManager();
+            _websiteManager = new WebsiteManager(microSDCard);
 
             _cameraManager = new CameraManager(camera);
             _cameraManager.OnPictureTaken += CameraManager_OnPictureTaken;

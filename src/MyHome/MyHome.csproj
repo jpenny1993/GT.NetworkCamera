@@ -39,9 +39,12 @@
   <!-- Everything below here is custom to .NET MF / Gadgeteer template-->
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
+    <Compile Include="Constants\ContentTypes.cs" />
     <Compile Include="Constants\Directories.cs" />
+    <Compile Include="Constants\WebRoutes.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="Extensions\StringCollectionExtensions.cs" />
+    <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Modules\CameraManager.cs" />
     <Compile Include="Modules\FileManager.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
@@ -58,7 +61,8 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="SocketClient.cs" />
+    <Compile Include="Utilities\Path.cs" />
+    <Compile Include="Utilities\SocketClient.cs" />
     <Compile Include="Time.cs" />
   </ItemGroup>
   <ItemGroup>

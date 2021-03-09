@@ -1,5 +1,6 @@
 using System;
 using Microsoft.SPOT;
+using MyHome.Utilities;
 
 namespace MyHome
 {

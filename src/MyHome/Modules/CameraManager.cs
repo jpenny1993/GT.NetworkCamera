@@ -40,7 +40,6 @@ namespace MyHome.Modules
         private void Camera_PictureCaptured(Camera sender, GT.Picture picture)
         {
             Debug.Print("Camera: Picture captured");
-            _picture = picture;
             if (OnPictureTaken != null) 
             {
                 OnPictureTaken.Invoke(picture);
