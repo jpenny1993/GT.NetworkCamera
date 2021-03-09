@@ -24,6 +24,7 @@ namespace MyHome
         private CameraManager _cameraManager;
         private FileManager _fileManager;
         private NetworkManager _networkManager;
+        private WebsiteManager _websiteManager;
         private WebEvent[] _webEvents;
 
         // This method is run when the mainboard is powered up or reset.   
@@ -55,12 +56,13 @@ namespace MyHome
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
             _networkManager.Enable();
 
+            _websiteManager = new WebsiteManager();
+
             _cameraManager = new CameraManager(camera);
             _cameraManager.OnPictureTaken += CameraManager_OnPictureTaken;
 
             button.ButtonReleased += Button_ButtonReleased;
             button.TurnLedOn();
-
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
@@ -70,6 +72,8 @@ namespace MyHome
 
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
+            _websiteManager.UpdatePicture(picture);
+
             // TODO: implement path.combine, and accessible constants for directories
             var filepath = string.Concat(Directories.Camera, "\\", "IMG_", DateTime.Now.ToString("yyMMdd_HHmmss"), ".bmp");
             _fileManager.SaveFile(filepath, picture);
@@ -81,7 +85,7 @@ namespace MyHome
         {
             if (previousStatus == NetworkStatus.NetworkAvailable) 
             {
-                WebServer.StopLocalServer();
+                _websiteManager.Stop();
             }
 
             switch(status) 
@@ -115,7 +119,8 @@ namespace MyHome
                         // Unable to sync time
                         multicolorLED.TurnGreen();
                     }
-                    WebServer_Setup();
+
+                    _websiteManager.Start(_networkManager.IpAddress);
                     break;
             }
         }
@@ -138,54 +143,6 @@ namespace MyHome
         {
             Debug.Print("Tick: " + FormatTimeSpan(GetUptime()));
             TakeSnapshot();
-        }
-
-        private void WebServer_Setup()
-        {
-            Debug.Print("Starting web server");
-            try
-            {
-                WebServer.StartLocalServer(ethernetJ11D.NetworkSettings.IPAddress, 80);
-                Debug.Print("Started web server");
-
-                Debug.Print("Registering Index Page");
-                WebServer.DefaultEvent.WebEventReceived += WebEvent_Index;
-
-                Debug.Print("Registering Image Page");
-                var webEvents = WebServer.SetupWebEvent("image");
-                webEvents.WebEventReceived += WebEvent_Image;
-                Debug.Print("Completed web server startup");
-            }
-            catch (Exception ex)
-            {
-                Debug.Print("Failed to start web server... " + ex.ToString());
-                multicolorLED.TurnColor(GT.Color.Purple);
-            }
-        }
-
-        private void WebEvent_Index(string path, WebServer.HttpMethod method, Responder responder)
-        {
-            /*
-             // x.x.x.x:80/route?query=value
-             if (responder.UrlParameters.Contains("query"))
-             {
-                 if (responder.UrlParameters["query"].ToString() == "value")
-                 { 
-                 }
-             }
-             */
-            responder.Respond("Hello World");
-        }
-
-        private void WebEvent_Image(string path, WebServer.HttpMethod method, Responder responder)
-        {
-            if (_cameraManager.HasPicture)
-            {
-                responder.Respond(_cameraManager.Picture);
-                return;
-            }
-            
-            responder.Respond("Latest image is not yet available.");
         }
 
         private static string FormatInteger(int value)

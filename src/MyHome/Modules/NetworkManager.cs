@@ -41,6 +41,8 @@ namespace MyHome.Modules
             _networkTimer.Start();
         }
 
+        public string IpAddress { get { return _ethernet.NetworkSettings.IPAddress; } }
+
         public void Disable()
         {
             _ethernet.NetworkInterface.Close();

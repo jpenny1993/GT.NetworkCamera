@@ -45,6 +45,7 @@
     <Compile Include="Modules\CameraManager.cs" />
     <Compile Include="Modules\FileManager.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
+    <Compile Include="Modules\WebsiteManager.cs" />
     <Compile Include="Program.generated.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

@@ -10,7 +10,6 @@ namespace MyHome.Modules
     public sealed class CameraManager
     {
         private readonly Camera _camera;
-        private GT.Picture _picture;
 
         public event CameraManager.PictureTakenEventHandler OnPictureTaken;
 
@@ -23,10 +22,6 @@ namespace MyHome.Modules
             _camera.CameraDisconnected += Camera_CameraDisconnected;
             _camera.PictureCaptured += Camera_PictureCaptured;
         }
-
-        public bool HasPicture { get { return _picture != null; } }
-
-        public GT.Picture Picture { get { return _picture; } }
 
         public bool Ready { get { return _camera.CameraReady; } }
 
