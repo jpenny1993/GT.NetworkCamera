@@ -12,6 +12,7 @@ using Gadgeteer.Networking;
 using GT = Gadgeteer;
 using GTM = Gadgeteer.Modules;
 using Gadgeteer.Modules.GHIElectronics;
+using MyHome.Constants;
 using MyHome.Modules;
     
 namespace MyHome
@@ -79,7 +80,7 @@ namespace MyHome
             _snapshot = picture;
 
             // TODO: implement path.combine, and accessible constants for directories
-            var filepath = string.Concat("DCIM\\", "IMG_", DateTime.Now.ToString("yyMMdd_HHmmss"), ".bmp");
+            var filepath = string.Concat(Directories.Camera, "\\", "IMG_", DateTime.Now.ToString("yyMMdd_HHmmss"), ".bmp");
             _fileManager.SaveFile(filepath, picture);
 
             button.TurnLedOn();
@@ -134,7 +135,6 @@ namespace MyHome
             return DateTime.Now - _start;
         }
 
-#pragma warning disable 0612, 0618
         private void TakeSnapshot()
         {
             if (camera.CameraReady && button.IsLedOn)
@@ -143,7 +143,6 @@ namespace MyHome
                 camera.TakePicture();
             }
         }
-#pragma warning restore 0612, 0618
 
         private void Update_Tick(GT.Timer timer)
         {

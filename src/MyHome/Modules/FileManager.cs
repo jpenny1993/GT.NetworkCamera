@@ -7,6 +7,7 @@ using Microsoft.SPOT.Hardware;
 using Gadgeteer.Modules.GHIElectronics;
 
 using GT = Gadgeteer;
+using MyHome.Constants;
 using MyHome.Extensions;
 
 namespace MyHome.Modules
@@ -14,7 +15,6 @@ namespace MyHome.Modules
 #pragma warning disable 0612, 0618 // Ignore MicroSDCard obsolete warning
     public sealed class FileManager
     {
-        const string ImageDirectory = "DCIM";
         private readonly MicroSDCard _sdCard;
 
         public FileManager(MicroSDCard microSDCard)
@@ -36,11 +36,11 @@ namespace MyHome.Modules
             Debug.Print("SD Card: Listing directories");
             var directories = sender.StorageDevice.ListRootDirectorySubdirectories();
 
-            Debug.Print("SD Card: Checking for " + ImageDirectory);
-            if (!directories.Contains(ImageDirectory))
+            Debug.Print("SD Card: Checking for " + Directories.Camera);
+            if (!directories.Contains(Directories.Camera))
             {
                 Debug.Print("SD Card: Creating directory");
-                sender.StorageDevice.CreateDirectory(ImageDirectory);
+                sender.StorageDevice.CreateDirectory(Directories.Camera);
                 Debug.Print("SD Card: Created directory");
             }
         }
