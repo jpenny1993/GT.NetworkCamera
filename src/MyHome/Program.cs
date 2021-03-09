@@ -21,9 +21,9 @@ namespace MyHome
     {
         private DateTime _start;
         private GT.Timer _timer;
-        private NetworkManager _networkManager;
+        private CameraManager _cameraManager;
         private FileManager _fileManager;
-        private GT.Picture _snapshot;
+        private NetworkManager _networkManager;
         private WebEvent[] _webEvents;
 
         // This method is run when the mainboard is powered up or reset.   
@@ -49,14 +49,15 @@ namespace MyHome
             multicolorLED.TurnRed();
 
             _fileManager = new FileManager(microSDCard);
-            _fileManager.Remount();
+            _fileManager.Remount(); // TODO: make non-blocking call
 
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
             _networkManager.Enable();
 
-            camera.PictureCaptured += Camera_PictureCaptured;
-            camera.CameraConnected += Camera_CameraConnected;
+            _cameraManager = new CameraManager(camera);
+            _cameraManager.OnPictureTaken += CameraManager_OnPictureTaken;
+
             button.ButtonReleased += Button_ButtonReleased;
             button.TurnLedOn();
 
@@ -67,25 +68,14 @@ namespace MyHome
             TakeSnapshot();
         }
 
-#pragma warning disable 0612, 0618 // Ignore camera obsolete warning
-        private void Camera_CameraConnected(Camera sender, EventArgs e)
+        private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
-            camera.CurrentPictureResolution = Camera.PictureResolution.Resolution320x240;
-            camera.TakePictureStreamTimeout = new TimeSpan(0, 0, 3);
-        }
-
-        private void Camera_PictureCaptured(Camera sender, GT.Picture picture)
-        {
-            Debug.Print("Camera: Picture captured");
-            _snapshot = picture;
-
             // TODO: implement path.combine, and accessible constants for directories
             var filepath = string.Concat(Directories.Camera, "\\", "IMG_", DateTime.Now.ToString("yyMMdd_HHmmss"), ".bmp");
             _fileManager.SaveFile(filepath, picture);
 
             button.TurnLedOn();
         }
-#pragma warning restore 0612, 0618
 
         private void NetworkManager_OnStatusChanged(NetworkStatus status, NetworkStatus previousStatus)
         {
@@ -137,10 +127,10 @@ namespace MyHome
 
         private void TakeSnapshot()
         {
-            if (camera.CameraReady && button.IsLedOn)
+            if (_cameraManager.Ready && button.IsLedOn)
             {
                 button.TurnLedOff();
-                camera.TakePicture();
+                _cameraManager.TakePicture();
             }
         }
 
@@ -189,9 +179,9 @@ namespace MyHome
 
         private void WebEvent_Image(string path, WebServer.HttpMethod method, Responder responder)
         {
-            if (_snapshot != null)
+            if (_cameraManager.HasPicture)
             {
-                responder.Respond(_snapshot);
+                responder.Respond(_cameraManager.Picture);
                 return;
             }
             
