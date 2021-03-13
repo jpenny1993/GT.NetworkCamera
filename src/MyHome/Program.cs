@@ -56,7 +56,7 @@ namespace MyHome
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
             _networkManager.Enable();
 
-            _websiteManager = new WebsiteManager(microSDCard);
+            _websiteManager = new WebsiteManager(_fileManager);
 
             _cameraManager = new CameraManager(camera);
             _cameraManager.OnPictureTaken += CameraManager_OnPictureTaken;
@@ -74,7 +74,7 @@ namespace MyHome
         {
             _websiteManager.UpdatePicture(picture);
 
-            var filepath = Path.Combine(Directories.Camera, "IMG_", string.Concat(DateTime.Now.ToString("yyMMdd_HHmmss"), ".bmp"));
+            var filepath = Path.Combine(Directories.Camera, "IMG_", string.Concat(DateTime.Now.ToString("yyMMdd_HHmmss"), FileExtensions.Bitmap));
             _fileManager.SaveFile(filepath, picture);
         }
 

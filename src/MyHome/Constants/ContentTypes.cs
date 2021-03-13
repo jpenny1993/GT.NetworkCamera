@@ -7,15 +7,17 @@ namespace MyHome.Constants
     {
         public const string Binary = "application/binary";
 
-        public const string ImageBmp = "image/bmp";
+        public const string Bitmap = "image/bmp";
         
-        public const string ImageGif = "image/gif";
+        public const string Gif = "image/gif";
 
-        public const string ImageIcon = "image/x-icon";
+        public const string Html = "text/html;charset=utf-8";
+
+        public const string Icon = "image/x-icon";
         
-        public const string ImageJpeg = "image/jpeg";
+        public const string Jpeg = "image/jpeg";
 
-        public const string ImagePng = "image/png";
+        public const string Png = "image/png";
 
         public const string Javascript = "application/javascript";
 
@@ -23,8 +25,6 @@ namespace MyHome.Constants
 
         public const string Stylesheet = "text/css";
 
-        public const string TextPlain = "text/plain;charset=utf-8";
-
-        public const string TextHtml = "text/html;charset=utf-8";
+        public const string Text = "text/plain;charset=utf-8";
     }
 }

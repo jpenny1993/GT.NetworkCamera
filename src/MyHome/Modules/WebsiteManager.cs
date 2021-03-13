@@ -22,13 +22,13 @@ namespace MyHome.Modules
             public string ContentType { get; set; }
         }
 
-        private readonly MicroSDCard _sdCard;
+        private readonly IFileManager _fm;
         private GT.Picture _picture;
         private bool _isRunning;
 
-        public WebsiteManager(MicroSDCard microSDCard)
+        public WebsiteManager(IFileManager fileManager)
         {
-            _sdCard = microSDCard;
+            _fm = fileManager;
         }
 
         private void RegisterWebEvents() 
@@ -74,47 +74,13 @@ namespace MyHome.Modules
             _picture = picture;
         }
 
-        // TODO move to filemanager and use an interface
-        private string[] GetDirectoryListing(string directory)
-        {
-            try
-            {
-                return _sdCard.StorageDevice.ListDirectories(directory);
-            }
-            catch
-            {
-                // directory does not exist
-                return new string[0];
-            }
-        }
-
-        private string[] GetFileListing(string directory)
-        {
-            try
-            {
-                return _sdCard.StorageDevice.ListFiles(directory);
-            }
-            catch
-            {
-                // directory does not exist
-                return new string[0];
-            }
-        }
-
-        private WebsiteReponse GetFile(string area, string path)
+        private WebsiteReponse GetFileResponse(string area, string path)
         {
             var response = new WebsiteReponse();
-            if (!_sdCard.IsCardInserted || !_sdCard.IsCardMounted)
-            {
-                return response;
-            }
+            if (!_fm.HasFileSystem()) return response;
 
             // Check area exists on the device
-            var directories = _sdCard.StorageDevice.ListRootDirectorySubdirectories();
-            if (!directories.ContainsCaseInsensitive(area))
-            {
-                return response;
-            }
+            if (!_fm.RootDirectoryExists(area)) return response;
 
             // Define the full filepath
             var filePath = Path.Combine(area, path);
@@ -123,41 +89,30 @@ namespace MyHome.Modules
             var directory = Path.GetDirectoryName(filePath);
 
             // Check for file
-            var files = GetFileListing(directory);
-            if (!files.ContainsCaseInsensitive(filePath))
-            {
-                return response;
-            }
+            if (!_fm.FileExists(filePath)) return response;
 
             // Get file content
             response.ContentType = GetContentType(Path.GetFileExtension(path));
-            response.Content = _sdCard.StorageDevice.ReadFile(filePath);
+            response.Content = _fm.GetFileContent(filePath);
             response.Found = true;
 
             return response;
         }
 
-        private WebsiteReponse ListFiles(string area, string path)
+        private WebsiteReponse BrowseDirectoryResponse(string area, string path)
         {
             var response = new WebsiteReponse();
-            if (!_sdCard.IsCardInserted || !_sdCard.IsCardMounted)
-            {
-                return response;
-            }
+            if (!_fm.HasFileSystem()) return response;
 
             // Check area exists on the device
-            var rootDirectories = _sdCard.StorageDevice.ListRootDirectorySubdirectories();
-            if (!rootDirectories.ContainsCaseInsensitive(area))
-            {
-                return response;
-            }
+            if (!_fm.RootDirectoryExists(area)) return response;
 
             // Define the full directory
             var folderPath = Path.Combine(area, path);
 
             // Check for files
-            var directories = GetDirectoryListing(folderPath);
-            var files = GetFileListing(folderPath);
+            var directories = _fm.ListDirectories(folderPath);
+            var files = _fm.ListFiles(folderPath);
 
             // TODO Convert to JSON
             response.Content = System.Text.Encoding.UTF8.GetBytes(string.Concat(directories, files));
@@ -174,7 +129,7 @@ namespace MyHome.Modules
                 path = WebRoutes.Index;
             }
 
-            var file = GetFile(Directories.Website, path);
+            var file = GetFileResponse(Directories.Website, path);
             SendResponse(file, responder);
         }
 
@@ -187,7 +142,7 @@ namespace MyHome.Modules
             }
             else
             {
-                var notFound = GetFile(Directories.Config, "ImageNotAvailable.bmp");
+                var notFound = GetFileResponse(Directories.Config, "ImageNotAvailable.bmp");
                 SendResponse(notFound, responder);
             }
         }
@@ -195,7 +150,7 @@ namespace MyHome.Modules
         private void WebEvent_GalleryImage(string path, WebServer.HttpMethod method, Responder responder)
         {
             // Handle the return of stored images
-            var file = GetFile(Directories.Camera, path);
+            var file = GetFileResponse(Directories.Camera, path);
             SendResponse(file, responder);
         }
 
@@ -206,7 +161,7 @@ namespace MyHome.Modules
                 ? responder.UrlParameters[QueryStrings.Directory].ToString()
                 : string.Empty;
 
-            var response = ListFiles(Directories.Camera, folderPath);
+            var response = BrowseDirectoryResponse(Directories.Camera, folderPath);
             SendResponse(response, responder);
         }
 
@@ -214,18 +169,18 @@ namespace MyHome.Modules
         {
             switch (fileExtension)
             {
-                default:        return ContentTypes.Binary;
-                case ".bmp":    return ContentTypes.ImageBmp;
-                case ".css":    return ContentTypes.Stylesheet;
-                case ".gif":    return ContentTypes.ImageGif;
-                case ".html":   return ContentTypes.TextHtml;
-                case ".ico":    return ContentTypes.ImageIcon;
-                case ".jpg":
-                case ".jpeg":   return ContentTypes.ImageJpeg;
-                case ".js":     return ContentTypes.Javascript;
-                case ".log":    return ContentTypes.TextPlain;
-                case ".png":    return ContentTypes.ImagePng;
-                case ".txt":    return ContentTypes.TextPlain;
+                default: return ContentTypes.Binary;
+                case FileExtensions.Bitmap:     return ContentTypes.Bitmap;
+                case FileExtensions.Stylesheet: return ContentTypes.Stylesheet;
+                case FileExtensions.Gif:        return ContentTypes.Gif;
+                case FileExtensions.Html:       return ContentTypes.Html;
+                case FileExtensions.Icon:       return ContentTypes.Icon;
+                case FileExtensions.Jpg:
+                case FileExtensions.Jpeg:       return ContentTypes.Jpeg;
+                case FileExtensions.Javascript: return ContentTypes.Javascript;
+                case FileExtensions.Log:        return ContentTypes.Text;
+                case FileExtensions.Png:        return ContentTypes.Png;
+                case FileExtensions.Text:       return ContentTypes.Text;
             }
         }
 

@@ -48,6 +48,7 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Modules\CameraManager.cs" />
     <Compile Include="Modules\FileManager.cs" />
+    <Compile Include="Modules\IFileManager.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
     <Compile Include="Modules\WebsiteManager.cs" />
     <Compile Include="Program.generated.cs">

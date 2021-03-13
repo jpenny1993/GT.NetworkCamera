@@ -9,11 +9,12 @@ using Gadgeteer.Modules.GHIElectronics;
 using GT = Gadgeteer;
 using MyHome.Constants;
 using MyHome.Extensions;
+using MyHome.Utilities;
 
 namespace MyHome.Modules
 {
 #pragma warning disable 0612, 0618 // Ignore MicroSDCard obsolete warning
-    public sealed class FileManager
+    public sealed class FileManager : IFileManager
     {
         private readonly MicroSDCard _sdCard;
 
@@ -24,9 +25,107 @@ namespace MyHome.Modules
             _sdCard.Unmounted += MicroSDCard_Unmounted;
         }
 
-        private bool HasFileSystem() 
+        public bool DirectoryExists(string folderPath)
+        {
+            var directory = Path.GetDirectoryName(folderPath);
+            var directories = ListDirectories(directory);
+            return directories.ContainsCaseInsensitive(directory);
+        }
+
+        public bool FileExists(string filePath)
+        {
+            var directory = Path.GetDirectoryName(filePath);
+            var files = ListFiles(directory);
+            return files.ContainsCaseInsensitive(filePath);
+        }
+
+        public byte[] GetFileContent(string filePath)
+        {
+            if (!HasFileSystem())
+            {
+                throw new ApplicationException("SD card not available to read");
+            }
+
+            return _sdCard.StorageDevice.ReadFile(filePath);
+        }
+
+        public bool HasFileSystem()
         {
             return _sdCard.IsCardInserted && _sdCard.IsCardMounted;
+        }
+
+        public string[] ListDirectories(string directory)
+        {
+            if (HasFileSystem())
+            {
+                try
+                {
+                    return _sdCard.StorageDevice.ListDirectories(directory);
+                }
+                catch
+                {
+                    // directory does not exist
+                }
+            }
+
+            return new string[0];
+        }
+
+        public string[] ListFiles(string directory)
+        {
+            if (HasFileSystem())
+            {
+                try
+                {
+                    return _sdCard.StorageDevice.ListFiles(directory);
+                }
+                catch
+                {
+                    // directory does not exist
+                }
+            }
+
+            return new string[0];
+        }
+
+        public string[] ListRootDirectories()
+        {
+            if (HasFileSystem())
+            {
+                try
+                {
+                    return _sdCard.StorageDevice.ListRootDirectorySubdirectories();
+                }
+                catch
+                {
+                    // SD Card disconnected while reading
+                }
+            }
+
+            return new string[0];
+        }
+
+        public string[] ListRootFiles()
+        {
+            if (HasFileSystem())
+            {
+                try
+                {
+                    return _sdCard.StorageDevice.ListRootDirectoryFiles();
+                }
+                catch
+                {
+                    // SD Card disconnected while reading
+                }
+            }
+
+            return new string[0];
+        }
+
+        public bool RootDirectoryExists(string rootDirectory)
+        {
+            var directories = ListRootDirectories();
+            return directories.ContainsCaseInsensitive(rootDirectory);
         }
 
         private void MicroSDCard_Mounted(MicroSDCard sender, GT.StorageDevice device)
