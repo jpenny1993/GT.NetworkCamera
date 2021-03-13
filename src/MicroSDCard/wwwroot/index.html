@@ -139,9 +139,12 @@
         <div class="row">
 
           <div class="col-lg-3 col-6">
-            <div class="small-box bg-info">
+            <div id="widget-totalsnapshots" class="small-box bg-info">
+              <div class="overlay">
+                  <i class="fas fa-3x fa-sync-alt"></i>
+              </div>
               <div class="inner">
-                <h3>150</h3>
+                <h3 class="widget-value">...</h3>
                 <p>Total Snapshots</p>
               </div>
               <div class="icon">
@@ -151,12 +154,12 @@
           </div>
 
           <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
+            <div id="widget-humidity" class="small-box bg-success">
               <div class="overlay">
                 <i class="fas fa-3x fa-sync-alt"></i>
               </div>
               <div class="inner">
-                <h3>50</h3>
+                <h3 class="widget-value">...</h3>
                 <p>Humidity</p>
               </div>
               <div class="icon">
@@ -166,9 +169,12 @@
           </div>
 
           <div class="col-lg-3 col-6">
-            <div class="small-box bg-warning">
+            <div id="widget-capturetime" class="small-box bg-warning">
+              <div class="overlay">
+                  <i class="fas fa-3x fa-sync-alt"></i>
+              </div>
               <div class="inner">
-                <h3>14:00</h3>
+                <h3 class="widget-value">...</h3>
                 <p>Last Capture</p>
               </div>
               <div class="icon">
@@ -178,9 +184,12 @@
           </div>
 
           <div class="col-lg-3 col-6">
-            <div class="small-box bg-danger">
+            <div id="widget-uptime" class="small-box bg-danger">
+              <div class="overlay">
+                  <i class="fas fa-3x fa-sync-alt"></i>
+              </div>
               <div class="inner">
-                <h3>30 minutes</h3>
+                <h3 class="widget-value">...</h3>
                 <p>Uptime</p>
               </div>
               <div class="icon">
@@ -239,7 +248,24 @@
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.0.5/dist/js/adminlte.min.js" integrity="sha256-qgEvQZWPqqD1J5uCoPAsOZ7kzPmcFpS1AHIU7mowcAE= sha384-MPMu19FXmzMGaq5CEQairu/lARKuHUSg3jc90NMdmNYuCT4tyaf5xadNHJKqhs1k sha512-++c7zGcm18AhH83pOIETVReg0dr1Yn8XTRw+0bWSIWAVCAwz1s2PwnSj4z/OOyKlwSXc4RLg3nnjR22q0dhEyA==" crossorigin="anonymous"></script>
 
 <!-- OPTIONAL SCRIPTS -->
+<script type="text/javascript">
+    (function () {
+        function LoadWidget(widgetId, url) {
+            var widgetOverlay = $(widgetId + ' .overlay');
+            var widgetValue = $(widgetId + ' .widget-value');
+            widgetOverlay.css('display', 'block');
+            $.getJSON(url)
+                .catch(function () { widgetValue.html('ERR'); })
+                .done(function (response) { widgetValue.html(response); })
+                .always(function () { widgetOverlay.css('display', 'none'); });
+        }
 
+        LoadWidget('#widget-totalsnapshots', './api/images/count');
+        //LoadWidget('#widget-humidity', '');
+        //LoadWidget('#widget-capturetime', '');
+        //LoadWidget('#widget-uptime', '');
+    })();
+</script>
 
 </body>
 </html>
