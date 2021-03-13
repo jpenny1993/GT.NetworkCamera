@@ -74,6 +74,33 @@ namespace MyHome.Modules
             _picture = picture;
         }
 
+        // TODO move to filemanager and use an interface
+        private string[] GetDirectoryListing(string directory)
+        {
+            try
+            {
+                return _sdCard.StorageDevice.ListDirectories(directory);
+            }
+            catch
+            {
+                // directory does not exist
+                return new string[0];
+            }
+        }
+
+        private string[] GetFileListing(string directory)
+        {
+            try
+            {
+                return _sdCard.StorageDevice.ListFiles(directory);
+            }
+            catch
+            {
+                // directory does not exist
+                return new string[0];
+            }
+        }
+
         private WebsiteReponse GetFile(string area, string path)
         {
             var response = new WebsiteReponse();
@@ -96,7 +123,7 @@ namespace MyHome.Modules
             var directory = Path.GetDirectoryName(filePath);
 
             // Check for file
-            var files = _sdCard.StorageDevice.ListFiles(directory);
+            var files = GetFileListing(directory);
             if (!files.Contains(filePath))
             {
                 return response;
@@ -129,8 +156,8 @@ namespace MyHome.Modules
             var folderPath = Path.Combine(area, path);
 
             // Check for files
-            var directories = _sdCard.StorageDevice.ListDirectories(folderPath);
-            var files = _sdCard.StorageDevice.ListFiles(folderPath);
+            var directories = GetDirectoryListing(folderPath);
+            var files = GetFileListing(folderPath);
 
             // TODO Convert to JSON
             response.Content = System.Text.Encoding.UTF8.GetBytes(string.Concat(directories, files));
