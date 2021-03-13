@@ -21,6 +21,7 @@ namespace MyHome
     public partial class Program
     {
         private DateTime _start;
+        private bool _savingPicture;
         private GT.Timer _timer;
         private CameraManager _cameraManager;
         private FileManager _fileManager;
@@ -43,7 +44,6 @@ namespace MyHome
 
             Debug.Print("Startup Complete");
         }
-
 
         private void SetupDevices()
         {
@@ -72,10 +72,16 @@ namespace MyHome
 
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
+            _savingPicture = true;
             _websiteManager.UpdatePicture(picture);
 
-            var filepath = Path.Combine(Directories.Camera, "IMG_", string.Concat(DateTime.Now.ToString("yyMMdd_HHmmss"), FileExtensions.Bitmap));
+            var now = DateTime.Now;
+            var dateDirectory = now.ToString("yyMMdd");
+            var filename = string.Concat("IMG_", now.ToString("yyMMddHHmmss"), FileExtensions.Bitmap);
+
+            var filepath = Path.Combine(Directories.Camera, dateDirectory, filename);
             _fileManager.SaveFile(filepath, picture);
+            _savingPicture = false;
         }
 
         private void NetworkManager_OnStatusChanged(NetworkStatus status, NetworkStatus previousStatus)
@@ -132,7 +138,7 @@ namespace MyHome
 
         private void TakeSnapshot()
         {
-            if (_cameraManager.Ready && button.IsLedOn)
+            if (button.IsLedOn && !_savingPicture && _cameraManager.Ready)
             {
                 _cameraManager.TakePicture();
             }
