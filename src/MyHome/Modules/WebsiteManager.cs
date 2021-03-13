@@ -13,7 +13,7 @@ using MyHome.Utilities;
 namespace MyHome.Modules
 {
 #pragma warning disable 0612, 0618 // Ignore MicroSDCard obsolete warning
-    public sealed class WebsiteManager
+    public sealed partial class WebsiteManager
     {
         private class WebsiteReponse
         {
@@ -38,6 +38,9 @@ namespace MyHome.Modules
 
             Debug.Print("Registering Camera Image");
             Register(WebEvent_CameraImage, WebRoutes.Camera);
+
+            Debug.Print("Registering Gallery Count");
+            Register(WebEvent_GalleryCount, WebRoutes.GalleryCount);
 
             Debug.Print("Registering Gallery List");
             Register(WebEvent_GalleryList, WebRoutes.GalleryList);
@@ -120,49 +123,6 @@ namespace MyHome.Modules
             response.Found = true;
 
             return response;
-        }
-
-        private void WebEvent_Index(string path, WebServer.HttpMethod method, Responder responder)
-        {
-            if (path.IsNullOrEmpty())
-            {
-                path = WebRoutes.Index;
-            }
-
-            var file = GetFileResponse(Directories.Website, path);
-            SendResponse(file, responder);
-        }
-
-        private void WebEvent_CameraImage(string path, WebServer.HttpMethod method, Responder responder)
-        {
-            // Handle the return of latest image
-            if (_picture != null)
-            {
-                responder.Respond(_picture);
-            }
-            else
-            {
-                var notFound = GetFileResponse(Directories.Config, "ImageNotAvailable.bmp");
-                SendResponse(notFound, responder);
-            }
-        }
-
-        private void WebEvent_GalleryImage(string path, WebServer.HttpMethod method, Responder responder)
-        {
-            // Handle the return of stored images
-            var file = GetFileResponse(Directories.Camera, path);
-            SendResponse(file, responder);
-        }
-
-        private void WebEvent_GalleryList(string path, WebServer.HttpMethod method, Responder responder)
-        {
-            // Return a list of stored images
-            var folderPath = responder.UrlParameters.Contains(QueryStrings.Directory)
-                ? responder.UrlParameters[QueryStrings.Directory].ToString()
-                : string.Empty;
-
-            var response = BrowseDirectoryResponse(Directories.Camera, folderPath);
-            SendResponse(response, responder);
         }
 
         private static string GetContentType(string fileExtension)

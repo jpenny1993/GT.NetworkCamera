@@ -4,6 +4,7 @@ namespace MyHome.Modules
 {
     public interface IFileManager
     {
+        int CountFiles(string folderPath);
         bool DirectoryExists(string folderPath);
         bool FileExists(string filePath);
         byte[] GetFileContent(string filePath);

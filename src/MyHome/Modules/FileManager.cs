@@ -25,6 +25,18 @@ namespace MyHome.Modules
             _sdCard.Unmounted += MicroSDCard_Unmounted;
         }
 
+        public int CountFiles(string folderPath)
+        {
+            var fileCount = ListFiles(folderPath).Length;
+            var directories = ListDirectories(folderPath);
+            foreach (var directory in directories)
+            {
+                fileCount += CountFiles(directory);
+            }
+
+            return fileCount;
+        }
+
         public bool DirectoryExists(string folderPath)
         {
             var directory = Path.GetDirectoryName(folderPath);
