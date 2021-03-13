@@ -14,6 +14,7 @@ using GTM = Gadgeteer.Modules;
 using Gadgeteer.Modules.GHIElectronics;
 using MyHome.Constants;
 using MyHome.Modules;
+using MyHome.Utilities;
     
 namespace MyHome
 {
@@ -61,7 +62,7 @@ namespace MyHome
             _cameraManager.OnPictureTaken += CameraManager_OnPictureTaken;
 
             button.ButtonReleased += Button_ButtonReleased;
-            button.TurnLedOn();
+            button.TurnLedOff();
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
@@ -73,11 +74,8 @@ namespace MyHome
         {
             _websiteManager.UpdatePicture(picture);
 
-            // TODO: implement path.combine, and accessible constants for directories
-            var filepath = string.Concat(Directories.Camera, "\\", "IMG_", DateTime.Now.ToString("yyMMdd_HHmmss"), ".bmp");
+            var filepath = Path.Combine(Directories.Camera, "IMG_", string.Concat(DateTime.Now.ToString("yyMMdd_HHmmss"), ".bmp"));
             _fileManager.SaveFile(filepath, picture);
-
-            button.TurnLedOn();
         }
 
         private void NetworkManager_OnStatusChanged(NetworkStatus status, NetworkStatus previousStatus)
@@ -133,7 +131,6 @@ namespace MyHome
         {
             if (_cameraManager.Ready && button.IsLedOn)
             {
-                button.TurnLedOff();
                 _cameraManager.TakePicture();
             }
         }

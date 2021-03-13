@@ -13,6 +13,12 @@ namespace MyHome.Constants
         
         public const string ImageJpeg = "image/jpeg";
 
+        public const string Javascript = "application/javascript";
+
+        public const string Json = "application/json";
+
+        public const string Stylesheet = "text/css";
+
         public const string TextPlain = "text/plain;charset=utf-8";
 
         public const string TextHtml = "text/html;charset=utf-8";

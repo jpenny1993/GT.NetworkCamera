@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="Constants\ContentTypes.cs" />
     <Compile Include="Constants\Directories.cs" />
+    <Compile Include="Constants\QueryStrings.cs" />
     <Compile Include="Constants\WebRoutes.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="Extensions\StringCollectionExtensions.cs" />

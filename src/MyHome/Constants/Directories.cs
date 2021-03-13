@@ -7,8 +7,10 @@ namespace MyHome.Constants
     {
         public const string Camera = "DCIM";
 
-        public const string Logs = "logs";
+        public const string Config = "CONFIG";
 
-        public const string Website = "wwwroot";
+        public const string Logs = "LOGS";
+
+        public const string Website = "WWWROOT";
     }
 }
