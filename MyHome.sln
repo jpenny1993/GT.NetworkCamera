@@ -7,22 +7,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyHome", "src\MyHome\MyHome
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gadgeteer.WebServer", "src\Gadgeteer.WebServer\Gadgeteer.WebServer.csproj", "{FBCCBCF6-D89B-441A-AA9B-BF557714025D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Website", "Website", "{B8B644B5-D403-467C-8F24-5C0D7B3D85AE}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroSdCard", "MicroSdCard", "{9783C165-F81D-4716-BA0C-EC8B219F6D48}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{B16EB0EB-D9CD-44C0-9A25-027B5B347650}"
 	ProjectSection(SolutionItems) = preProject
-		src\Website\index.html = src\Website\index.html
+		src\MicroSDCard\config\ImageNotAvailable.bmp = src\MicroSDCard\config\ImageNotAvailable.bmp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wwwroot", "wwwroot", "{B8B644B5-D403-467C-8F24-5C0D7B3D85AE}"
+	ProjectSection(SolutionItems) = preProject
+		src\MicroSDCard\wwwroot\favicon.ico = src\MicroSDCard\wwwroot\favicon.ico
+		src\MicroSDCard\wwwroot\index.html = src\MicroSDCard\wwwroot\index.html
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "img", "img", "{14BDCA9F-CB0B-430A-A5BC-7E408EA26C5D}"
 	ProjectSection(SolutionItems) = preProject
-		src\Website\img\logo.png = src\Website\img\logo.png
+		src\MicroSDCard\wwwroot\img\logo.png = src\MicroSDCard\wwwroot\img\logo.png
 	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{B16EB0EB-D9CD-44C0-9A25-027B5B347650}"
-	ProjectSection(SolutionItems) = preProject
-		src\Config\ImageNotAvailable.bmp = src\Config\ImageNotAvailable.bmp
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroSdCard", "MicroSdCard", "{9783C165-F81D-4716-BA0C-EC8B219F6D48}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,9 +46,9 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{B16EB0EB-D9CD-44C0-9A25-027B5B347650} = {9783C165-F81D-4716-BA0C-EC8B219F6D48}
 		{B8B644B5-D403-467C-8F24-5C0D7B3D85AE} = {9783C165-F81D-4716-BA0C-EC8B219F6D48}
 		{14BDCA9F-CB0B-430A-A5BC-7E408EA26C5D} = {B8B644B5-D403-467C-8F24-5C0D7B3D85AE}
-		{B16EB0EB-D9CD-44C0-9A25-027B5B347650} = {9783C165-F81D-4716-BA0C-EC8B219F6D48}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {629ED608-A33E-4910-9FFE-7648A45B3A2F}

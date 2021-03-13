@@ -35,13 +35,23 @@ namespace MyHome.Modules
 
             Debug.Print("SD Card: Listing directories");
             var directories = sender.StorageDevice.ListRootDirectorySubdirectories();
-
-            Debug.Print("SD Card: Checking for " + Directories.Camera);
-            if (!directories.Contains(Directories.Camera))
+            var expectedDirectories = new[] 
             {
-                Debug.Print("SD Card: Creating directory");
-                sender.StorageDevice.CreateDirectory(Directories.Camera);
-                Debug.Print("SD Card: Created directory");
+                Directories.Camera,
+                Directories.Config,
+                Directories.Logs,
+                Directories.Website
+            };
+
+            foreach (var dir in expectedDirectories)
+            {
+                Debug.Print("SD Card: Checking for " + dir);
+                if (!directories.Contains(dir))
+                {
+                    Debug.Print("SD Card: Creating directory");
+                    sender.StorageDevice.CreateDirectory(dir);
+                    Debug.Print("SD Card: Created directory");
+                }
             }
         }
 
