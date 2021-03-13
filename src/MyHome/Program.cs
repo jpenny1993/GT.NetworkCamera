@@ -67,7 +67,7 @@ namespace MyHome
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
         {
-            TakeSnapshot();
+            button.ToggleLED();
         }
 
         private void CameraManager_OnPictureTaken(GT.Picture picture)
@@ -91,10 +91,13 @@ namespace MyHome
                     multicolorLED.TurnRed();
                     break;
                 case NetworkStatus.Enabled:
-                    multicolorLED.BlinkRepeatedly(GT.Color.Orange);
+                    multicolorLED.TurnColor(GT.Color.Orange);
+                    break;
+                case NetworkStatus.NetworkStuck:
+                    multicolorLED.BlinkRepeatedly(GT.Color.Yellow);
                     break;
                 case NetworkStatus.NetworkDown:
-                    multicolorLED.TurnColor(GT.Color.Orange);
+                    multicolorLED.TurnColor(GT.Color.Yellow);
                     break;
                 case NetworkStatus.NetworkUp:
                     multicolorLED.BlinkRepeatedly(GT.Color.Green);

@@ -13,9 +13,10 @@ namespace MyHome.Modules
     {
         Disabled = 0,
         Enabled = 1,
-        NetworkDown = 2,
-        NetworkUp = 3,
-        NetworkAvailable = 4
+        NetworkStuck = 2,
+        NetworkDown = 3,
+        NetworkUp = 4,
+        NetworkAvailable = 5
     }
 
     public sealed class NetworkManager
@@ -24,7 +25,6 @@ namespace MyHome.Modules
         private const string EmptyIpAddress = "0.0.0.0";
         private readonly EthernetJ11D _ethernet;
         private readonly GT.Timer _networkTimer;
-        private bool _networkStuck;
         private NetworkStatus _prevStatus;
         private NetworkStatus _status;
 
@@ -61,14 +61,12 @@ namespace MyHome.Modules
             _ethernet.NetworkSettings.EnableDynamicDns();
             _ethernet.UseThisNetworkInterface();
             _status = NetworkStatus.Enabled;
-            _networkStuck = false;
         }
 
         private void EthernetJ11D_NetworkDown(GTM.Module.NetworkModule sender, GTM.Module.NetworkModule.NetworkState state)
         {
             Debug.Print("Automatic Network Change: Network down");
             _status = NetworkStatus.NetworkDown;
-            _networkStuck = false;
         }
 
         private void EthernetJ11D_NetworkUp(GTM.Module.NetworkModule sender, GTM.Module.NetworkModule.NetworkState state)
@@ -102,18 +100,13 @@ namespace MyHome.Modules
                         Debug.Print("Manual Network Change: Cable disconnected");
                         networkStatus = NetworkStatus.Enabled;
                     }
-                    else if (!_networkStuck)
+                    else
                     {
-                        _networkStuck = true;
+                        networkStatus = NetworkStatus.NetworkStuck;
                         Debug.Print("Network Startup Stuck, unplug cable and reinsert network cable");
                     }
                     break;
                 case NetworkStatus.NetworkUp:
-                    if (_networkStuck)
-                    {
-                        _networkStuck = false;
-                    }
-
                     if (_ethernet.NetworkSettings.IPAddress != EmptyIpAddress)
                     {
                         Debug.Print("Manual Network Change: Network available");
