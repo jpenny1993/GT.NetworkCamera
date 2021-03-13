@@ -54,6 +54,7 @@ namespace Gadgeteer.Networking
                     tempMimeType = "image/jpeg";
                 }
 
+                webEvent.StatusCode = HttpStatusCode.OK;
                 webEvent.ContentType = tempMimeType;
                 webEvent.ResponseData = picture.PictureData;
             }
@@ -84,6 +85,7 @@ namespace Gadgeteer.Networking
                 mstream.Position = 0;
                 audioStream.Position = 0;
 
+                webEvent.StatusCode = HttpStatusCode.OK;
                 webEvent.ContentType = "audio/mp3";
                 byte[] temp = mstream.ToArray();
                 webEvent.ResponseData = temp;
@@ -101,6 +103,7 @@ namespace Gadgeteer.Networking
 
             if (text != null)
             {
+                webEvent.StatusCode = HttpStatusCode.OK;
                 webEvent.ContentType = "text/plain;charset=utf-8";
                 webEvent.ResponseData = Encoding.UTF8.GetBytes(text);
             }
@@ -118,10 +121,38 @@ namespace Gadgeteer.Networking
 
             if (data != null)
             {
+                webEvent.StatusCode = HttpStatusCode.OK;
                 webEvent.ContentType = contentType;
                 webEvent.ResponseData = data;
             }
             SendResponse();
+        }
+
+        /// <summary>
+        ///  Updates the data with which the WebEvent responds. The MIME type can be set manually.
+        /// </summary>
+        /// <param name="data">The data to be streamed. </param>
+        /// <param name="contentType">The MIME type of the outgoing data.</param>
+        /// <param name="statusCode">The HttpStatusCode to be returned.</param>
+        public void Respond(byte[] data, string contentType, HttpStatusCode statusCode)
+        {
+            if (CheckResponded()) return;
+
+            if (data != null)
+            {
+                webEvent.StatusCode = statusCode;
+                webEvent.ContentType = contentType;
+                webEvent.ResponseData = data;
+            }
+            SendResponse();
+        }
+
+        /// <summary>
+        /// Respond with 404 Not Found.
+        /// </summary>
+        public void NotFound()
+        {
+            Respond(Encoding.UTF8.GetBytes("Not Found"), "text/plain;charset=utf-8", HttpStatusCode.NotFound);
         }
 
         /// <summary>

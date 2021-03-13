@@ -64,6 +64,7 @@ namespace Gadgeteer.Networking
             Instance.DefaultEvent = new WebEvent();
             Instance.DefaultEvent.ResponseData = Encoding.UTF8.GetBytes("<html><head></head><body><h1>Hey, it works:-)</h1><p>Your own .NET Gadgeteer Web Server is up and running!</p></body></html>");
             Instance.DefaultEvent.ContentType = "text/html;charset=utf-8";
+            Instance.DefaultEvent.StatusCode = HttpStatusCode.OK;
 
             Timeout = 60000;
         }

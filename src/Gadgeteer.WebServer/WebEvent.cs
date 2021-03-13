@@ -31,6 +31,8 @@ namespace Gadgeteer.Networking
         /// </summary>
         internal uint refreshAfter = 0;
 
+        internal HttpStatusCode StatusCode;
+
         /// <summary>
         /// The content type of the data.
         /// </summary>
@@ -65,13 +67,14 @@ namespace Gadgeteer.Networking
             noHandlerSet = true;
             this.manager = WebServerManager.Instance;
 
+            StatusCode = HttpStatusCode.OK;
             ContentType = "text/plain;charset=utf-8";
         }
 
         // Computes the response to be sent to the client. 
         internal BinaryResponseTemplate ComputeResponse()
         {
-            return new BinaryResponseTemplate(ContentType, ResponseData, refreshAfter);
+            return new BinaryResponseTemplate(StatusCode, ContentType, ResponseData, refreshAfter);
         }
 
         /// <summary>

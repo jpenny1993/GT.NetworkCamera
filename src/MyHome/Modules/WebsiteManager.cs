@@ -23,7 +23,7 @@ namespace MyHome.Modules
         }
 
         private readonly MicroSDCard _sdCard;
-        private volatile GT.Picture _picture;
+        private GT.Picture _picture;
         private bool _isRunning;
 
         public WebsiteManager(MicroSDCard microSDCard)
@@ -218,7 +218,7 @@ namespace MyHome.Modules
             }
             else
             {
-                responder.Respond("Not Found");
+                responder.NotFound();
             }
         }
     }
