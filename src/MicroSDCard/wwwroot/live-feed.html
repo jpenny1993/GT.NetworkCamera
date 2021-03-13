@@ -84,14 +84,14 @@
           <!-- <li class="nav-header">EXAMPLES</li> -->
 
           <li class="nav-item">
-            <a href="./index.html" class="nav-link active">
+            <a href="./index.html" class="nav-link">
               <i class="nav-icon fas fa-th"></i>
               <p>Home</p>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="./live-feed.html" class="nav-link">
+            <a href="./live-feed.html" class="nav-link active">
               <i class="nav-icon fas fa-video"></i>
               <p>Live Feed</p>
             </a>
@@ -125,7 +125,7 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1 class="m-0">Home</h1>
+            <h1 class="m-0">Live Feed</h1>
           </div><!-- /.col -->
         </div><!-- /.row -->
       </div><!-- /.container-fluid -->
@@ -138,79 +138,10 @@
 
         <div class="row">
 
-          <div class="col-lg-3 col-6">
-            <div id="widget-totalsnapshots" class="small-box bg-info">
-              <div class="overlay">
-                  <i class="fas fa-3x fa-sync-alt"></i>
-              </div>
-              <div class="inner">
-                <h3 class="widget-value">...</h3>
-                <p>Total Snapshots</p>
-              </div>
-              <div class="icon">
-                <i class="fas fa-images"></i>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-3 col-6">
-            <div id="widget-humidity" class="small-box bg-success">
-              <div class="overlay">
-                <i class="fas fa-3x fa-sync-alt"></i>
-              </div>
-              <div class="inner">
-                <h3 class="widget-value">...</h3>
-                <p>Humidity</p>
-              </div>
-              <div class="icon">
-                <i class="fas fa-tachometer-alt"></i>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-3 col-6">
-            <div id="widget-capturetime" class="small-box bg-warning">
-              <div class="overlay">
-                  <i class="fas fa-3x fa-sync-alt"></i>
-              </div>
-              <div class="inner">
-                <h3 class="widget-value">...</h3>
-                <p>Last Capture</p>
-              </div>
-              <div class="icon">
-                <i class="fas fa-shopping-cart"></i>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-3 col-6">
-            <div id="widget-uptime" class="small-box bg-danger">
-              <div class="overlay">
-                  <i class="fas fa-3x fa-sync-alt"></i>
-              </div>
-              <div class="inner">
-                <h3 class="widget-value">...</h3>
-                <p>Uptime</p>
-              </div>
-              <div class="icon">
-                <i class="fas fa-clock"></i>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="row">
-
           <div class="col-md-6">
             <div class="card">
-              <div class="card-header border-0 bg-primary">
-                <div class="d-flex justify-content-between">
-                  <h3 class="card-title">Latest Snapshot</h3>
-                </div>
-              </div>
               <div class="card-body">
-                  <img alt="Latest Snapshot" src="./api/camera/image" width="640" height="480" />
+                <img id="camera-feed" alt="Snapshot" width="640" height="480" />
               </div>
             </div>
           </div>
@@ -250,20 +181,21 @@
 <!-- OPTIONAL SCRIPTS -->
 <script type="text/javascript">
     (function () {
-        function LoadWidget(widgetId, url) {
-            var widgetOverlay = $(widgetId + ' .overlay');
-            var widgetValue = $(widgetId + ' .widget-value');
-            widgetOverlay.css('display', 'block');
-            $.getJSON(url)
-                .catch(function () { widgetValue.html('ERR'); })
-                .done(function (response) { widgetValue.html(response); })
-                .always(function () { widgetOverlay.css('display', 'none'); });
+      function refreshImage(imgId, imgURL) {
+        return function() {
+          console.log('updating camera feed');
+          var timestamp = new Date().getTime();
+          var imgElement = $(imgId)[0];
+          var queryString = "?t=" + timestamp;
+          imgElement.src = imgURL + queryString;
         }
+      }
 
-        LoadWidget('#widget-totalsnapshots', './api/images/count');
-        //LoadWidget('#widget-humidity', '');
-        //LoadWidget('#widget-capturetime', '');
-        //LoadWidget('#widget-uptime', '');
+      var elementId = '#camera-feed';
+      var apiAddress = './api/camera/image';
+      var refreshInterval = 10000;
+      refreshImage(elementId, apiAddress)();
+      setInterval(refreshImage(elementId, apiAddress), refreshInterval);
     })();
 </script>
 
