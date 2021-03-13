@@ -111,7 +111,7 @@ namespace MyHome.Modules
 
             // Check area exists on the device
             var directories = _sdCard.StorageDevice.ListRootDirectorySubdirectories();
-            if (!directories.Contains(area))
+            if (!directories.ContainsCaseInsensitive(area))
             {
                 return response;
             }
@@ -124,7 +124,7 @@ namespace MyHome.Modules
 
             // Check for file
             var files = GetFileListing(directory);
-            if (!files.Contains(filePath))
+            if (!files.ContainsCaseInsensitive(filePath))
             {
                 return response;
             }
@@ -147,7 +147,7 @@ namespace MyHome.Modules
 
             // Check area exists on the device
             var rootDirectories = _sdCard.StorageDevice.ListRootDirectorySubdirectories();
-            if (!rootDirectories.Contains(area))
+            if (!rootDirectories.ContainsCaseInsensitive(area))
             {
                 return response;
             }
@@ -214,16 +214,18 @@ namespace MyHome.Modules
         {
             switch (fileExtension)
             {
-                default: return ContentTypes.Binary;
-                case ".bmp": return ContentTypes.ImageBmp;
-                case ".css": return ContentTypes.Stylesheet;
-                case ".gif": return ContentTypes.ImageGif;
-                case ".html": return ContentTypes.TextHtml;
+                default:        return ContentTypes.Binary;
+                case ".bmp":    return ContentTypes.ImageBmp;
+                case ".css":    return ContentTypes.Stylesheet;
+                case ".gif":    return ContentTypes.ImageGif;
+                case ".html":   return ContentTypes.TextHtml;
+                case ".ico":    return ContentTypes.ImageIcon;
                 case ".jpg":
-                case ".jpeg": return ContentTypes.ImageJpeg;
-                case ".js": return ContentTypes.Javascript;
-                case ".log":
-                case ".txt": return ContentTypes.TextPlain;
+                case ".jpeg":   return ContentTypes.ImageJpeg;
+                case ".js":     return ContentTypes.Javascript;
+                case ".log":    return ContentTypes.TextPlain;
+                case ".png":    return ContentTypes.ImagePng;
+                case ".txt":    return ContentTypes.TextPlain;
             }
         }
 

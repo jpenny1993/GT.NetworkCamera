@@ -22,5 +22,24 @@ namespace MyHome.Extensions
 
             return false;
         }
+
+        public static bool ContainsCaseInsensitive(this string[] source, string str)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException("source", "String[] cannot be null.");
+            }
+
+            foreach (var item in source)
+            {
+                if (!item.IsNullOrEmpty() &&
+                    item.ToUpper() == str.ToUpper())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

@@ -10,8 +10,12 @@ namespace MyHome.Constants
         public const string ImageBmp = "image/bmp";
         
         public const string ImageGif = "image/gif";
+
+        public const string ImageIcon = "image/x-icon";
         
         public const string ImageJpeg = "image/jpeg";
+
+        public const string ImagePng = "image/png";
 
         public const string Javascript = "application/javascript";
 
