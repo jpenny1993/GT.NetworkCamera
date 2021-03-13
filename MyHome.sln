@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wwwroot", "wwwroot", "{B8B6
 	ProjectSection(SolutionItems) = preProject
 		src\MicroSDCard\wwwroot\favicon.ico = src\MicroSDCard\wwwroot\favicon.ico
 		src\MicroSDCard\wwwroot\index.html = src\MicroSDCard\wwwroot\index.html
+		src\MicroSDCard\wwwroot\live-feed.html = src\MicroSDCard\wwwroot\live-feed.html
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "img", "img", "{14BDCA9F-CB0B-430A-A5BC-7E408EA26C5D}"

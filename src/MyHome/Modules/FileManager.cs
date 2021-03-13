@@ -37,11 +37,21 @@ namespace MyHome.Modules
             return fileCount;
         }
 
+        public void CreateDirectory(string folderPath)
+        {
+            if (!DirectoryExists(folderPath))
+            {
+                Debug.Print("SD Card: Creating directory \"" + folderPath + "\"");
+                _sdCard.StorageDevice.CreateDirectory(folderPath);
+            }
+        }
+
         public bool DirectoryExists(string folderPath)
         {
+            Debug.Print("SD Card: Checking directory exists \"" + folderPath + "\"");
             var directory = Path.GetDirectoryName(folderPath);
             var directories = ListDirectories(directory);
-            return directories.ContainsCaseInsensitive(directory);
+            return directories.ContainsCaseInsensitive(folderPath);
         }
 
         public bool FileExists(string filePath)
@@ -58,6 +68,7 @@ namespace MyHome.Modules
                 throw new ApplicationException("SD card not available to read");
             }
 
+            Debug.Print("SD Card: Getting file content \"" + filePath + "\"");
             return _sdCard.StorageDevice.ReadFile(filePath);
         }
 
@@ -72,6 +83,7 @@ namespace MyHome.Modules
             {
                 try
                 {
+                    Debug.Print("SD Card: Listing directories in \"" + directory + "\"");
                     return _sdCard.StorageDevice.ListDirectories(directory);
                 }
                 catch
@@ -89,6 +101,7 @@ namespace MyHome.Modules
             {
                 try
                 {
+                    Debug.Print("SD Card: Listing files in \"" + directory + "\"");
                     return _sdCard.StorageDevice.ListFiles(directory);
                 }
                 catch
@@ -106,6 +119,7 @@ namespace MyHome.Modules
             {
                 try
                 {
+                    Debug.Print("SD Card: Listing root directories");
                     return _sdCard.StorageDevice.ListRootDirectorySubdirectories();
                 }
                 catch
@@ -123,6 +137,7 @@ namespace MyHome.Modules
             {
                 try
                 {
+                    Debug.Print("SD Card: Listing root files");
                     return _sdCard.StorageDevice.ListRootDirectoryFiles();
                 }
                 catch
@@ -136,6 +151,7 @@ namespace MyHome.Modules
 
         public bool RootDirectoryExists(string rootDirectory)
         {
+            Debug.Print("SD Card: Checking directory exists \"" + rootDirectory + "\"");
             var directories = ListRootDirectories();
             return directories.ContainsCaseInsensitive(rootDirectory);
         }
@@ -196,6 +212,7 @@ namespace MyHome.Modules
 
         private void SaveBitmap(string filepath, Bitmap bitmap)
         {
+            CreateDirectory(Path.GetDirectoryName(filepath));
             Debug.Print("SD Card: Converting image to file format");
             var bytes = bitmap.GetBytes();
             Debug.Print("SD Card: Saving file");
@@ -207,6 +224,7 @@ namespace MyHome.Modules
         {
             if (HasFileSystem())
             {
+                CreateDirectory(Path.GetDirectoryName(filepath));
                 Debug.Print("SD Card: Converting text to bytes");
                 var bytes = Encoding.UTF8.GetBytes(text);
                 Debug.Print("SD Card: Saving file");

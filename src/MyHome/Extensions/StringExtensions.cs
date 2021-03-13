@@ -6,6 +6,14 @@ namespace MyHome.Extensions
 {
     public static class StringExtensions
     {
+        public static bool Contains(this string source, string value)
+        {
+            if (value == null)
+                throw new ArgumentNullException("value");
+
+            return source.IndexOf(value) > -1;
+        }
+
         public static bool IsNullOrEmpty(this string source)
         {
             return source == null || source == string.Empty;
