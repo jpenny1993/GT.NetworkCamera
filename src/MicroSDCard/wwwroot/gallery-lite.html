@@ -5,14 +5,16 @@
   <!-- Live Demo: AdminLTE 3 https://adminlte.io/themes/v3/index.html -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Home | Live Feed</title>
+  <title>My Home | Gallery</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source%20Sans%20Pro%3A300%2C400%2C400i%2C700&display=fallback" integrity="sha256-sJF9LhANTKfaVgLPG2lVZKE44XC2U+CyN/V8k6M1Lsk= sha384-M6s+d0ZEYKdG8DJYjWUJtXxg7Sn0Z0LVN6o2ilbIfENet62/NhpT76h2+zN4fhXg sha512-gipchvWmF5OgP6T7Q4cnwfcLL3uLrgH/UFwQSa/F4kMGG2evtqhnFfSW778HVxll9N+rjzRXstNH167nwDX/JA==" crossorigin="anonymous">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.2/css/all.min.css" integrity="sha256-0fuNgzfNIlaClbDtmYyFxY8LTNCDrwsNshywr4AALy0= sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==" crossorigin="anonymous">
-  <!-- IonIcons -->
-  <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" integrity="sha256-kqxQgiD1u2DslOB2UFKOtmYl+CpHQK2gaM3gU2V4EoY= sha384-4r9SMzlCiUSd92w9v1wROFY7DlBc5sDYaEBhcCJR7Pm2nuzIIGKVRtYWlf6w+GG4 sha512-YXZY2+disPTBpkM8kOov4hoNJ9Qx8AsrIW3ihjYGb8RlOiPQtszMU7mrvVojTjQW3Lgpa38N7gzrobRc6Zorzw==" crossorigin="anonymous">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.10.23/css/dataTables.bootstrap4.min.css" integrity="sha256-STpv7j93gE6HYVfZWhvyWXNR720RedyFu67Is9RbBYk= sha384-TvTPOY0+zDaPJOrsc0DowFx9ZZ7ygan5VNqnwjvEb9wc8wXpGb7yVKgkz61X1CuC sha512-qVnp0yn7sd1VOFZzt4LrbaL5yBEsNrM3tD4vdyXTl0UcmA0Ctep0Xbu9wtCBiXes5NZgFFQKsDDL3ANKZqKzWQ==" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-responsive-bs4@2.2.7/css/responsive.bootstrap4.min.css" integrity="sha256-U7cKvBF96CeSqpzNEnxO6RH/hOJb5Xw885tusTTX6wI= sha384-Q0VYQaNygr6Z12DigHhH8ZyiLQJPhx8zESZcZWqA6Z0mDcJ4q4wNpf5vkbVrCt4r sha512-+TJckkeGxlxMsXzzgiOzPP98YRd+4BiK4B6n/8T4ls+LHSVtwLNvidIXKHL0OkzwBz8iG5YNwcKO6U2mWgoHDQ==" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-buttons-bs4@1.7.0/css/buttons.bootstrap4.min.css" integrity="sha256-gG7aI/E7q8bkMZWEAjius+llVl+GPTpsfccS1s2UF5w= sha384-fXhHPF8ssuwFIayuSsWvXuAzCumR1ZM5JqKNd53yz8KThEyc4y/Kb8BMAUipK098 sha512-0LpZpPhy5gC20rXCT9HfsYz0gF+wRD62I/MCY+d1tDgK7xKpvd0hQLMBqyXS9BYdzyis/BdIW2iMIBK8e+0o+Q==" crossorigin="anonymous">
   <!-- Theme style -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.0.5/dist/css/adminlte.min.css" integrity="sha256-e6m1bynxLVxZVbcvJiDKuKgUb19u0sDT9PIdJjLqr0E= sha384-K3U6uOl+lsXDvtMNwMbdrPpzTOxVbGec55DVgWN4uDZ86YxMRIujVXrff1LOLjVk sha512-rVZC4rf0Piwtw/LsgwXxKXzWq3L0P6atiQKBNuXYRbg2FoRbSTIY0k2DxuJcs7dk4e/ShtMzglHKBOJxW8EQyQ==" crossorigin="anonymous">
 </head>
@@ -72,7 +74,7 @@
     <!-- Brand Logo -->
     <a href="index.html" class="brand-link">
       <img src="./img/logo.png" alt="Logo" class="brand-image img-circle">
-      <span class="brand-text font-weight-light">My Home</span>
+      <span class="brand-text font-weight-light">Gallery</span>
     </a>
 
     <!-- Sidebar -->
@@ -91,14 +93,14 @@
           </li>
 
           <li class="nav-item">
-            <a href="./live-feed.html" class="nav-link active">
+            <a href="./live-feed.html" class="nav-link">
               <i class="nav-icon fas fa-video"></i>
               <p>Live Feed</p>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="./gallery-lite.html" class="nav-link">
+            <a href="./gallery-lite.html" class="nav-link active">
               <i class="nav-icon fas fa-image"></i>
               <p>Gallery</p>
             </a>
@@ -125,7 +127,7 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1 class="m-0">Live Feed</h1>
+            <h1 class="m-0">Gallery</h1>
           </div><!-- /.col -->
         </div><!-- /.row -->
       </div><!-- /.container-fluid -->
@@ -135,17 +137,35 @@
     <!-- Main content -->
     <div class="content">
       <div class="container-fluid">
-
         <div class="row">
+          <div class="col-12">
 
-          <div class="col-md-6">
             <div class="card">
               <div class="card-body">
-                <img id="camera-feed" alt="Snapshot" width="640" height="480" />
-              </div>
-            </div>
-          </div>
 
+                <table id="search-results" class="table table-bordered table-striped">
+                  <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Filename</ht>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    <td>...</td>
+                    <td>...</td>
+                    <td>...</td>
+                  </tr>
+                  </tbody>
+                </table>
+
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
         </div>
         <!-- /.row -->
       </div>
@@ -175,27 +195,37 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4= sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha256-sCElQ8xaSgoxwbWp0eiXMmGZIRa0z94+ffzzO06BqXs= sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns sha512-wV7Yj1alIZDqZFCUQJy85VN+qvEIly93fIQAN7iqDFCPEucLCeNFz4r35FCo9s6WrpdDQPi80xbljXB8Bjtvcg==" crossorigin="anonymous"></script>
+<!-- DataTables  -->
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.10.24/js/jquery.dataTables.min.js" integrity="sha256-itm1F+qFhcjfGnrv+v18AA+Fa7sA8rQIT7J0YenNH64= sha384-6guVkD+RgXfxrmI7DQZCDEylX4bfQRopdQKgtKKkPvNzPNMo/Vbk2wQbDR849kdF sha512-CjzmXwLSrBjNtvsEN+CQdcghPTeMoDLxMyZ8xlAkObHM9NfFAdZVGxKd54+NFoL0+ydaq3+lV+dJQzb9StoxXw==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.10.23/js/dataTables.bootstrap4.min.js" integrity="sha256-x7er9UzDxtTEVMCQ77BEYIazL0OYvR0Xs5gRbC9a7FM= sha384-1zf3CbnCM+FnHfdwEiLKpBo3GrQKqZ8ReTEtMyqpLCbk/CiA8CTgxz2x9GK+uxer sha512-NQ2u+QUFbhI3KWtE0O4rk855o+vgPo58C8vvzxdHXJZu6gLu2aLCCBMdudH9580OmLisCC1lJg2zgjcJbnBMOQ==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-responsive@2.2.7/js/dataTables.responsive.min.js" integrity="sha256-lNhDn9rWCvb7iB+apRL+bi4SsUrHKLopvY8lE5nscyI= sha384-wKMdkuTMby6DWlaFOkzvoMnGrhhFKe/S3L68JywskvtCTucevjWzF6uoxRNX8UdM sha512-4ecidd7I1XWwmLVzfLUN0sA0t2It86ti4qwPAzXW7B0/yIScpiOj7uyvFgu/ieGTEFjO5Ho98RZIqt75+ZZhdA==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-responsive-bs4@2.2.7/js/responsive.bootstrap4.min.js" integrity="sha256-aXVO47Rb7s58FhMTCwbM39en/1XcmzGkClRzBe5txKs= sha384-1dq/VDAF2KuzYz0N0KG39nI4v4MC7WeyP+lfpNEGOlCgaO61VwJxK7FRBYuiewdG sha512-OiHNq9acGP68tNJIr1ctDsYv7c2kuEVo2XmB78fh4I+3Wi0gFtZl4lOi9XIGn1f1SHGcXGhn/3VHVXm7CYBFNQ==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-buttons@1.7.0/js/dataTables.buttons.min.js" integrity="sha256-E7rxCyS8bZkq+bWQscfZviqwQhv264YjujRFej0PnIE= sha384-MCZ7HPvAQ9CcnOsirXCsH0cu6bVcTL29UMcxF3jhPhkgcj8ziS/KrpdkmqFAJt/G sha512-EzaqIDcdBg8g037o9E12U69oY/mfHffJJzUtB6dgd67AB4IXkMi1/7WY6og4fKSVXtqqt35S/R5ClqNHjSIH4g==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-buttons-bs4@1.7.0/js/buttons.bootstrap4.min.js" integrity="sha256-yVgLlmdyCodV2B610Qx+qPRFgJWP93yGFI4pJNeBrP8= sha384-IaqkU7kzW20FxqVEF257MCEqB8f0Lxb24vHqsxKC5aPVe05k7td2r2PZTG5eTMrI sha512-D4MloW0hy9XtYnqtvwfg2T2WZRn0dB8Ir0KcPrDX7S/gVE05JotZQHirzd9vMSIT8ViKyntOOZl1muHii0spUA==" crossorigin="anonymous"></script>
 <!-- AdminLTE -->
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.0.5/dist/js/adminlte.min.js" integrity="sha256-qgEvQZWPqqD1J5uCoPAsOZ7kzPmcFpS1AHIU7mowcAE= sha384-MPMu19FXmzMGaq5CEQairu/lARKuHUSg3jc90NMdmNYuCT4tyaf5xadNHJKqhs1k sha512-++c7zGcm18AhH83pOIETVReg0dr1Yn8XTRw+0bWSIWAVCAwz1s2PwnSj4z/OOyKlwSXc4RLg3nnjR22q0dhEyA==" crossorigin="anonymous"></script>
 
 <!-- OPTIONAL SCRIPTS -->
 <script type="text/javascript">
     (function () {
-      function refreshImage(imgId, imgURL) {
-        return function() {
-          console.log('updating camera feed');
-          var timestamp = new Date().getTime();
-          var imgElement = $(imgId)[0];
-          var queryString = "?t=" + timestamp;
-          imgElement.src = imgURL + queryString;
-        }
-      }
 
-      var elementId = '#camera-feed';
-      var apiAddress = './api/camera/image';
-      var refreshInterval = 10000;
-      refreshImage(elementId, apiAddress)();
-      setInterval(refreshImage(elementId, apiAddress), refreshInterval);
+      $('#search-results').DataTable({
+        ajax: './api/images/list',
+        columns: [
+          { data: 'date' },
+          { data: 'time' },
+          { data: 'filename' }
+        ],
+        "paging": true,
+        "lengthChange": false,
+        "searching": false,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "responsive": true,
+      });
+
+
     })();
 </script>
 
