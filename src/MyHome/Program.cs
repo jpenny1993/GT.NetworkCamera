@@ -82,6 +82,7 @@ namespace MyHome
             var filepath = Path.Combine(Directories.Camera, dateDirectory, filename);
             _fileManager.SaveFile(filepath, picture);
             _savingPicture = false;
+            var test = new DictionaryEntry(1, "");
         }
 
         private void NetworkManager_OnStatusChanged(NetworkStatus status, NetworkStatus previousStatus)
