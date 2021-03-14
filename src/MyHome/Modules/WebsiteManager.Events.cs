@@ -53,7 +53,7 @@ namespace MyHome.Modules
         {
             var queriedFolderPath = responder.QueryParameter(QueryStrings.Directory);
             var folderPath = Path.Combine(Directories.Camera, queriedFolderPath);
-            var totalFiles = _fm.CountFiles(folderPath);
+            var totalFiles = _fm.CountFiles(folderPath, true);
             responder.Respond(totalFiles.ToString());
         }
 

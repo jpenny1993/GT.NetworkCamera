@@ -25,13 +25,16 @@ namespace MyHome.Modules
             _sdCard.Unmounted += MicroSDCard_Unmounted;
         }
 
-        public int CountFiles(string folderPath)
+        public int CountFiles(string folderPath, bool recursive)
         {
             var fileCount = ListFiles(folderPath).Length;
-            var directories = ListDirectories(folderPath);
-            foreach (var directory in directories)
+            if (recursive)
             {
-                fileCount += CountFiles(directory);
+                var directories = ListDirectories(folderPath);
+                foreach (var directory in directories)
+                {
+                    fileCount += CountFiles(directory, recursive);
+                }
             }
 
             return fileCount;
@@ -95,6 +98,17 @@ namespace MyHome.Modules
             return new string[0];
         }
 
+        public string[] ListDirectoriesRecursive(string directory)
+        {
+            if (HasFileSystem())
+            {
+                var table = GetDirectoriesRecursiveInternal(directory);
+                return table.ToStringArray();
+            }
+
+            return new string[0];
+        }
+
         public string[] ListFiles(string directory)
         {
             if (HasFileSystem())
@@ -111,6 +125,67 @@ namespace MyHome.Modules
             }
 
             return new string[0];
+        }
+
+        public string[] ListFilesRecursive(string directory)
+        {
+            if (HasFileSystem())
+            {
+                var table = GetFilesRecursiveInternal(directory);
+                return table.ToStringArray();
+            }
+
+            return new string[0];
+        }
+
+        private Hashtable GetDirectoriesRecursiveInternal(string directory)
+        {
+            Hashtable list = new Hashtable();
+            int iterator = -1;
+            var folders = ListDirectories(directory);
+            foreach (var folder in folders)
+            {
+                iterator++;
+                list.Add(iterator, folder);
+
+                var subDirectories = GetDirectoriesRecursiveInternal(folder);
+                foreach (DictionaryEntry entry in subDirectories)
+                {
+                    iterator++;
+                    list.Add(iterator, entry.Value);
+                }
+            }
+
+            return list;
+        }
+
+        private Hashtable GetFilesRecursiveInternal(string directory)
+        {
+            Hashtable list = new Hashtable();
+            int iterator = -1;
+            var folders = ListDirectories(directory);
+            foreach (var folder in folders)
+            {
+                var files = ListFiles(folder);
+                foreach(var file in files)
+                {
+                    iterator++;
+                    list.Add(iterator, file);
+                }
+
+                var subDirectories = ListDirectories(folder);
+                foreach (var subFolder in subDirectories)
+                {
+                    var subTable = GetFilesRecursiveInternal(subFolder);
+                    foreach (DictionaryEntry entry in subTable)
+                    {
+                        iterator++;
+                        list.Add(iterator, entry.Value);
+                    }
+                }
+            }
+
+            return list;
         }
 
         public string[] ListRootDirectories()

@@ -145,6 +145,7 @@ namespace Json.Lite
             WriteNewLine(sb);
             WriteIndent(sb, nextIndent);
 
+            // .GetMembers() is not supported by .Net MF
             var properties = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
             for (int index = 0; index < properties.Length; index++)
             {

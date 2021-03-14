@@ -45,6 +45,7 @@
     <Compile Include="Constants\QueryStrings.cs" />
     <Compile Include="Constants\WebRoutes.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
+    <Compile Include="Extensions\HashtableExtensions.cs" />
     <Compile Include="Extensions\ResponderExtensions.cs" />
     <Compile Include="Extensions\StringCollectionExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />

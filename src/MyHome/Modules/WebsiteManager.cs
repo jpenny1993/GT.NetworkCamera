@@ -9,6 +9,7 @@ using GT = Gadgeteer;
 using MyHome.Constants;
 using MyHome.Extensions;
 using MyHome.Utilities;
+using Json.Lite;
 
 namespace MyHome.Modules
 {
@@ -114,11 +115,37 @@ namespace MyHome.Modules
             var folderPath = Path.Combine(area, path);
 
             // Check for files
-            var directories = _fm.ListDirectories(folderPath);
-            var files = _fm.ListFiles(folderPath);
+            var hashtable = new Hashtable();
 
-            // TODO Convert to JSON
-            response.Content = System.Text.Encoding.UTF8.GetBytes(string.Concat(directories, files));
+            var directories = _fm.ListDirectories(folderPath);
+            hashtable.Add("Directories", directories);
+
+            var files = _fm.ListFiles(folderPath);
+            hashtable.Add("Files", files);
+
+            var json = JsonConvert.SerializeObject(hashtable);
+            response.Content = json.GetBytes();
+            response.ContentType = ContentTypes.Json;
+            response.Found = true;
+
+            return response;
+        }
+
+        private WebsiteReponse ListFilesResponse(string area, string path)
+        {
+            var response = new WebsiteReponse();
+            if (!_fm.HasFileSystem()) return response;
+
+            // Check area exists on the device
+            if (!_fm.RootDirectoryExists(area)) return response;
+
+            // Define the full directory
+            var folderPath = Path.Combine(area, path);
+
+            // Check for files
+            var files = _fm.ListFilesRecursive(folderPath);
+            var json = JsonConvert.SerializeObject(files);
+            response.Content = json.GetBytes();
             response.ContentType = ContentTypes.Json;
             response.Found = true;
 

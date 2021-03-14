@@ -14,6 +14,11 @@ namespace MyHome.Extensions
             return source.IndexOf(value) > -1;
         }
 
+        public static byte[] GetBytes(this string source)
+        {
+            return Encoding.UTF8.GetBytes(source);
+        }
+
         public static bool IsNullOrEmpty(this string source)
         {
             return source == null || source == string.Empty;
