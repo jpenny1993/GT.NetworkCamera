@@ -27,6 +27,9 @@ namespace Json.ConsoleTest
             table.Add(2, "Two");
             table.Add(3, "Three");
 
+            var data = new Thing3();
+            data.Wibble = "Wobble";
+
             var anonymous = new Thing1
             {
                 Id = 1,
@@ -48,7 +51,8 @@ namespace Json.ConsoleTest
                 {
                     File = "consolelog.txt",
                     MaxSizeMb = 50,
-                }
+                },
+                MyStruct = data
             };
             return anonymous;
         }
@@ -73,11 +77,17 @@ namespace Json.ConsoleTest
         public Hashtable HashTable;
         public double[] Array;
         public Thing2 MyObject;
+        public Thing3 MyStruct;
     }
 
     public class Thing2
     {
         public string File;
         public int MaxSizeMb;
+    }
+
+    public struct Thing3
+    {
+        public string Wibble;
     }
 }

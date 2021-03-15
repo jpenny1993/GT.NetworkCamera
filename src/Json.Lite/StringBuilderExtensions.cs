@@ -231,7 +231,7 @@ namespace Json.Lite
             {
                 WriteEnumerable(sb, value, indent);
             }
-            else if (type.IsClass)
+            else if (type.IsClass || type.IsValueType) // Is class or struct, relies on other cases being handled above
             {
                 WriteObject(sb, type, value, indent);
             }
