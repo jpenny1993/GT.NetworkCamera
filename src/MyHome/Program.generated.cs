@@ -30,8 +30,8 @@ namespace MyHome {
         /// <summary>The Multicolor LED module using socket 4 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.MulticolorLED multicolorLED;
         
-        /// <summary>The Micro SD Card module using socket 5 of the mainboard.</summary>
-        private Gadgeteer.Modules.GHIElectronics.MicroSDCard microSDCard;
+        /// <summary>The SD Card module using socket 5 of the mainboard.</summary>
+        private Gadgeteer.Modules.GHIElectronics.SDCard sdCard;
         
         /// <summary>This property provides access to the Mainboard API. This is normally not necessary for an end user program.</summary>
         protected new static GHIElectronics.Gadgeteer.FEZSpider Mainboard {
@@ -60,7 +60,7 @@ namespace MyHome {
             this.ethernetJ11D = new GTM.GHIElectronics.EthernetJ11D(7);
             this.button = new GTM.GHIElectronics.Button(11);
             this.multicolorLED = new GTM.GHIElectronics.MulticolorLED(4);
-            this.microSDCard = new GTM.GHIElectronics.MicroSDCard(5);
+            this.sdCard = new GTM.GHIElectronics.SDCard(5);
         }
     }
 }

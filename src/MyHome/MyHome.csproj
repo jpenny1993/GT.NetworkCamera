@@ -103,10 +103,10 @@
     <Reference Include="GTM.GHIElectronics.EthernetJ11D, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-    <Reference Include="GTM.GHIElectronics.MicroSDCard, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="GTM.GHIElectronics.MulticolorLED, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-    <Reference Include="GTM.GHIElectronics.MulticolorLED, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="GTM.GHIElectronics.SDCard, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="GTM.GHIElectronics.USBClientDP, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
@@ -141,13 +141,13 @@
     <None Include="Resources\small.tinyfnt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Json.Lite\Json.Lite.csproj">
-      <Project>{6CDF0655-9B91-4E35-80D6-390B0BF8412B}</Project>
-      <Name>Json.Lite</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Gadgeteer.WebServer\Gadgeteer.WebServer.csproj">
       <Project>{FBCCBCF6-D89B-441A-AA9B-BF557714025D}</Project>
       <Name>Gadgeteer.WebServer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Json.Lite\Json.Lite.csproj">
+      <Project>{6CDF0655-9B91-4E35-80D6-390B0BF8412B}</Project>
+      <Name>Json.Lite</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

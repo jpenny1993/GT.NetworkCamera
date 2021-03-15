@@ -16,13 +16,13 @@ namespace MyHome.Modules
 #pragma warning disable 0612, 0618 // Ignore MicroSDCard obsolete warning
     public sealed class FileManager : IFileManager
     {
-        private readonly MicroSDCard _sdCard;
+        private readonly SDCard _sdCard;
 
-        public FileManager(MicroSDCard microSDCard)
+        public FileManager(SDCard sdCard)
         {
-            _sdCard = microSDCard;
-            _sdCard.Mounted += MicroSDCard_Mounted;
-            _sdCard.Unmounted += MicroSDCard_Unmounted;
+            _sdCard = sdCard;
+            _sdCard.Mounted += SDCard_Mounted;
+            _sdCard.Unmounted += SDCard_Unmounted;
         }
 
         public int CountFiles(string folderPath, bool recursive)
@@ -231,7 +231,7 @@ namespace MyHome.Modules
             return directories.ContainsCaseInsensitive(rootDirectory);
         }
 
-        private void MicroSDCard_Mounted(MicroSDCard sender, GT.StorageDevice device)
+        private void SDCard_Mounted(SDCard sender, GT.StorageDevice device)
         {
             Debug.Print("SD Card: Mounted");
 
@@ -257,7 +257,7 @@ namespace MyHome.Modules
             }
         }
 
-        private void MicroSDCard_Unmounted(MicroSDCard sender, EventArgs e)
+        private void SDCard_Unmounted(SDCard sender, EventArgs e)
         {
             Debug.Print("SD Card: Unmounted");
         }

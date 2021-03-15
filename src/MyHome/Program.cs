@@ -49,7 +49,7 @@ namespace MyHome
         {
             multicolorLED.TurnRed();
 
-            _fileManager = new FileManager(microSDCard);
+            _fileManager = new FileManager(sdCard);
             _fileManager.Remount(); // TODO: make non-blocking call
 
             _networkManager = new NetworkManager(ethernetJ11D);
