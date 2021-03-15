@@ -124,6 +124,7 @@ namespace MyHome.Modules
             hashtable.Add("Files", files);
 
             var json = JsonConvert.SerializeObject(hashtable);
+            Debug.Print(json);
             response.Content = json.GetBytes();
             response.ContentType = ContentTypes.Json;
             response.Found = true;
@@ -145,6 +146,7 @@ namespace MyHome.Modules
             // Check for files
             var files = _fm.ListFilesRecursive(folderPath);
             var json = JsonConvert.SerializeObject(files);
+            Debug.Print(json);
             response.Content = json.GetBytes();
             response.ContentType = ContentTypes.Json;
             response.Found = true;

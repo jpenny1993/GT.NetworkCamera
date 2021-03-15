@@ -10,6 +10,17 @@ namespace Json.Lite
         private const int IndentSize = 3;
         private const string IsoDateFormat = "yyyy-MM-ddTHH:mm:ss.FFFFFFFK";
 
+        public static void ReplaceAll(this StringBuilder sb, string oldValue, string newValue)
+        {
+            var str = sb.ToString();
+            int start = str.LastIndexOf(oldValue, 0, str.Length);
+            while (start > -1)
+            {
+                sb.Replace(oldValue, newValue, start, oldValue.Length);
+                start = str.LastIndexOf(oldValue, 0, start);
+            };
+        }
+
         public static void WriteBoolean(this StringBuilder sb, object value)
         {
             if ((bool)value) sb.Append("true");
@@ -244,7 +255,9 @@ namespace Json.Lite
         public static void WriteString(this StringBuilder sb, object value)
         {
             WriteQuote(sb);
-            sb.Append(value.ToString());
+            var str = value.ToString();
+            var safeStr = str.EscapeString();
+            sb.Append(safeStr);
             WriteQuote(sb);
         }
 

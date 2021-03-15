@@ -14,6 +14,23 @@ namespace MyHome.Extensions
             return source.IndexOf(value) > -1;
         }
 
+        public static int Count(this string str, string value)
+        {
+            int count = 0;
+            int i = str.Length;
+            do
+            {
+                i = str.LastIndexOf(value, 0, i);
+                if (i != -1)
+                {
+                    count++;
+                }
+            } while (i > -1);
+
+
+            return count;
+        }
+
         public static byte[] GetBytes(this string source)
         {
             return Encoding.UTF8.GetBytes(source);
@@ -57,16 +74,12 @@ namespace MyHome.Extensions
         public static string ReplaceAll(this string source, char oldValue, char newValue)
         {
             var builder = new StringBuilder(source);
-            int index = 0;
-            do
+            int start = source.LastIndexOf(oldValue, 0, source.Length);
+            while (start > -1)
             {
-                index = source.IndexOf(oldValue, index);
-                builder.Replace(oldValue, newValue);
-                if (index != -1)
-                {
-                    index++;
-                }
-            } while (index > -1 && index < source.Length);
+                builder.Replace(oldValue, newValue, start, 1);
+                start = source.LastIndexOf(oldValue, 0, start);
+            };
 
             return builder.ToString();
         }
@@ -80,16 +93,12 @@ namespace MyHome.Extensions
                 throw new ArgumentNullException("newValue");
 
             var builder = new StringBuilder(source);
-            int index = 0;
-            do
+            int start = source.LastIndexOf(oldValue, 0, source.Length);
+            while (start > -1)
             {
-                index = source.IndexOf(oldValue, index);
-                builder.Replace(oldValue, newValue);
-                if (index != -1)
-                {
-                    index += newValue.Length;
-                }
-            } while (index > -1 && index < source.Length);
+                builder.Replace(oldValue, newValue, start, oldValue.Length);
+                start = source.LastIndexOf(oldValue, 0, start);
+            };
 
             return builder.ToString();
         }
