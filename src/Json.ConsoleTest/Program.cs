@@ -49,7 +49,7 @@ namespace Json.ConsoleTest
                 },
                 MyObject = new Thing2
                 {
-                    File = "consolelog.txt",
+                    File = "C:\\temp\\consolelog.txt",
                     MaxSizeMb = 50,
                 },
                 MyStruct = data,

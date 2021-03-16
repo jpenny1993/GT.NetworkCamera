@@ -8,7 +8,9 @@ namespace Json.Lite
     internal static class StringBuilderExtensions
     {
         private const int IndentSize = 3;
-        private const string IsoDateFormat = "yyyy-MM-ddTHH:mm:ss.FFFFFFFK";
+
+        // ISO Date Format "yyyy-MM-ddTHH:mm:ss.FFFFFFFK" milliseconds have limited support by .Net MF
+        private const string IsoDateFormat = "yyyy-MM-ddTHH:mm:ss.fff000+00:00";
 
         public static void ReplaceAll(this StringBuilder sb, string oldValue, string newValue)
         {
