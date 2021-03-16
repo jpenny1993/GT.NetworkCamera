@@ -43,8 +43,6 @@ namespace Json.Lite
             var collection = (IEnumerable)value;
             var nextIndent = indent + IndentSize;
             WriteLeftSquareBracket(sb);
-            WriteNewLine(sb);
-            WriteIndent(sb, nextIndent);
 
             int counter = 0;
             foreach (var item in collection)
@@ -52,16 +50,20 @@ namespace Json.Lite
                 if (counter > 0)
                 {
                     WriteComma(sb);
-                    WriteNewLine(sb);
-                    WriteIndent(sb, nextIndent);
                 }
 
+                WriteNewLine(sb);
+                WriteIndent(sb, nextIndent);
                 WriteSomething(sb, item, nextIndent);
                 counter++;
             }
 
-            WriteNewLine(sb);
-            WriteIndent(sb, indent);
+            if (counter > 0)
+            {
+                WriteNewLine(sb);
+                WriteIndent(sb, indent);
+            }
+
             WriteRightSquareBracket(sb);
         }
 
@@ -75,8 +77,6 @@ namespace Json.Lite
             var hashtable = (Hashtable)value;
             var nextIndent = indent + IndentSize;
             WriteLeftCurlyBracket(sb);
-            WriteNewLine(sb);
-            WriteIndent(sb, nextIndent);
 
             int counter = 0;
             foreach (DictionaryEntry item in hashtable)
@@ -84,10 +84,10 @@ namespace Json.Lite
                 if (counter > 0)
                 {
                     WriteComma(sb);
-                    WriteNewLine(sb);
-                    WriteIndent(sb, nextIndent);
                 }
 
+                WriteNewLine(sb);
+                WriteIndent(sb, nextIndent);
                 var keyType = item.Key.GetType();
                 if (keyType.IsDateTime())
                 {
@@ -116,8 +116,12 @@ namespace Json.Lite
                 counter++;
             }
 
-            WriteNewLine(sb);
-            WriteIndent(sb, indent);
+            if (counter > 0)
+            {
+                WriteNewLine(sb);
+                WriteIndent(sb, indent);
+            }
+
             WriteRightCurlyBracket(sb);
         }
 
@@ -153,19 +157,19 @@ namespace Json.Lite
         {
             var nextIndent = indent + IndentSize;
             WriteLeftCurlyBracket(sb);
-            WriteNewLine(sb);
-            WriteIndent(sb, nextIndent);
 
             // .GetMembers() is not supported by .Net MF
             var properties = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
             for (int index = 0; index < properties.Length; index++)
             {
                 var field = properties[index];
-                if (index > 0 && index < properties.Length) {
+                if (index > 0 && index < properties.Length)
+                {
                     WriteComma(sb);
-                    WriteNewLine(sb);
-                    WriteIndent(sb, nextIndent);
                 }
+
+                WriteNewLine(sb);
+                WriteIndent(sb, nextIndent);
 
                 var propertyName = field.Name.Substring(0, 1).ToLower() +
                                    field.Name.Substring(1);
@@ -175,8 +179,12 @@ namespace Json.Lite
                 WriteSomething(sb, field.GetValue(value), nextIndent);
             }
 
-            WriteNewLine(sb);
-            WriteIndent(sb, indent);
+            if (properties.Length > 0)
+            {
+                WriteNewLine(sb);
+                WriteIndent(sb, indent);
+            }
+
             WriteRightCurlyBracket(sb);
         }
 

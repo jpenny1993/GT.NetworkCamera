@@ -52,7 +52,10 @@ namespace Json.ConsoleTest
                     File = "consolelog.txt",
                     MaxSizeMb = 50,
                 },
-                MyStruct = data
+                MyStruct = data,
+                EmptyArray = new string[0],
+                EmptyObject = new object(),
+                NullObject = null
             };
             return anonymous;
         }
@@ -78,6 +81,9 @@ namespace Json.ConsoleTest
         public double[] Array;
         public Thing2 MyObject;
         public Thing3 MyStruct;
+        public string[] EmptyArray;
+        public object EmptyObject;
+        public object NullObject;
     }
 
     public class Thing2
