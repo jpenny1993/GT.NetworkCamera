@@ -19,8 +19,7 @@ namespace Json.Lite
         public static bool IsEnumerable(this Type type)
         {
             // interfaceType.IsAssignableFrom(type) is not supported in .Net MF
-            // I can't remember but I don't think it can do List<T>s either
-            return type.IsArray;
+            return type.IsArray || type == typeof(ArrayList);
         }
 
         public static bool IsHashtable(this Type type)

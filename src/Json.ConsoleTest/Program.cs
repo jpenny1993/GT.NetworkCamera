@@ -27,6 +27,11 @@ namespace Json.ConsoleTest
             table.Add(2, "Two");
             table.Add(3, "Three");
 
+            var list = new ArrayList();
+            list.Add("One");
+            list.Add("Two");
+            list.Add("Three");
+
             var data = new Thing3();
             data.Wibble = "Wobble";
 
@@ -47,6 +52,7 @@ namespace Json.ConsoleTest
                     4.4,
                     5.5
                 },
+                List = list,
                 MyObject = new Thing2
                 {
                     File = "C:\\temp\\consolelog.txt",
@@ -79,6 +85,7 @@ namespace Json.ConsoleTest
         public TimeSpan Uptime;
         public Hashtable HashTable;
         public double[] Array;
+        public ArrayList List;
         public Thing2 MyObject;
         public Thing3 MyStruct;
         public string[] EmptyArray;
