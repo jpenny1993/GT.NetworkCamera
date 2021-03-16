@@ -102,8 +102,8 @@ namespace MyHome.Modules
         {
             if (HasFileSystem())
             {
-                var table = GetDirectoriesRecursiveInternal(directory);
-                return table.ToStringArray();
+                var list = GetDirectoriesRecursiveInternal(directory);
+                return (string[])list.ToArray();
             }
 
             return new string[0];
@@ -131,56 +131,50 @@ namespace MyHome.Modules
         {
             if (HasFileSystem())
             {
-                var table = GetFilesRecursiveInternal(directory);
-                return table.ToStringArray();
+                var list = GetFilesRecursiveInternal(directory);
+                return (string[])list.ToArray();
             }
 
             return new string[0];
         }
 
-        private Hashtable GetDirectoriesRecursiveInternal(string directory)
+        private ArrayList GetDirectoriesRecursiveInternal(string directory)
         {
-            Hashtable list = new Hashtable();
-            int iterator = -1;
+            ArrayList list = new ArrayList();
             var folders = ListDirectories(directory);
             foreach (var folder in folders)
             {
-                iterator++;
-                list.Add(iterator, folder);
+                list.Add(folder);
 
                 var subDirectories = GetDirectoriesRecursiveInternal(folder);
-                foreach (DictionaryEntry entry in subDirectories)
+                foreach (string entry in subDirectories)
                 {
-                    iterator++;
-                    list.Add(iterator, entry.Value);
+                    list.Add(entry);
                 }
             }
 
             return list;
         }
 
-        private Hashtable GetFilesRecursiveInternal(string directory)
+        private ArrayList GetFilesRecursiveInternal(string directory)
         {
-            Hashtable list = new Hashtable();
-            int iterator = -1;
+            ArrayList list = new ArrayList();
             var folders = ListDirectories(directory);
             foreach (var folder in folders)
             {
                 var files = ListFiles(folder);
                 foreach(var file in files)
                 {
-                    iterator++;
-                    list.Add(iterator, file);
+                    list.Add(file);
                 }
 
                 var subDirectories = ListDirectories(folder);
                 foreach (var subFolder in subDirectories)
                 {
                     var subTable = GetFilesRecursiveInternal(subFolder);
-                    foreach (DictionaryEntry entry in subTable)
+                    foreach (string entry in subTable)
                     {
-                        iterator++;
-                        list.Add(iterator, entry.Value);
+                        list.Add(entry);
                     }
                 }
             }

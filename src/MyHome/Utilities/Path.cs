@@ -56,7 +56,7 @@ namespace MyHome.Utilities
         {
             try
             {
-                var index = path.LastIndexOf(Period);
+                var index = path.LastIndexOf(Period, (path.LastIndexOf(Backslash) + 1));
                 var length = path.Length - index;
                 return path.Substring(index, length);
             }

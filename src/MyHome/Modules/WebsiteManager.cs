@@ -8,6 +8,7 @@ using GT = Gadgeteer;
 
 using MyHome.Constants;
 using MyHome.Extensions;
+using MyHome.Models;
 using MyHome.Utilities;
 using Json.Lite;
 
@@ -145,6 +146,7 @@ namespace MyHome.Modules
 
             // Check for files
             var files = _fm.ListFilesRecursive(folderPath);
+
             var json = JsonConvert.SerializeObject(files);
             Debug.Print(json);
             response.Content = json.GetBytes();
