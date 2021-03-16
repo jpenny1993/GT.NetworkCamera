@@ -17,16 +17,11 @@ namespace MyHome.Extensions
         public static int Count(this string str, string value)
         {
             int count = 0;
-            int i = str.Length;
-            do
+            int start = str.LastIndexOf(value, 0, value.Length);
+            while (start > -1)
             {
-                i = str.LastIndexOf(value, 0, i);
-                if (i != -1)
-                {
-                    count++;
-                }
-            } while (i > -1);
-
+                start = str.LastIndexOf(value, 0, start);
+            };
 
             return count;
         }
