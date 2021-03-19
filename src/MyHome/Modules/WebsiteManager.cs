@@ -134,7 +134,7 @@ namespace MyHome.Modules
             var list = new ArrayList();
             foreach (var folder in directories)
             {
-                var branch = PathObject.FromPath(area, folder, PathType.Directory);
+                var branch = PathObject.FromPath(area, folder, PathType.Directory, WebRoutes.GalleryList + "?directory=");
                 list.Add(branch);
             }
 
