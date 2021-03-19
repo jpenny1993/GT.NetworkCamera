@@ -15,6 +15,7 @@ namespace Json.Lite
         public static void ReplaceAll(this StringBuilder sb, string oldValue, string newValue)
         {
             var str = sb.ToString();
+            if (str == null) return;
             int start = str.LastIndexOf(oldValue, 0, str.Length);
             while (start > -1)
             {

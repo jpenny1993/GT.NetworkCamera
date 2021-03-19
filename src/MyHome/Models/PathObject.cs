@@ -1,4 +1,5 @@
 using System;
+using MyHome.Extensions;
 using MyHome.Utilities;
 
 namespace MyHome.Models
@@ -12,40 +13,26 @@ namespace MyHome.Models
     public class PathObject
     {
         public string FullPath;
+        public string Url;
         public string Area;
         public string Directory;
         public string Name;
-        public PathType Type;
+        public string Type;
 
-        public static PathObject FromDirectory(string fullPath)
-        {
-            return FromPathInteral(fullPath, PathType.Directory);
-        }
-
-        public static PathObject FromFile(string fullPath)
-        {
-            return FromPathInteral(fullPath, PathType.File);
-        }
-
-        public static PathObject FromPath(string fullPath)
-        {
-            return Path.GetFileExtension(fullPath).Length == 0
-                ? FromDirectory(fullPath)
-                : FromFile(fullPath);
-        }
-
-        private static PathObject FromPathInteral(string fullPath, PathType type)
+        public static PathObject FromPath(string area, string fullPath, PathType type, string prefix = null)
         {
             var firstBreak = fullPath.IndexOf('\\');
-            var area = fullPath.Substring(0, firstBreak);
             var path = fullPath.Substring(firstBreak);
             return new PathObject
             {
                 FullPath = fullPath,
-                Area = area,
-                Directory = Path.GetDirectoryName(path),
+                Url = prefix + fullPath.TrimStart(area).ReplaceAll('\\', '/').TrimStart('/'),
+                Area = fullPath.Substring(0, firstBreak),
+                Directory = Path.GetDirectoryName(path).TrimStart('\\'),
                 Name = Path.GetFilenameWithExtension(path),
-                Type = type
+                Type = type == PathType.Directory
+                    ? "Directory"
+                    : "File"
             };
         }
     }

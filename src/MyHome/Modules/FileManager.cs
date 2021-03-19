@@ -98,15 +98,14 @@ namespace MyHome.Modules
             return new string[0];
         }
 
-        public string[] ListDirectoriesRecursive(string directory)
+        public ArrayList ListDirectoriesRecursive(string directory)
         {
             if (HasFileSystem())
             {
-                var list = GetDirectoriesRecursiveInternal(directory);
-                return (string[])list.ToArray();
+                return GetDirectoriesRecursiveInternal(directory);
             }
 
-            return new string[0];
+            return new ArrayList();
         }
 
         public string[] ListFiles(string directory)
@@ -127,15 +126,14 @@ namespace MyHome.Modules
             return new string[0];
         }
 
-        public string[] ListFilesRecursive(string directory)
+        public ArrayList ListFilesRecursive(string directory)
         {
             if (HasFileSystem())
             {
-                var list = GetFilesRecursiveInternal(directory);
-                return (string[])list.ToArray();
+                return GetFilesRecursiveInternal(directory);
             }
 
-            return new string[0];
+            return new ArrayList();
         }
 
         private ArrayList GetDirectoriesRecursiveInternal(string directory)

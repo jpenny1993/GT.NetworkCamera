@@ -105,5 +105,15 @@ namespace MyHome.Extensions
 
             return source.IndexOf(value) == 0;
         }
+
+        public static string TrimStart(this string source, string value)
+        {
+            if (StartsWith(source, value))
+            {
+                return source.Substring(value.Length);
+            }
+
+            return source;
+        }
     }
 }

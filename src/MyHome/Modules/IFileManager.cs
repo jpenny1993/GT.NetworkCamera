@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 
 namespace MyHome.Modules
 {
@@ -11,9 +12,9 @@ namespace MyHome.Modules
         byte[] GetFileContent(string filePath);
         bool HasFileSystem();
         string[] ListDirectories(string directory);
-        string[] ListDirectoriesRecursive(string directory);
+        ArrayList ListDirectoriesRecursive(string directory);
         string[] ListFiles(string directory);
-        string[] ListFilesRecursive(string directory);
+        ArrayList ListFilesRecursive(string directory);
         string[] ListRootDirectories();
         string[] ListRootFiles();
         bool RootDirectoryExists(string rootDirectory);

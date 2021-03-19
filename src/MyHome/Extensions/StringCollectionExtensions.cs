@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Microsoft.SPOT;
 
 namespace MyHome.Extensions
@@ -40,6 +41,16 @@ namespace MyHome.Extensions
             }
 
             return false;
+        }
+
+        public static string[] ToStringArray(this ArrayList source)
+        {
+            var array = new string[source.Count];
+            for (var index = 0; index < source.Count; index++)
+            {
+                array[index] = (string)source[index];
+            }
+            return array;
         }
     }
 }

@@ -42,14 +42,13 @@ namespace MyHome.Utilities
 
         public static string GetDirectoryName(string path)
         {
-            try
+            var end = path.LastIndexOf(Backslash);
+            if (end > -1)
             {
-                return path.Substring(0, path.LastIndexOf(Backslash));
+                return path.Substring(0, end);
             }
-            catch
-            {
-                return string.Empty;
-            }
+
+            return string.Empty;
         }
 
         public static string GetFileExtension(string path)

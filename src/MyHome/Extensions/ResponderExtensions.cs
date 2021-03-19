@@ -31,28 +31,27 @@ namespace MyHome.Extensions
             return false;
         }
 
-        public static int? QueryInteger(this Responder responder, string parameterName)
+        public static int QueryInteger(this Responder responder, string parameterName)
         {
-            if (!HasQueryParameter(responder, parameterName))
+            if (HasQueryParameter(responder, parameterName))
             {
-                return null;
+                try
+                {
+                    return int.Parse(QueryParameter(responder, parameterName));
+                }
+                catch 
+                {
+                }
             }
 
-            try
-            {
-                return int.Parse(QueryParameter(responder, parameterName));
-            }
-            catch
-            {
-                return null;
-            }
+            return 0;
         }
 
-        public static DateTime? QueryDate(this Responder responder, string parameterName)
+        public static DateTime QueryDate(this Responder responder, string parameterName)
         {
             if (!HasQueryParameter(responder, parameterName))
             {
-                return null;
+                return DateTime.MinValue;
             }
 
             var valueStr = QueryParameter(responder, parameterName);
@@ -68,7 +67,7 @@ namespace MyHome.Extensions
                 return date;
             }
 
-            return null;
+            return DateTime.MinValue;
         }
 
         public static string QueryString(this Responder responder, string parameterName)

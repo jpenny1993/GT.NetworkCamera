@@ -123,7 +123,7 @@ namespace MyHome.Modules
             if (recursive)
             {
                 directories = new string[0];
-                files = _fm.ListFilesRecursive(systemPath);
+                files = _fm.ListFilesRecursive(systemPath).ToStringArray();
             }
             else
             {
@@ -132,15 +132,15 @@ namespace MyHome.Modules
             }
 
             var list = new ArrayList();
-            foreach (var dir in directories)
+            foreach (var folder in directories)
             {
-                var branch = PathObject.FromDirectory(dir);
+                var branch = PathObject.FromPath(area, folder, PathType.Directory);
                 list.Add(branch);
             }
 
             foreach (var file in files)
             {
-                var leaf = PathObject.FromFile(file);
+                var leaf = PathObject.FromPath(area, file, PathType.File, WebRoutes.GalleryImage + '/');
                 list.Add(leaf);
             }
 
