@@ -6,8 +6,10 @@ using Gadgeteer.Modules.GHIElectronics;
 using Gadgeteer.Networking;
 using GT = Gadgeteer;
 
+using Json.Lite;
 using MyHome.Constants;
 using MyHome.Extensions;
+using MyHome.Models;
 using MyHome.Utilities;
 
 namespace MyHome.Modules
@@ -51,7 +53,7 @@ namespace MyHome.Modules
         /// </summary>
         private void WebEvent_GalleryCount(string path, WebServer.HttpMethod method, Responder responder)
         {
-            var queriedFolderPath = responder.QueryParameter(QueryStrings.Directory);
+            var queriedFolderPath = responder.QueryString(QueryStrings.Directory);
             var folderPath = Path.Combine(Directories.Camera, queriedFolderPath);
             var totalFiles = _fm.CountFiles(folderPath, true);
             responder.Respond(totalFiles.ToString());
@@ -76,8 +78,9 @@ namespace MyHome.Modules
         /// </summary>
         private void WebEvent_GalleryList(string path, WebServer.HttpMethod method, Responder responder)
         {
-            var folderPath = responder.QueryParameter(QueryStrings.Directory);
-            var response = BrowseDirectoryResponse(Directories.Camera, folderPath);
+            var folderPath = responder.QueryString(QueryStrings.Directory);
+            var recursive = responder.QueryBoolean(QueryStrings.Recursive);
+            var response = BrowseDirectoryResponse(Directories.Camera, folderPath, recursive);
             SendResponse(response, responder);
         }
     }

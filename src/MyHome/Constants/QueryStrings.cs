@@ -5,6 +5,8 @@ namespace MyHome.Constants
 {
     public static class QueryStrings
     {
-        public const string Directory = "dir";
+        public const string Directory = "directory";
+
+        public const string Recursive = "recursive";
     }
 }

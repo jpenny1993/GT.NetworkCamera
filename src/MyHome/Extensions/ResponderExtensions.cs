@@ -1,21 +1,80 @@
 using System;
-using Microsoft.SPOT;
+using System.Collections;
 using Gadgeteer.Networking;
+using MyHome.Utilities;
 
 namespace MyHome.Extensions
 {
     public static class ResponderExtensions
     {
+        private static readonly string[] Booleans = new[] { "1", "true", "yes" };
+
         public static bool HasQueryParameter(this Responder responder, string parameterName)
         {
             return responder.UrlParameters != null &&
                    responder.UrlParameters.Contains(parameterName);
         }
 
-        public static string QueryParameter(this Responder responder, string parameterName)
+        private static string QueryParameter(this Responder responder, string parameterName)
+        {
+            return responder.UrlParameters[parameterName].ToString();
+        }
+
+        public static bool QueryBoolean(this Responder responder, string parameterName)
+        {
+            if (HasQueryParameter(responder, parameterName))
+            {
+                var valueStr = QueryParameter(responder, parameterName);
+                return Booleans.ContainsCaseInsensitive(valueStr);
+            }
+
+            return false;
+        }
+
+        public static int? QueryInteger(this Responder responder, string parameterName)
+        {
+            if (!HasQueryParameter(responder, parameterName))
+            {
+                return null;
+            }
+
+            try
+            {
+                return int.Parse(QueryParameter(responder, parameterName));
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static DateTime? QueryDate(this Responder responder, string parameterName)
+        {
+            if (!HasQueryParameter(responder, parameterName))
+            {
+                return null;
+            }
+
+            var valueStr = QueryParameter(responder, parameterName);
+            DateTime date;
+
+            if (DateTimeParser.ISO8601(valueStr, out date))
+            {
+                return date;
+            }
+
+            if (DateTimeParser.RFC822(valueStr, out date))
+            {
+                return date;
+            }
+
+            return null;
+        }
+
+        public static string QueryString(this Responder responder, string parameterName)
         {
             return HasQueryParameter(responder, parameterName)
-                ? responder.UrlParameters[parameterName].ToString()
+                ? QueryParameter(responder, parameterName)
                 : string.Empty;
         }
     }

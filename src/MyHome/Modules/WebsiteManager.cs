@@ -104,7 +104,7 @@ namespace MyHome.Modules
             return response;
         }
 
-        private WebsiteReponse BrowseDirectoryResponse(string area, string path)
+        private WebsiteReponse BrowseDirectoryResponse(string area, string path, bool recursive)
         {
             var response = new WebsiteReponse();
             if (!_fm.HasFileSystem()) return response;
@@ -113,41 +113,38 @@ namespace MyHome.Modules
             if (!_fm.RootDirectoryExists(area)) return response;
 
             // Define the full directory
-            var folderPath = Path.Combine(area, path);
+            var systemPath = Path.Combine(area, path);
 
-            // Check for files
-            var hashtable = new Hashtable();
+            if (!_fm.DirectoryExists(systemPath)) return response;
 
-            var directories = _fm.ListDirectories(folderPath);
-            hashtable.Add("Directories", directories);
+            string[] directories;
+            string[] files;
 
-            var files = _fm.ListFiles(folderPath);
-            hashtable.Add("Files", files);
+            if (recursive)
+            {
+                directories = new string[0];
+                files = _fm.ListFilesRecursive(systemPath);
+            }
+            else
+            {
+                directories = _fm.ListDirectories(systemPath);
+                files = _fm.ListFiles(systemPath);
+            }
 
-            var json = JsonConvert.SerializeObject(hashtable);
-            Debug.Print(json);
-            response.Content = json.GetBytes();
-            response.ContentType = ContentTypes.Json;
-            response.Found = true;
+            var list = new ArrayList();
+            foreach (var dir in directories)
+            {
+                var branch = PathObject.FromDirectory(dir);
+                list.Add(branch);
+            }
 
-            return response;
-        }
+            foreach (var file in files)
+            {
+                var leaf = PathObject.FromFile(file);
+                list.Add(leaf);
+            }
 
-        private WebsiteReponse ListFilesResponse(string area, string path)
-        {
-            var response = new WebsiteReponse();
-            if (!_fm.HasFileSystem()) return response;
-
-            // Check area exists on the device
-            if (!_fm.RootDirectoryExists(area)) return response;
-
-            // Define the full directory
-            var folderPath = Path.Combine(area, path);
-
-            // Check for files
-            var files = _fm.ListFilesRecursive(folderPath);
-
-            var json = JsonConvert.SerializeObject(files);
+            var json = JsonConvert.SerializeObject(list);
             Debug.Print(json);
             response.Content = json.GetBytes();
             response.ContentType = ContentTypes.Json;
