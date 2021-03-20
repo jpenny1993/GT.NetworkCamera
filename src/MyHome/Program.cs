@@ -113,25 +113,24 @@ namespace MyHome
                     multicolorLED.BlinkRepeatedly(GT.Color.Green);
                     break;
                 case NetworkStatus.NetworkAvailable:
-                    // Calculates the correct uptime if Internet connection is lost while running
-                    multicolorLED.BlinkRepeatedly(GT.Color.Blue);
-                    DateTime timeBeforeSync = _systemManager.Time;
-                    if (Time.SyncInternetTime()) // TODO REFACTOR
+                {
+                    if (!_systemManager.IsTimeSynchronised)
                     {
-                        var now = _systemManager.Time;
-                        var recalculatedStartTime = now - (timeBeforeSync - _systemManager.StartTime);
-                        _systemManager.SetSystemStartTime(recalculatedStartTime);
-                        Debug.Print("Synchronised time: " + JsonConvert.SerializeObject(now));
-                        Debug.Print("Recalculated uptime: " + JsonConvert.SerializeObject(_systemManager.Uptime));
+                        multicolorLED.BlinkRepeatedly(GT.Color.Blue);
+                        _systemManager.SyncroniseInternetTime();
+                    }
+
+                    if (_systemManager.IsTimeSynchronised)
+                    {
                         multicolorLED.TurnColor(GT.Color.Blue);
                     }
-                    else 
+                    else
                     {
-                        // Unable to sync time
                         multicolorLED.TurnGreen();
                     }
 
                     _websiteManager.Start(_networkManager.IpAddress);
+                }
                     break;
             }
         }

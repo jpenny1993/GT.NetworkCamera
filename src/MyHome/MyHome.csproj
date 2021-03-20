@@ -45,6 +45,7 @@
     <Compile Include="Constants\QueryStrings.cs" />
     <Compile Include="Constants\WebRoutes.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
+    <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\ResponderExtensions.cs" />
     <Compile Include="Extensions\StringCollectionExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
@@ -78,7 +79,6 @@
     <Compile Include="Utilities\IAwaitable.cs" />
     <Compile Include="Utilities\Path.cs" />
     <Compile Include="Utilities\SocketClient.cs" />
-    <Compile Include="Time.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Gadgeteer" />

@@ -31,16 +31,45 @@ namespace MyHome.Extensions
                 throw new ArgumentNullException("source", "String[] cannot be null.");
             }
 
+            var uStr = !str.IsNullOrEmpty()
+                ? str.ToUpper()
+                : str;
             foreach (var item in source)
             {
-                if (!item.IsNullOrEmpty() &&
-                    item.ToUpper() == str.ToUpper())
+                var uItem = !item.IsNullOrEmpty()
+                    ? item.ToUpper()
+                    : item;
+                if (uItem == uStr)
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        public static int IndexOfCaseInsensitive(this string[] source, string str)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException("source", "String[] cannot be null.");
+            }
+            var uStr = !str.IsNullOrEmpty()
+                ? str.ToUpper()
+                : str;
+            for (var i = 0; i < source.Length; i++)
+            {
+                var item = source[i];
+                var uItem = !item.IsNullOrEmpty()
+                    ? item.ToUpper()
+                    : item;
+                if (uItem == uStr)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         public static string[] ToStringArray(this ArrayList source)

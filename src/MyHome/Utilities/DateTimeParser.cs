@@ -89,6 +89,72 @@ namespace MyHome.Utilities
         }
 
         /// <summary>
+        /// Parse date format from NIST time server
+        /// 56620 13-11-24 15:05:12 00 0 0 120.3 UTC(NIST) *
+        /// </summary>
+        public static bool NIST(string str, out DateTime datetime)
+        {
+            try
+            {
+                string[] split = str.Split(' ');
+                string[] splitDate = split[1].Split('-');
+                string[] splitTime = split[2].Split(':');
+
+                int year = int.Parse("20" + splitDate[0]);
+                int month = int.Parse(splitDate[1]);
+                int day = int.Parse(splitDate[2]);
+
+                int hour = int.Parse(splitTime[0]);
+                int minute = int.Parse(splitTime[1]);
+                int second = int.Parse(splitTime[2]);
+
+                datetime = new DateTime(year, month, day, hour, minute, second);
+                return true;
+            }
+            catch
+            {
+                datetime = DateTime.MinValue;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parse date format from NTP time server
+        // 11 FEB 2014 17:11:32 CET
+        /// </summary>
+        public static bool NTP(string str, out DateTime datetime)
+        {
+            try
+            {
+                string[] split = str.Split(' ');
+                string[] splitTime = split[3].Split(':');
+                int month = Months.IndexOfCaseInsensitive(split[1]) + 1;
+                if (month == 0)
+                {
+                    datetime = DateTime.MinValue;
+                    return false;
+                }
+
+                int year = int.Parse(split[2]);
+                int day = int.Parse(split[0]);
+
+                int hour = int.Parse(splitTime[0]);
+                int minute = int.Parse(splitTime[1]);
+                int second = int.Parse(splitTime[2]);
+
+                datetime = new DateTime(year, month, day, hour, minute, second);
+                return true;
+            }
+            catch
+            {
+                datetime = DateTime.MinValue;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Parse date format 
         /// Sun, 06 Jun 2010 20:07:44 +0000
         /// </summary
