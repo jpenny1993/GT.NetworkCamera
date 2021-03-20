@@ -20,12 +20,12 @@ namespace MyHome
 {
     public partial class Program
     {
-        private DateTime _start;
         private bool _savingPicture;
         private GT.Timer _timer;
         private CameraManager _cameraManager;
         private FileManager _fileManager;
         private NetworkManager _networkManager;
+        private SystemManager _systemManager;
         private WebsiteManager _websiteManager;
 
         // This method is run when the mainboard is powered up or reset.   
@@ -33,7 +33,6 @@ namespace MyHome
         {
             // DO NOT PUT BLOCKING CODE IN THE MAIN THREAD
             Debug.Print("Startup Initiated");
-            _start = DateTime.Now;
 
             SetupDevices();
 
@@ -47,6 +46,8 @@ namespace MyHome
 
         private void SetupDevices()
         {
+            _systemManager = new SystemManager();
+
             multicolorLED.TurnRed();
 
             _fileManager = new FileManager(sdCard);
@@ -55,15 +56,16 @@ namespace MyHome
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
             _networkManager.ModeStatic("192.168.2.2");
+            // _networkManager.ModeDhcp();
             _networkManager.Enable();
 
-            _websiteManager = new WebsiteManager(_fileManager);
-
-            _cameraManager = new CameraManager(camera);
+            _cameraManager = new CameraManager(camera, _systemManager);
             _cameraManager.OnPictureTaken += CameraManager_OnPictureTaken;
 
             button.ButtonReleased += Button_ButtonReleased;
             button.TurnLedOff();
+
+            _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager);
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
@@ -74,7 +76,6 @@ namespace MyHome
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
             _savingPicture = true;
-            _websiteManager.UpdatePicture(picture);
 
             var now = DateTime.Now;
             var dateDirectory = now.ToString("yyMMdd");
@@ -113,13 +114,14 @@ namespace MyHome
                 case NetworkStatus.NetworkAvailable:
                     // Calculates the correct uptime if Internet connection is lost while running
                     multicolorLED.BlinkRepeatedly(GT.Color.Blue);
-                    DateTime timeBeforeSync = DateTime.Now;
+                    DateTime timeBeforeSync = _systemManager.Time;
                     if (false)// Time.SyncInternetTime()) // TODO REFACTOR
                     {
-                        var now = DateTime.Now;
-                        _start = now - (timeBeforeSync - _start);
+                        var now = _systemManager.Time;
+                        var recalculatedStartTime = now - (timeBeforeSync - _systemManager.StartTime);
+                        _systemManager.SetSystemStartTime(recalculatedStartTime);
                         Debug.Print("Synchronised time: " + FormatDateTime(now));
-                        Debug.Print("Recalculated uptime: " + FormatTimeSpan(GetUptime()));
+                        Debug.Print("Recalculated uptime: " + FormatTimeSpan(_systemManager.Uptime));
                         multicolorLED.TurnColor(GT.Color.Blue);
                     }
                     else 
@@ -133,11 +135,6 @@ namespace MyHome
             }
         }
 
-        private TimeSpan GetUptime()
-        {
-            return DateTime.Now - _start;
-        }
-
         private void TakeSnapshot()
         {
             if (button.IsLedOn && !_savingPicture && _cameraManager.Ready)
@@ -148,7 +145,7 @@ namespace MyHome
 
         private void Update_Tick(GT.Timer timer)
         {
-            Debug.Print("Tick: " + FormatTimeSpan(GetUptime()));
+            Debug.Print("Tick: " + FormatTimeSpan(_systemManager.Uptime));
             TakeSnapshot();
         }
 

@@ -277,11 +277,28 @@ namespace Json.Lite
         public static void WriteTimeSpan(this StringBuilder sb, object value)
         {
             var timespan = (TimeSpan)value;
+            WriteQuote(sb);
+            if (timespan.Days < 10)
+            {
+                sb.Append('0');
+            }
+
             sb.Append(timespan.Days);
             WriteColon(sb);
+            if (timespan.Minutes < 10)
+            {
+                sb.Append('0');
+            }
+
             sb.Append(timespan.Minutes);
             WriteColon(sb);
+            if (timespan.Seconds < 10)
+            {
+                sb.Append('0');
+            }
+
             sb.Append(timespan.Seconds);
+            WriteQuote(sb);
         }
     }
 }

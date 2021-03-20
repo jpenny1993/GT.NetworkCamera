@@ -178,7 +178,7 @@
                 <p>Last Capture</p>
               </div>
               <div class="icon">
-                <i class="fas fa-shopping-cart"></i>
+                <i class="fas fa-camera"></i>
               </div>
             </div>
           </div>
@@ -250,20 +250,35 @@
 <!-- OPTIONAL SCRIPTS -->
 <script type="text/javascript">
     (function () {
-        function LoadWidget(widgetId, url) {
+        // Hack to allow testing from static file
+        var origin = window.location.origin != "null"
+          ? window.location.origin
+          : 'http://192.168.2.2'; 
+
+        function formatDateStr(datetime) {
+          var d = new Date(datetime);
+          var day = d.getDate() < 10 ? ('0' + d.getDate()) : d.getDate(); 
+          var month = d.getMonth() < 9 ? ('0' + (d.getMonth() + 1)) : (d.getMonth() + 1);
+          var year = d.getFullYear().toString().substring(2);
+          return `${day}/${month}/${year} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        }
+
+        function LoadWidget(widgetId, url, displayFunc) {
             var widgetOverlay = $(widgetId + ' .overlay');
             var widgetValue = $(widgetId + ' .widget-value');
-            widgetOverlay.css('display', 'block');
+            widgetOverlay.css('display', 'flex');
             $.getJSON(url)
                 .catch(function () { widgetValue.html('ERR'); })
-                .done(function (response) { widgetValue.html(response); })
+                .done(function (response) {
+                  widgetValue.html(displayFunc ? displayFunc(response) : response);
+                })
                 .always(function () { widgetOverlay.css('display', 'none'); });
         }
 
-        LoadWidget('#widget-totalsnapshots', './api/images/count');
+        LoadWidget('#widget-totalsnapshots', `${origin}/api/images/count`);
         //LoadWidget('#widget-humidity', '');
-        //LoadWidget('#widget-capturetime', '');
-        //LoadWidget('#widget-uptime', '');
+        LoadWidget('#widget-capturetime', `${origin}/api/camera/timestamp`, formatDateStr);
+        LoadWidget('#widget-uptime', `${origin}/api/system/uptime`);
     })();
 </script>
 

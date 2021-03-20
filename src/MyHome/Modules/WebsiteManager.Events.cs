@@ -37,15 +37,25 @@ namespace MyHome.Modules
         /// </summary>
         private void WebEvent_CameraImage(string path, WebServer.HttpMethod method, Responder responder)
         {
-            if (_picture != null)
+            if (_cam.Picture != null)
             {
-                responder.Respond(_picture);
+                responder.Respond(_cam.Picture);
             }
             else
             {
                 var fileResponse = GetFileResponse(Directories.Config, ImageNotAvailable);
                 SendResponse(fileResponse, responder);
             }
+        }
+
+        /// <summary>
+        /// Returns the time the camera last captured an image
+        /// </summary>
+        private void WebEvent_CameraTimestamp(string path, WebServer.HttpMethod method, Responder responder)
+        {
+            var time = _cam.PictureLastTaken;
+            var response = GetJsonReponse(time);
+            SendResponse(response, responder);
         }
 
         /// <summary>
@@ -81,7 +91,6 @@ namespace MyHome.Modules
         {
             var folderPath = responder.QueryString(QueryStrings.Directory);
             var recursive = responder.QueryBoolean(QueryStrings.Recursive);
-            var response = BrowseDirectoryResponse(Directories.Camera, folderPath, recursive);
 
             if (!_fm.HasFileSystem())
             {
@@ -117,8 +126,17 @@ namespace MyHome.Modules
                 list.Add(leaf);
             }
 
-            var json = JsonConvert.SerializeObject(list);
-            responder.Respond(json.GetBytes(), ContentTypes.Json, HttpStatusCode.OK);
+            var response = GetJsonReponse(list);
+            SendResponse(response, responder);
+        }
+
+        /// <summary>
+        /// Returns the total system uptime
+        /// </summary>
+        private void WebEvent_SystemUptime(string path, WebServer.HttpMethod method, Responder responder)
+        {
+            var response = GetJsonReponse(_sys.Uptime);
+            SendResponse(response, responder);
         }
     }
 }

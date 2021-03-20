@@ -24,31 +24,31 @@ namespace MyHome.Modules
             public string ContentType { get; set; }
         }
 
+
+        private readonly ISystemManager _sys;
+        private readonly ICameraManager _cam;
         private readonly IFileManager _fm;
-        private GT.Picture _picture;
         private bool _isRunning;
 
-        public WebsiteManager(IFileManager fileManager)
+        public WebsiteManager(
+            ISystemManager systemManager,
+            ICameraManager cameraManager,
+            IFileManager fileManager)
         {
+            _sys = systemManager;
+            _cam = cameraManager;
             _fm = fileManager;
         }
 
         private void RegisterWebEvents() 
         {
-            Debug.Print("Registering Index Page");
             Register(WebEvent_Index, WebServer.DefaultEvent);
-
-            Debug.Print("Registering Camera Image");
-            Register(WebEvent_CameraImage, WebRoutes.Camera);
-
-            Debug.Print("Registering Gallery Count");
+            Register(WebEvent_CameraImage, WebRoutes.CameraImage);
+            Register(WebEvent_CameraTimestamp, WebRoutes.CameraTimestamp);
             Register(WebEvent_GalleryCount, WebRoutes.GalleryCount);
-
-            Debug.Print("Registering Gallery List");
             Register(WebEvent_GalleryList, WebRoutes.GalleryList);
-
-            Debug.Print("Registering Gallery Image");
             Register(WebEvent_GalleryImage, WebRoutes.GalleryImage);
+            Register(WebEvent_SystemUptime, WebRoutes.SystemUptime);
         }
 
         public void Start(string ipAddress, ushort port = 80)
@@ -74,11 +74,6 @@ namespace MyHome.Modules
             _isRunning = false;
         }
 
-        public void UpdatePicture(GT.Picture picture)
-        {
-            _picture = picture;
-        }
-
         private WebsiteReponse GetFileResponse(string area, string path)
         {
             var response = new WebsiteReponse();
@@ -102,6 +97,16 @@ namespace MyHome.Modules
             response.Found = true;
 
             return response;
+        }
+
+        private WebsiteReponse GetJsonReponse(object response)
+        {
+            return new WebsiteReponse
+            {
+                Content = JsonConvert.SerializeObject(response).GetBytes(),
+                ContentType = ContentTypes.Json,
+                Found = response != null
+            };
         }
 
         private WebsiteReponse BrowseDirectoryResponse(string area, string path, bool recursive)
@@ -174,6 +179,7 @@ namespace MyHome.Modules
 
         private static void Register(WebEvent.ReceivedWebEventHandler handler, string webRoute)
         {
+            Debug.Print("WebsiteManager: Registering \"" + webRoute + "\"");
             Register(handler, WebServer.SetupWebEvent(webRoute));
         }
 

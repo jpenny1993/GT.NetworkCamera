@@ -52,8 +52,11 @@
     <Compile Include="Models\PathObject.cs" />
     <Compile Include="Modules\CameraManager.cs" />
     <Compile Include="Modules\FileManager.cs" />
+    <Compile Include="Modules\ICameraManager.cs" />
     <Compile Include="Modules\IFileManager.cs" />
+    <Compile Include="Modules\ISystemManager.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
+    <Compile Include="Modules\SystemManager.cs" />
     <Compile Include="Modules\WebsiteManager.Events.cs" />
     <Compile Include="Modules\WebsiteManager.cs" />
     <Compile Include="Program.generated.cs">
