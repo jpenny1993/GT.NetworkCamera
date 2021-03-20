@@ -191,6 +191,33 @@
 </div>
 <!-- ./wrapper -->
 
+<!-- Modal -->
+<div class="modal fade" id="preview-modal" tabindex="-1" role="dialog" aria-labelledby="preview-header" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="preview-header">...</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-12 text-center">
+            <div id="preview-spinner" class="overlay" style="display:none;">
+              <i class="fas fa-3x fa-sync-alt fa-spin" style="margin-top: 25vh;"></i>
+            </div>
+            <img id="preview-image" alt="Snapshot" width="640" height="480" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4= sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
@@ -215,11 +242,21 @@
 
       function formatDateStr(datetime) {
         var d = new Date(datetime);
-        return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        var day = d.getDate() < 10 ? ('0' + d.getDate()) : d.getDate(); 
+        var month = d.getMonth() < 9 ? ('0' + (d.getMonth() + 1)) : (d.getMonth() + 1);
+        return `${day}/${month}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
       }
 
-      function formatAction(url) {
-        return `<a class="btn btn-sm btn-primary" target="_blank" href="${origin}/${url}">Open</a>`;
+      function formatAction(url, dateStr) {
+        var clickAction = function(url, title) {
+          $('#preview-spinner').show();
+          $('#preview-image')[0].src = url;
+          $('#preview-header').html(title);
+          setTimeout(function() { $('#preview-spinner').hide(); }, 10000);
+        };
+        return '<button type="button" class="btn btn-sm btn-primary" ' +
+               `onclick="(${clickAction})('${origin}/${url}', '${dateStr}');" ` +
+               'data-toggle="modal" data-target="#preview-modal">View</button>';
       }
 
       $.getJSON(`${origin}/api/images/list?recursive=1`)
@@ -227,10 +264,11 @@
          if (!response) return;
 
          var results = response.map(function(item) {
+            var dateStr = formatDateStr(item.dateTime);
             return {
-              timestamp: formatDateStr(item.dateTime),
+              timestamp: dateStr,
               filename: item.name,
-              action: formatAction(item.url)
+              action: formatAction(item.url, dateStr)
             };
          });
 
