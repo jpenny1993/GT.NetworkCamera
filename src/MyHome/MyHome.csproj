@@ -73,7 +73,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Utilities\Awaitable.cs" />
     <Compile Include="Utilities\DateTimeParser.cs" />
+    <Compile Include="Utilities\IAwaitable.cs" />
     <Compile Include="Utilities\Path.cs" />
     <Compile Include="Utilities\SocketClient.cs" />
     <Compile Include="Time.cs" />

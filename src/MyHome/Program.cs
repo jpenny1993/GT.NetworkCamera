@@ -12,6 +12,7 @@ using Gadgeteer.Networking;
 using GT = Gadgeteer;
 using GTM = Gadgeteer.Modules;
 using Gadgeteer.Modules.GHIElectronics;
+using Json.Lite;
 using MyHome.Constants;
 using MyHome.Modules;
 using MyHome.Utilities;
@@ -20,7 +21,6 @@ namespace MyHome
 {
     public partial class Program
     {
-        private bool _savingPicture;
         private GT.Timer _timer;
         private CameraManager _cameraManager;
         private FileManager _fileManager;
@@ -28,6 +28,8 @@ namespace MyHome
         private SystemManager _systemManager;
         private WeatherManager _weatherManager;
         private WebsiteManager _websiteManager;
+
+        private IAwaitable _savePictureThread = Awaitable.Default;
 
         // This method is run when the mainboard is powered up or reset.   
         void ProgramStarted()
@@ -52,7 +54,7 @@ namespace MyHome
             multicolorLED.TurnRed();
 
             _fileManager = new FileManager(sdCard);
-            _fileManager.Remount(); // TODO: make non-blocking call
+            new Awaitable(() => _fileManager.Remount());
 
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
@@ -79,16 +81,11 @@ namespace MyHome
 
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
-            _savingPicture = true;
-
-            var now = DateTime.Now;
+            var now = _systemManager.Time;
             var dateDirectory = now.ToString("yyMMdd");
             var filename = string.Concat("IMG_", now.ToString("yyMMddHHmmss"), FileExtensions.Bitmap);
-
             var filepath = Path.Combine(Directories.Camera, dateDirectory, filename);
-            _fileManager.SaveFile(filepath, picture);
-            _savingPicture = false;
-            var test = new DictionaryEntry(1, "");
+            _savePictureThread = new Awaitable(() => _fileManager.SaveFile(filepath, picture));
         }
 
         private void NetworkManager_OnStatusChanged(NetworkStatus status, NetworkStatus previousStatus)
@@ -119,13 +116,13 @@ namespace MyHome
                     // Calculates the correct uptime if Internet connection is lost while running
                     multicolorLED.BlinkRepeatedly(GT.Color.Blue);
                     DateTime timeBeforeSync = _systemManager.Time;
-                    if (false)// Time.SyncInternetTime()) // TODO REFACTOR
+                    if (Time.SyncInternetTime()) // TODO REFACTOR
                     {
                         var now = _systemManager.Time;
                         var recalculatedStartTime = now - (timeBeforeSync - _systemManager.StartTime);
                         _systemManager.SetSystemStartTime(recalculatedStartTime);
-                        Debug.Print("Synchronised time: " + FormatDateTime(now));
-                        Debug.Print("Recalculated uptime: " + FormatTimeSpan(_systemManager.Uptime));
+                        Debug.Print("Synchronised time: " + JsonConvert.SerializeObject(now));
+                        Debug.Print("Recalculated uptime: " + JsonConvert.SerializeObject(_systemManager.Uptime));
                         multicolorLED.TurnColor(GT.Color.Blue);
                     }
                     else 
@@ -141,7 +138,7 @@ namespace MyHome
 
         private void TakeSnapshot()
         {
-            if (button.IsLedOn && !_savingPicture && _cameraManager.Ready)
+            if (button.IsLedOn && !_savePictureThread.IsRunning)
             {
                 _cameraManager.TakePicture();
             }
@@ -149,32 +146,8 @@ namespace MyHome
 
         private void Update_Tick(GT.Timer timer)
         {
-            Debug.Print("Tick: " + FormatTimeSpan(_systemManager.Uptime));
+            Debug.Print("Tick: " + JsonConvert.SerializeObject(_systemManager.Uptime));
             TakeSnapshot();
         }
-
-        private static string FormatInteger(int value)
-        {
-            return value > -1 && value < 10
-                ? "0" + value.ToString()
-                : value.ToString();
-        }
-
-        private static string FormatDateTime(DateTime datetime)
-        {
-            return datetime.ToString("dd/MM/yy HH:mm:ss");
-        }
-
-        private static string FormatTimeSpan(TimeSpan timespan)
-        {
-            const string colon = ":";
-            return string.Concat(
-                FormatInteger(timespan.Days), colon,
-                FormatInteger(timespan.Hours), colon,
-                FormatInteger(timespan.Minutes), colon,
-                FormatInteger(timespan.Seconds)
-            );
-        }
-
     }
 }

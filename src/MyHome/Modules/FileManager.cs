@@ -17,6 +17,7 @@ namespace MyHome.Modules
     public sealed class FileManager : IFileManager
     {
         private readonly SDCard _sdCard;
+        private Thread _saveThread;
 
         public FileManager(SDCard sdCard)
         {
