@@ -191,8 +191,8 @@
         }
       }
 
-      var elementId = '#camera-feed';
       var apiAddress = './api/camera/image';
+      var elementId = '#camera-feed';
       var refreshInterval = 10000;
       refreshImage(elementId, apiAddress)();
       setInterval(refreshImage(elementId, apiAddress), refreshInterval);

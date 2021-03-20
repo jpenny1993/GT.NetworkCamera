@@ -64,7 +64,8 @@ namespace MyHome.Modules
         /// </summary>
         private void WebEvent_GalleryImage(string path, WebServer.HttpMethod method, Responder responder)
         {
-            var fileResponse = GetFileResponse(Directories.Camera, path);
+            var filePath = responder.QueryString(QueryStrings.File);
+            var fileResponse = GetFileResponse(Directories.Camera, filePath);
             if (!fileResponse.Found)
             {
                 fileResponse = GetFileResponse(Directories.Config, ImageNotAvailable);
@@ -81,7 +82,43 @@ namespace MyHome.Modules
             var folderPath = responder.QueryString(QueryStrings.Directory);
             var recursive = responder.QueryBoolean(QueryStrings.Recursive);
             var response = BrowseDirectoryResponse(Directories.Camera, folderPath, recursive);
-            SendResponse(response, responder);
+
+            if (!_fm.HasFileSystem())
+            {
+                responder.NotFound();
+                return;
+            }
+
+            // Check area exists on the device
+            if (!_fm.RootDirectoryExists(Directories.Camera))
+            {
+                responder.NotFound();
+                return;
+            }
+
+            // Define the full directory
+            var systemPath = Path.Combine(Directories.Camera, folderPath);
+
+            if (!_fm.DirectoryExists(systemPath))
+            {
+                responder.NotFound();
+                return;
+            }
+
+            // Get file list
+            string[] files = recursive
+                ? _fm.ListFilesRecursive(systemPath).ToStringArray()
+                : _fm.ListFiles(systemPath);
+
+            var list = new ArrayList();
+            foreach (var file in files)
+            {
+                var leaf = GalleryObject.FromPath(Directories.Camera, file, WebRoutes.GalleryImage + "?file=");
+                list.Add(leaf);
+            }
+
+            var json = JsonConvert.SerializeObject(list);
+            responder.Respond(json.GetBytes(), ContentTypes.Json, HttpStatusCode.OK);
         }
     }
 }

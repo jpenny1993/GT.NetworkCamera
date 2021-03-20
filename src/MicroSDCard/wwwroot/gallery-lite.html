@@ -74,7 +74,7 @@
     <!-- Brand Logo -->
     <a href="index.html" class="brand-link">
       <img src="./img/logo.png" alt="Logo" class="brand-image img-circle">
-      <span class="brand-text font-weight-light">Gallery</span>
+      <span class="brand-text font-weight-light">My Home</span>
     </a>
 
     <!-- Sidebar -->
@@ -146,9 +146,9 @@
                 <table id="search-results" class="table table-bordered table-striped">
                   <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Filename</ht>
+                    <th>Timestamp</th>
+                    <th>Filename</th>
+                    <th>Action</ht>
                   </tr>
                   </thead>
                   <tbody>
@@ -208,23 +208,48 @@
 <!-- OPTIONAL SCRIPTS -->
 <script type="text/javascript">
     (function () {
+      // Hack to allow testing from static file
+      var origin = window.location.origin != "null"
+        ? window.location.origin
+        : 'http://192.168.2.2'; 
 
-      $('#search-results').DataTable({
-        ajax: './api/images/list',
-        columns: [
-          { data: 'date' },
-          { data: 'time' },
-          { data: 'filename' }
-        ],
-        "paging": true,
-        "lengthChange": false,
-        "searching": false,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-      });
+      function formatDateStr(datetime) {
+        var d = new Date(datetime);
+        return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+      }
 
+      function formatAction(url) {
+        return `<a class="btn btn-sm btn-primary" target="_blank" href="${origin}/${url}">Open</a>`;
+      }
+
+      $.getJSON(`${origin}/api/images/list?recursive=1`)
+       .done(function(response) {
+         if (!response) return;
+
+         var results = response.map(function(item) {
+            return {
+              timestamp: formatDateStr(item.dateTime),
+              filename: item.name,
+              action: formatAction(item.url)
+            };
+         });
+
+         $('#search-results').DataTable({
+           data: results,
+           paging: true,
+           lengthChange: false,
+           searching: false,
+           ordering: true,
+           info: true,
+           autoWidth: false,
+           responsive: true,
+           columns: [
+            {"data": "timestamp"},
+            {"data": "filename"},
+            {"data": "action"}
+           ]
+          }).draw();
+        });
 
     })();
 </script>

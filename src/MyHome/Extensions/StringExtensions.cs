@@ -26,6 +26,14 @@ namespace MyHome.Extensions
             return count;
         }
 
+        public static bool EndsWith(this string source, string value)
+        {
+            if (value == null)
+                throw new ArgumentNullException("value");
+
+            return (source.LastIndexOf(value) + value.Length) == source.Length;
+        }
+
         public static byte[] GetBytes(this string source)
         {
             return Encoding.UTF8.GetBytes(source);
@@ -104,6 +112,16 @@ namespace MyHome.Extensions
                 throw new ArgumentNullException("value");
 
             return source.IndexOf(value) == 0;
+        }
+
+        public static string TrimEnd(this string source, string value)
+        {
+            if (EndsWith(source, value))
+            {
+                return source.Substring(0, source.LastIndexOf(value));
+            }
+
+            return source;
         }
 
         public static string TrimStart(this string source, string value)

@@ -57,12 +57,7 @@ namespace MyHome.Extensions
             var valueStr = QueryParameter(responder, parameterName);
             DateTime date;
 
-            if (DateTimeParser.ISO8601(valueStr, out date))
-            {
-                return date;
-            }
-
-            if (DateTimeParser.RFC822(valueStr, out date))
+            if (DateTimeParser.TryParse(valueStr, out date))
             {
                 return date;
             }

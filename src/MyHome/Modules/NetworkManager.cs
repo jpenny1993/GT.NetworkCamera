@@ -23,6 +23,7 @@ namespace MyHome.Modules
     {
         private const int TimerTickMs = 5000; // Every 5 seconds
         private const string EmptyIpAddress = "0.0.0.0";
+        private const string DefaultSubnet = "255.255.255.0";
         private readonly EthernetJ11D _ethernet;
         private readonly GT.Timer _networkTimer;
         private NetworkStatus _prevStatus;
@@ -43,6 +44,16 @@ namespace MyHome.Modules
 
         public string IpAddress { get { return _ethernet.NetworkSettings.IPAddress; } }
 
+        public void ModeDhcp()
+        {
+            _ethernet.NetworkSettings.EnableDhcp();
+        }
+
+        public void ModeStatic(string ipAddress, string subnet = DefaultSubnet, string gateway = EmptyIpAddress)
+        {
+            _ethernet.NetworkSettings.EnableStaticIP(ipAddress, subnet, gateway);
+        }
+
         public void Disable()
         {
             _ethernet.NetworkInterface.Close();
@@ -57,7 +68,6 @@ namespace MyHome.Modules
             _ethernet.NetworkDown += EthernetJ11D_NetworkDown;
             _ethernet.NetworkUp += EthernetJ11D_NetworkUp;
 
-            _ethernet.NetworkSettings.EnableDhcp();
             _ethernet.NetworkSettings.EnableDynamicDns();
             _ethernet.UseThisNetworkInterface();
             _status = NetworkStatus.Enabled;

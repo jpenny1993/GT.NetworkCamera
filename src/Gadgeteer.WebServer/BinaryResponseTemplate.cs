@@ -43,6 +43,7 @@ namespace Gadgeteer.Networking
         /// <param name="content">The binary response data.</param>
         public BinaryResponseTemplate(HttpStatusCode statusCode, string contentType, byte[] content, uint refreshAfter)
         {
+            const string CrossOriginHeader = "Access-Control-Allow-Origin: *";
             this.StatusCode = statusCode;
             this.Content = content;
             this.ContentType = contentType;
@@ -51,19 +52,19 @@ namespace Gadgeteer.Networking
             var statusMessage = GetStatusMessage(StatusCode);
             if (content == null && refreshAfter <= 0)
             {
-                header = "HTTP/1.0 " + (int)StatusCode + " " + statusMessage + "\r\nCache-Control: no-cache\r\nConnection: Close\r\nContent-Length: 0\r\nContent-Type: " + contentType + "\r\n\r\n";
+                header = "HTTP/1.0 " + (int)StatusCode + " " + statusMessage + "\r\nCache-Control: no-cache\r\nConnection: Close\r\nContent-Length: 0\r\nContent-Type: " + contentType + "\r\n" + CrossOriginHeader + "\r\n\r\n";
             }
             else if (content != null && refreshAfter <= 0)
             {
-                header = "HTTP/1.0 " + (int)StatusCode + " " + statusMessage + "\r\nCache-Control: no-cache\r\nConnection: Close\r\nContent-Length: " + content.Length + "\r\nContent-Type: " + contentType + "\r\n\r\n";
+                header = "HTTP/1.0 " + (int)StatusCode + " " + statusMessage + "\r\nCache-Control: no-cache\r\nConnection: Close\r\nContent-Length: " + content.Length + "\r\nContent-Type: " + contentType + "\r\n" + CrossOriginHeader + "\r\n\r\n";
             }
             else if (content == null && refreshAfter > 0)
             {
-                header = "HTTP/1.0 " + (int)StatusCode + " " + statusMessage + "\r\nCache-Control: no-cache\r\nConnection: Close\r\nRefresh: " + refreshAfter + "\r\nContent-Length: 0\r\nContent-Type: " + contentType + "\r\n\r\n";
+                header = "HTTP/1.0 " + (int)StatusCode + " " + statusMessage + "\r\nCache-Control: no-cache\r\nConnection: Close\r\nRefresh: " + refreshAfter + "\r\nContent-Length: 0\r\nContent-Type: " + contentType + "\r\n" + CrossOriginHeader + "\r\n\r\n";
             }
             else if (content != null && refreshAfter > 0)
             {
-                header = "HTTP/1.0 " + (int)StatusCode + " " + statusMessage + "\r\nCache-Control: no-cache\r\nConnection: Close\r\nRefresh: " + refreshAfter + "\r\nContent-Length: " + content.Length + "\r\nContent-Type: " + contentType + "\r\n\r\n";
+                header = "HTTP/1.0 " + (int)StatusCode + " " + statusMessage + "\r\nCache-Control: no-cache\r\nConnection: Close\r\nRefresh: " + refreshAfter + "\r\nContent-Length: " + content.Length + "\r\nContent-Type: " + contentType + "\r\n" + CrossOriginHeader + "\r\n\r\n";
             }
 
             Header = Encoding.UTF8.GetBytes(header);

@@ -38,7 +38,9 @@ namespace Json.Lite
         public static void WriteDateTime(this StringBuilder sb, object value)
         {
             var datetime = (DateTime)value;
+            WriteQuote(sb);
             sb.Append(datetime.ToString(IsoDateFormat));
+            WriteQuote(sb);
         }
 
         public static void WriteEnumerable(this StringBuilder sb, object value, int indent)

@@ -54,6 +54,7 @@ namespace MyHome
 
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
+            _networkManager.ModeStatic("192.168.2.2");
             _networkManager.Enable();
 
             _websiteManager = new WebsiteManager(_fileManager);
@@ -113,7 +114,7 @@ namespace MyHome
                     // Calculates the correct uptime if Internet connection is lost while running
                     multicolorLED.BlinkRepeatedly(GT.Color.Blue);
                     DateTime timeBeforeSync = DateTime.Now;
-                    if (Time.SyncInternetTime()) // TODO REFACTOR
+                    if (false)// Time.SyncInternetTime()) // TODO REFACTOR
                     {
                         var now = DateTime.Now;
                         _start = now - (timeBeforeSync - _start);

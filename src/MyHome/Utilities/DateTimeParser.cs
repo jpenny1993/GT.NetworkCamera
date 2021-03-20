@@ -1,4 +1,5 @@
 using System;
+using MyHome.Extensions;
 
 namespace MyHome.Utilities
 {
@@ -6,35 +7,37 @@ namespace MyHome.Utilities
     {
         private static readonly string[] Months = new string[] { "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec" };
 
+        public static bool TryParse(string str, out DateTime datetime)
+        {
+            return ISO8601(str, out datetime) ||
+                   RFC822(str, out datetime) ||
+                   UnixTimestamp(str, out datetime);
+        }
+
         /// <summary>
-        /// Parse date format 
-        /// Sun, 06 Jun 2010 20:07:44 +0000
-        /// </summary
-        public static bool RFC822(string str, out DateTime datetime)
+        /// Parse format yyMMddHHmmss
+        /// Handle prefix and suffixes for files
+        /// IMG_yyMMddHHmmss.bmp
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public static DateTime CustomFormat(string str, string prefix = "", string suffix = "")
         {
             try
             {
-                int day = int.Parse(str.Substring(5, 2));
-                int month = Array.IndexOf(Months, str.Substring(8, 3)) + 1;
-                int year = int.Parse(str.Substring(12, 4));
-
-                int hour = int.Parse(str.Substring(17, 2));
-                int minute = int.Parse(str.Substring(20, 2));
-                int second = int.Parse(str.Substring(23, 2));
-
-                int offsetSgn = (str[26] == '-') ? -1 : 1;
-                int offsetHour = int.Parse(str.Substring(27, 2));
-                int offsetMinute = int.Parse(str.Substring(29, 2));
-
-                datetime = new DateTime(year, month, day, hour, minute, second);
-                return true;
+                var timestamp = str.TrimStart(prefix).TrimEnd(suffix);
+                var year = 2000 + int.Parse(timestamp.Substring(0, 2));
+                var month = int.Parse(timestamp.Substring(2, 2));
+                var day = int.Parse(timestamp.Substring(4, 2));
+                var hour = int.Parse(timestamp.Substring(6, 2));
+                var minute = int.Parse(timestamp.Substring(8, 2));
+                var second = int.Parse(timestamp.Substring(10, 2));
+                return new DateTime(year, month, day, hour, minute, second);
             }
             catch
             {
-                datetime = DateTime.MinValue;
+                return DateTime.MinValue;
             }
-
-            return false;
         }
 
         /// <summary>
@@ -75,6 +78,57 @@ namespace MyHome.Utilities
                 }
 
                 datetime = new DateTime(year, month, day, hour, minute, second);
+                return true;
+            }
+            catch
+            {
+                datetime = DateTime.MinValue;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parse date format 
+        /// Sun, 06 Jun 2010 20:07:44 +0000
+        /// </summary
+        public static bool RFC822(string str, out DateTime datetime)
+        {
+            try
+            {
+                int day = int.Parse(str.Substring(5, 2));
+                int month = Array.IndexOf(Months, str.Substring(8, 3)) + 1;
+                int year = int.Parse(str.Substring(12, 4));
+
+                int hour = int.Parse(str.Substring(17, 2));
+                int minute = int.Parse(str.Substring(20, 2));
+                int second = int.Parse(str.Substring(23, 2));
+
+                int offsetSgn = (str[26] == '-') ? -1 : 1;
+                int offsetHour = int.Parse(str.Substring(27, 2));
+                int offsetMinute = int.Parse(str.Substring(29, 2));
+
+                datetime = new DateTime(year, month, day, hour, minute, second);
+                return true;
+            }
+            catch
+            {
+                datetime = DateTime.MinValue;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parses ticks since 1st January 1970
+        /// </summary>
+        public static bool UnixTimestamp(string str, out DateTime datetime)
+        {
+            try
+            {
+                var ticks = long.Parse(str);
+                datetime = new DateTime(1970, 1, 1);
+                datetime.AddTicks(ticks);
                 return true;
             }
             catch
