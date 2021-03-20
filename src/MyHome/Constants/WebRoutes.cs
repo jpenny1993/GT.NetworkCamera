@@ -17,6 +17,10 @@ namespace MyHome.Constants
 
         public const string GalleryImage = "api/images/view";
 
+        public const string WeatherHumidity = "api/weather/humidity";
+
+        public const string WeatherTemperature = "api/weather/temperature";
+
         public const string SystemUptime = "api/system/uptime";
     }
 }

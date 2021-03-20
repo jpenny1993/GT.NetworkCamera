@@ -55,8 +55,10 @@
     <Compile Include="Modules\ICameraManager.cs" />
     <Compile Include="Modules\IFileManager.cs" />
     <Compile Include="Modules\ISystemManager.cs" />
+    <Compile Include="Modules\IWeatherManager.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
     <Compile Include="Modules\SystemManager.cs" />
+    <Compile Include="Modules\WeatherManager.cs" />
     <Compile Include="Modules\WebsiteManager.Events.cs" />
     <Compile Include="Modules\WebsiteManager.cs" />
     <Compile Include="Program.generated.cs">
@@ -112,6 +114,9 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="GTM.GHIElectronics.SDCard, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="GTM.GHIElectronics.TempHumidity, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="GTM.GHIElectronics.USBClientDP, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">

@@ -28,16 +28,19 @@ namespace MyHome.Modules
         private readonly ISystemManager _sys;
         private readonly ICameraManager _cam;
         private readonly IFileManager _fm;
+        private readonly IWeatherManager _we;
         private bool _isRunning;
 
         public WebsiteManager(
             ISystemManager systemManager,
             ICameraManager cameraManager,
-            IFileManager fileManager)
+            IFileManager fileManager,
+            IWeatherManager weatherManager)
         {
             _sys = systemManager;
             _cam = cameraManager;
             _fm = fileManager;
+            _we = weatherManager;
         }
 
         private void RegisterWebEvents() 
@@ -48,6 +51,8 @@ namespace MyHome.Modules
             Register(WebEvent_GalleryCount, WebRoutes.GalleryCount);
             Register(WebEvent_GalleryList, WebRoutes.GalleryList);
             Register(WebEvent_GalleryImage, WebRoutes.GalleryImage);
+            Register(WebEvent_WeatherHumidity, WebRoutes.WeatherHumidity);
+            Register(WebEvent_WeatherTemperature, WebRoutes.WeatherTemperature);
             Register(WebEvent_SystemUptime, WebRoutes.SystemUptime);
         }
 

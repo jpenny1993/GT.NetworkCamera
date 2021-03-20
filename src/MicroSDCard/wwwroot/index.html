@@ -139,7 +139,22 @@
         <div class="row">
 
           <div class="col-lg-3 col-6">
-            <div id="widget-totalsnapshots" class="small-box bg-info">
+            <div id="widget-todayssnapshots" class="small-box bg-info">
+              <div class="overlay">
+                  <i class="fas fa-3x fa-sync-alt"></i>
+              </div>
+              <div class="inner">
+                <h3 class="widget-value">...</h3>
+                <p>Todays Snapshots</p>
+              </div>
+              <div class="icon">
+                <i class="fas fa-grimace"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-6">
+            <div id="widget-totalsnapshots" class="small-box bg-success">
               <div class="overlay">
                   <i class="fas fa-3x fa-sync-alt"></i>
               </div>
@@ -149,21 +164,6 @@
               </div>
               <div class="icon">
                 <i class="fas fa-images"></i>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-3 col-6">
-            <div id="widget-humidity" class="small-box bg-success">
-              <div class="overlay">
-                <i class="fas fa-3x fa-sync-alt"></i>
-              </div>
-              <div class="inner">
-                <h3 class="widget-value">...</h3>
-                <p>Humidity</p>
-              </div>
-              <div class="icon">
-                <i class="fas fa-tachometer-alt"></i>
               </div>
             </div>
           </div>
@@ -202,6 +202,40 @@
 
         <div class="row">
 
+          <div class="col-lg-3 col-6">
+            <div id="widget-humidity" class="small-box bg-success">
+              <div class="overlay">
+                <i class="fas fa-3x fa-sync-alt"></i>
+              </div>
+              <div class="inner">
+                <h3 class="widget-value">...</h3>
+                <p>Humidity</p>
+              </div>
+              <div class="icon">
+                <i class="fas fa-tachometer-alt"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-6">
+            <div id="widget-temperature" class="small-box bg-primary">
+              <div class="overlay">
+                <i class="fas fa-3x fa-sync-alt"></i>
+              </div>
+              <div class="inner">
+                <h3 class="widget-value">...</h3>
+                <p>Temperature</p>
+              </div>
+              <div class="icon">
+                <i class="fas fa-tachometer-alt"></i>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="row">
+
           <div class="col-md-6">
             <div class="card">
               <div class="card-header border-0 bg-primary">
@@ -216,6 +250,8 @@
           </div>
 
         </div>
+
+
         <!-- /.row -->
       </div>
       <!-- /.container-fluid -->
@@ -255,12 +291,20 @@
           ? window.location.origin
           : 'http://192.168.2.2'; 
 
-        function formatDateStr(datetime) {
+        function formatDateTimeStr(datetime) {
           var d = new Date(datetime);
           var day = d.getDate() < 10 ? ('0' + d.getDate()) : d.getDate(); 
           var month = d.getMonth() < 9 ? ('0' + (d.getMonth() + 1)) : (d.getMonth() + 1);
           var year = d.getFullYear().toString().substring(2);
           return `${day}/${month}/${year} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        }
+
+        function formatDateStr(datetime) {
+          var d = new Date(datetime);
+          var day = d.getDate() < 10 ? ('0' + d.getDate()) : d.getDate(); 
+          var month = d.getMonth() < 9 ? ('0' + (d.getMonth() + 1)) : (d.getMonth() + 1);
+          var year = d.getFullYear().toString().substring(2);
+          return `${year}${month}${day}`;
         }
 
         function LoadWidget(widgetId, url, displayFunc) {
@@ -275,9 +319,11 @@
                 .always(function () { widgetOverlay.css('display', 'none'); });
         }
 
+        LoadWidget('#widget-todayssnapshots', `${origin}/api/images/count?directory=${formatDateStr(Date.now())}`);
         LoadWidget('#widget-totalsnapshots', `${origin}/api/images/count`);
-        //LoadWidget('#widget-humidity', '');
-        LoadWidget('#widget-capturetime', `${origin}/api/camera/timestamp`, formatDateStr);
+        LoadWidget('#widget-humidity', `${origin}/api/weather/humidity`, function (e) { return `${e}%`; });
+        LoadWidget('#widget-temperature', `${origin}/api/weather/temperature`, function (e) { return `${e}°C`; });
+        LoadWidget('#widget-capturetime', `${origin}/api/camera/timestamp`, formatDateTimeStr);
         LoadWidget('#widget-uptime', `${origin}/api/system/uptime`);
     })();
 </script>

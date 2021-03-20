@@ -26,6 +26,7 @@ namespace MyHome
         private FileManager _fileManager;
         private NetworkManager _networkManager;
         private SystemManager _systemManager;
+        private WeatherManager _weatherManager;
         private WebsiteManager _websiteManager;
 
         // This method is run when the mainboard is powered up or reset.   
@@ -65,7 +66,10 @@ namespace MyHome
             button.ButtonReleased += Button_ButtonReleased;
             button.TurnLedOff();
 
-            _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager);
+            _weatherManager = new WeatherManager(tempHumidity);
+            _weatherManager.Start();
+
+            _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)

@@ -66,7 +66,8 @@ namespace MyHome.Modules
             var queriedFolderPath = responder.QueryString(QueryStrings.Directory);
             var folderPath = Path.Combine(Directories.Camera, queriedFolderPath);
             var totalFiles = _fm.CountFiles(folderPath, true);
-            responder.Respond(totalFiles.ToString());
+            var response = GetJsonReponse(totalFiles);
+            SendResponse(response, responder);
         }
 
         /// <summary>
@@ -136,6 +137,18 @@ namespace MyHome.Modules
         private void WebEvent_SystemUptime(string path, WebServer.HttpMethod method, Responder responder)
         {
             var response = GetJsonReponse(_sys.Uptime);
+            SendResponse(response, responder);
+        }
+
+        private void WebEvent_WeatherHumidity(string path, WebServer.HttpMethod method, Responder responder)
+        {
+            var response = GetJsonReponse(_we.Humidity);
+            SendResponse(response, responder);
+        }
+
+        private void WebEvent_WeatherTemperature(string path, WebServer.HttpMethod method, Responder responder)
+        {
+            var response = GetJsonReponse(_we.Temperature);
             SendResponse(response, responder);
         }
     }
