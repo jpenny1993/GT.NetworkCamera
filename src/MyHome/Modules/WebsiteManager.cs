@@ -51,6 +51,7 @@ namespace MyHome.Modules
             Register(WebEvent_GalleryCount, WebRoutes.GalleryCount);
             Register(WebEvent_GalleryList, WebRoutes.GalleryList);
             Register(WebEvent_GalleryImage, WebRoutes.GalleryImage);
+            Register(WebEvent_WeatherLuminosity, WebRoutes.WeatherLuminosity);
             Register(WebEvent_WeatherHumidity, WebRoutes.WeatherHumidity);
             Register(WebEvent_WeatherTemperature, WebRoutes.WeatherTemperature);
             Register(WebEvent_SystemUptime, WebRoutes.SystemUptime);

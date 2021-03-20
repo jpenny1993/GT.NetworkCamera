@@ -5,8 +5,10 @@ using Gadgeteer.Modules.GHIElectronics;
 
 namespace MyHome.Modules
 {
+#pragma warning disable 0612, 0618 // Ignore TempHumidity obsolete warning
     public sealed class WeatherManager : IWeatherManager
     {
+        private readonly LightSense _light;
         private readonly TempHumidity _sensor;
         private double _humidity;
         private double _temperature;
@@ -15,10 +17,16 @@ namespace MyHome.Modules
 
         public delegate void Measurement(double humidity, double temperature);
 
-        public WeatherManager(TempHumidity tempHumidity)
+        public WeatherManager(TempHumidity tempHumidity, LightSense lightSense)
         {
+            _light = lightSense;
             _sensor = tempHumidity;
             _sensor.MeasurementComplete += Sensor_MeasurementComplete;
+        }
+
+        public double Luminosity
+        {
+            get { return _light.GetIlluminance(); }
         }
 
         public double Humidity
@@ -60,4 +68,5 @@ namespace MyHome.Modules
             }
         }
     }
+#pragma warning restore 0612, 0618
 }

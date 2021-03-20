@@ -164,5 +164,21 @@
         <socketShapeMoniker Id="6e8996f9-789b-468e-85ab-1b776979272a" />
       </nodes>
     </socketConnector>
+    <moduleShape Id="1824bf15-6e87-42b5-9a09-79e7afb6340f" absoluteBounds="9.1, 5.14, 0.6692913385826772, 0.86614173228346458">
+      <moduleMoniker Id="133c81ad-2fd0-44c2-a669-8b72cd4efc72" />
+      <relativeChildShapes />
+      <nestedChildShapes>
+        <socketUseShape Id="37a02e77-e792-4e68-8458-dbd8df07fd96" absoluteBounds="9.28, 5.6999999999999993, 0.25, 0.25">
+          <socketUseMoniker Id="dc5ad004-58aa-4eff-a7a3-a7fff855f56a" />
+        </socketUseShape>
+      </nestedChildShapes>
+    </moduleShape>
+    <socketConnector Id="849a01f1-c7e3-4c03-a5b0-3e2251124bd0" edgePoints="[(9.16877952401138 : 5.825); (5.105 : 5.825); (5.105 : 4.02122047598862)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <socketUseReferencesSocketMoniker Id="7934c5da-a571-42fd-a54e-fbd47c0b92a4" />
+      <nodes>
+        <socketUseShapeMoniker Id="37a02e77-e792-4e68-8458-dbd8df07fd96" />
+        <socketShapeMoniker Id="a7af113f-148b-41c5-b725-8765b927ea94" />
+      </nodes>
+    </socketConnector>
   </nestedChildShapes>
 </gadgeteerDSLDiagram>

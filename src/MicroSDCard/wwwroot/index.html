@@ -169,7 +169,7 @@
           </div>
 
           <div class="col-lg-3 col-6">
-            <div id="widget-capturetime" class="small-box bg-warning">
+            <div id="widget-capturetime" class="small-box bg-danger">
               <div class="overlay">
                   <i class="fas fa-3x fa-sync-alt"></i>
               </div>
@@ -184,7 +184,7 @@
           </div>
 
           <div class="col-lg-3 col-6">
-            <div id="widget-uptime" class="small-box bg-danger">
+            <div id="widget-uptime" class="small-box bg-warning">
               <div class="overlay">
                   <i class="fas fa-3x fa-sync-alt"></i>
               </div>
@@ -212,13 +212,13 @@
                 <p>Humidity</p>
               </div>
               <div class="icon">
-                <i class="fas fa-tachometer-alt"></i>
+                <i class="fas fa-tint"></i>
               </div>
             </div>
           </div>
 
           <div class="col-lg-3 col-6">
-            <div id="widget-temperature" class="small-box bg-primary">
+            <div id="widget-temperature" class="small-box bg-info">
               <div class="overlay">
                 <i class="fas fa-3x fa-sync-alt"></i>
               </div>
@@ -228,6 +228,21 @@
               </div>
               <div class="icon">
                 <i class="fas fa-tachometer-alt"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-6">
+            <div id="widget-illuminance" class="small-box bg-warning">
+              <div class="overlay">
+                <i class="fas fa-3x fa-sync-alt"></i>
+              </div>
+              <div class="inner">
+                <h3 class="widget-value">...</h3>
+                <p>Illuminance</p>
+              </div>
+              <div class="icon">
+                <i class="fas fa-sun"></i>
               </div>
             </div>
           </div>
@@ -324,8 +339,9 @@
 
         LoadWidget('#widget-todayssnapshots', `${origin}/api/images/count?directory=${formatDateStr(Date.now())}`);
         LoadWidget('#widget-totalsnapshots', `${origin}/api/images/count`);
-        LoadWidget('#widget-humidity', `${origin}/api/weather/humidity`, function (e) { return `${e}%`; });
-        LoadWidget('#widget-temperature', `${origin}/api/weather/temperature`, function (e) { return `${e}°C`; });
+        LoadWidget('#widget-humidity', `${origin}/api/weather/humidity`, function (e) { return `${e} %`; });
+        LoadWidget('#widget-temperature', `${origin}/api/weather/temperature`, function (e) { return `${e} °C`; });
+        LoadWidget('#widget-illuminance', `${origin}/api/weather/light`, function (e) { return `${e.toFixed(2)} Lux`; });
         LoadWidget('#widget-capturetime', `${origin}/api/camera/timestamp`, formatDateTimeStr);
         LoadWidget('#widget-uptime', `${origin}/api/system/uptime`);
     })();

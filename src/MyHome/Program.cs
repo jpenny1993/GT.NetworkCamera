@@ -66,7 +66,7 @@ namespace MyHome
             button.ButtonReleased += Button_ButtonReleased;
             button.TurnLedOff();
 
-            _weatherManager = new WeatherManager(tempHumidity);
+            _weatherManager = new WeatherManager(tempHumidity, lightSense);
             _weatherManager.Start();
 
             _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);

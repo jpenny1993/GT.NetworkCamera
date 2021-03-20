@@ -140,6 +140,12 @@ namespace MyHome.Modules
             SendResponse(response, responder);
         }
 
+        private void WebEvent_WeatherLuminosity(string path, WebServer.HttpMethod method, Responder responder)
+        {
+            var response = GetJsonReponse(_we.Luminosity);
+            SendResponse(response, responder);
+        }
+
         private void WebEvent_WeatherHumidity(string path, WebServer.HttpMethod method, Responder responder)
         {
             var response = GetJsonReponse(_we.Humidity);
