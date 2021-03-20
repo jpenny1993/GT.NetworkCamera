@@ -268,7 +268,7 @@
          if (!response) return;
 
          var results = response.map(function(item) {
-            var dateStr = formatDateStr(item.dateTime);
+            var dateStr = formatDateTimeStr(item.dateTime);
             return {
               timestamp: dateStr,
               filename: item.name,
