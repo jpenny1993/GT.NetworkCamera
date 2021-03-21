@@ -90,7 +90,7 @@ namespace MyHome.Modules
             if (!_fm.RootDirectoryExists(area)) return response;
 
             // Define the full filepath
-            var filePath = Path.Combine(area, path);
+            var filePath = MyPath.Combine(area, path);
 
             // Get directory from path
             var directory = Path.GetDirectoryName(filePath);
@@ -99,7 +99,7 @@ namespace MyHome.Modules
             if (!_fm.FileExists(filePath)) return response;
 
             // Get file content
-            response.ContentType = GetContentType(Path.GetExtension(path));
+            response.ContentType = GetContentType(Path.GetExtension(filePath));
             response.Content = _fm.GetFileContent(filePath);
             response.Found = true;
 
@@ -125,7 +125,7 @@ namespace MyHome.Modules
             if (!_fm.RootDirectoryExists(area)) return response;
 
             // Define the full directory
-            var systemPath = Path.Combine(area, path);
+            var systemPath = MyPath.Combine(area, path);
 
             if (!_fm.DirectoryExists(systemPath)) return response;
 

@@ -65,7 +65,7 @@ namespace MyHome.Modules
         private void WebEvent_GalleryCount(string path, WebServer.HttpMethod method, Responder responder)
         {
             var queriedFolderPath = responder.QueryString(QueryStrings.Directory);
-            var folderPath = Path.Combine(Directories.Camera, queriedFolderPath);
+            var folderPath = MyPath.Combine(Directories.Camera, queriedFolderPath);
             var totalFiles = _fm.CountFiles(folderPath, true);
             var response = GetJsonReponse(totalFiles);
             SendResponse(response, responder);
@@ -108,7 +108,7 @@ namespace MyHome.Modules
             }
 
             // Define the full directory
-            var systemPath = Path.Combine(Directories.Camera, folderPath);
+            var systemPath = MyPath.Combine(Directories.Camera, folderPath);
 
             if (!_fm.DirectoryExists(systemPath))
             {

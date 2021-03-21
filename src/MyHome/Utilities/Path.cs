@@ -1,19 +1,10 @@
-using System;
-using System.Collections;
 using System.Text;
-using Microsoft.SPOT;
 using MyHome.Extensions;
 
 namespace MyHome.Utilities
 {
-    public static class Path
+    public static class MyPath
     {
-        private const char Backslash = '\\';
-        private const char Forwardslash = '/';
-        private const char Period = '.';
-        private const string DoubleBackslash = "\\\\";
-        private const string EscapeDirectory = "..";
-
         public static string Combine(params string[] items)
         {
             var builder = new StringBuilder();
@@ -24,73 +15,20 @@ namespace MyHome.Utilities
 
                 // Replace things that would break the path
                 str = str
-                    .ReplaceAll(EscapeDirectory, string.Empty)
-                    .ReplaceAll(Forwardslash, Backslash)
-                    .ReplaceAll(DoubleBackslash, Backslash.ToString());
+                    .ReplaceAll("..", string.Empty)
+                    .ReplaceAll("/", "\\")
+                    .ReplaceAll("\\\\", "\\");
 
                 // Add directory separators
                 if (builder.Length > 0)
                 {
-                    builder.Append(Backslash);
+                    builder.Append("\\");
                 }
 
                 builder.Append(str);
             }
 
             return builder.ToString();
-        }
-
-        public static string GetDirectoryName(string path)
-        {
-            var end = path.LastIndexOf(Backslash);
-            if (end > -1)
-            {
-                return path.Substring(0, end);
-            }
-
-            return string.Empty;
-        }
-
-        public static string GetFileExtension(string path)
-        {
-            try
-            {
-                var index = path.LastIndexOf(Period, (path.LastIndexOf(Backslash) + 1));
-                var length = path.Length - index;
-                return path.Substring(index, length);
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
-        public static string GetFilename(string path)
-        {
-            try
-            {
-                var start = path.LastIndexOf(Backslash) + 1;
-                var end = path.LastIndexOf(Period) - start;
-                return path.Substring(start, end);
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
-        public static string GetFilenameWithExtension(string path)
-        {
-            try
-            {
-                var index = path.LastIndexOf(Backslash) + 1;
-                var length = path.Length - index;
-                return path.Substring(index, length);
-            }
-            catch
-            {
-                return string.Empty;
-            }
         }
     }
 }
