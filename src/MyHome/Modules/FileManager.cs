@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections;
 using System.Text;
 using System.Threading;
@@ -74,6 +75,17 @@ namespace MyHome.Modules
 
             Debug.Print("SD Card: Getting file content \"" + filePath + "\"");
             return _sdCard.StorageDevice.ReadFile(filePath);
+        }
+
+        public FileStream GetFileStream(string filePath, FileMode mode, FileAccess access)
+        {
+            if (!HasFileSystem())
+            {
+                throw new ApplicationException("SD card not available to read");
+            }
+
+            Debug.Print("SD Card: Getting file stream \"" + filePath + "\"");
+            return _sdCard.StorageDevice.Open(filePath, mode, access);   
         }
 
         public bool HasFileSystem()

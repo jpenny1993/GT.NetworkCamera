@@ -34,6 +34,18 @@ namespace MyHome.Extensions
             return (source.LastIndexOf(value) + value.Length) == source.Length;
         }
 
+        public static string Format(this string messageTemplate, params object[] args)
+        {
+            var sb = new StringBuilder(messageTemplate);
+            for (var index = 0; index < args.Length; index++)
+            {
+                var term = string.Concat("{", index, "}");
+                sb.Replace(term, args[index].ToString());
+            }
+
+            return sb.ToString();
+        }
+
         public static byte[] GetBytes(this string source)
         {
             return Encoding.UTF8.GetBytes(source);

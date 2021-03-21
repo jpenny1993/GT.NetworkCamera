@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.IO;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Presentation;
@@ -82,9 +83,9 @@ namespace MyHome
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
             var now = _systemManager.Time;
-            var dateDirectory = now.ToString("yyMMdd");
+            var dateDirectory = Path.Combine(Directories.Camera, now.ToString("yyMMdd"));
             var filename = string.Concat("IMG_", now.ToString("yyMMddHHmmss"), FileExtensions.Bitmap);
-            var filepath = Path.Combine(Directories.Camera, dateDirectory, filename);
+            var filepath = Path.Combine(dateDirectory, filename);
             _savePictureThread = new Awaitable(() => _fileManager.SaveFile(filepath, picture));
         }
 

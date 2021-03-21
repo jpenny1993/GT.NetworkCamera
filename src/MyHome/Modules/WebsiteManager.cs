@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.IO;
 using Microsoft.SPOT;
 using Gadgeteer.Modules.GHIElectronics;
 
@@ -98,7 +99,7 @@ namespace MyHome.Modules
             if (!_fm.FileExists(filePath)) return response;
 
             // Get file content
-            response.ContentType = GetContentType(Path.GetFileExtension(path));
+            response.ContentType = GetContentType(Path.GetExtension(path));
             response.Content = _fm.GetFileContent(filePath);
             response.Found = true;
 

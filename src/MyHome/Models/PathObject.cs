@@ -1,6 +1,6 @@
 using System;
+using System.IO;
 using MyHome.Extensions;
-using MyHome.Utilities;
 
 namespace MyHome.Models
 {
@@ -29,7 +29,7 @@ namespace MyHome.Models
                 Url = prefix + fullPath.TrimStart(area).ReplaceAll('\\', '/').TrimStart('/'),
                 Area = fullPath.Substring(0, firstBreak),
                 Directory = Path.GetDirectoryName(path).TrimStart('\\'),
-                Name = Path.GetFilenameWithExtension(path),
+                Name = Path.GetFileName(path),
                 Type = type == PathType.Directory
                     ? "Directory"
                     : "File"
