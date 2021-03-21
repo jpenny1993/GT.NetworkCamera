@@ -11,7 +11,7 @@ namespace MyHome.Utilities
         private bool _disposed;
         private bool _isRunning;
 
-        protected Awaitable()
+        private Awaitable()
         {
         }
 
@@ -69,7 +69,13 @@ namespace MyHome.Utilities
         {
             if (_thread != null && _thread.IsAlive)
             {
-                _thread.Abort();
+                try
+                {
+                    _thread.Abort();
+                }
+                catch
+                { 
+                }
             }
             _isRunning = false;
         }

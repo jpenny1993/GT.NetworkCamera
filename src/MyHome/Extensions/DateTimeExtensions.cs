@@ -9,23 +9,36 @@ namespace MyHome.Extensions
         /// Returns true if the current date is British Summer Time.
         /// Always changes on the last Sunday of March and last Sunday of October.
         /// </summary>
-        public static bool IsBST(this DateTime date)
+        public static bool IsBST(this DateTime datetime)
         {
-            // December to February are out
-            if (date.Month < 3 || date.Month > 10) { return false; }
-            // April to September are in
-            if (date.Month > 3 && date.Month < 10) { return true; }
-            // The earliest possible day for last sunday is 25th
-            // we are DST if our previous sunday was on or after the 18th.
-            int previousSunday = date.Day - (int)date.DayOfWeek;
-            if (date.Month == 3)
+            // November to February are GMT
+            if (datetime.Month < 3 || datetime.Month > 10) { return false; }
+
+            // April to September are BST
+            if (datetime.Month > 3 && datetime.Month < 10) { return true; }
+
+            // March and October both have 31 days in the month
+            var lastSundayOfMonth = new DateTime(datetime.Year, datetime.Month, 31);
+            if (lastSundayOfMonth.DayOfWeek != DayOfWeek.Sunday)
             {
-                // In march the hour increases 1am
-                return previousSunday >= 18 && date.Hour >= 1;
+                lastSundayOfMonth = lastSundayOfMonth.AddDays(-(int)lastSundayOfMonth.DayOfWeek);
             }
 
-            // In october the hour decreases at 2am
-            return previousSunday >= 18 && date.Hour >= 2;
+            if (datetime.Month == 3)
+            {
+                // In the UK the clocks go forward 1 hour at 1am on the last Sunday in March
+                lastSundayOfMonth = lastSundayOfMonth.AddHours(1);
+                return datetime > lastSundayOfMonth;
+            }
+            else if (datetime.Month == 10)
+            {
+                // and back 1 hour at 2am on the last Sunday in October.
+                lastSundayOfMonth = lastSundayOfMonth.AddHours(2);
+                return datetime < lastSundayOfMonth;
+            }
+
+            // This should never happen
+            return false;
         }
     }
 }

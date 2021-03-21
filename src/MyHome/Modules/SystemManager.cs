@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 
@@ -91,7 +92,14 @@ namespace MyHome.Modules
             string timeStr = null;
             var networkThread = new Awaitable(() =>
             {
-                timeStr = GetTimeString(hostname, port);
+                using (var client = new SocketClient())
+                {
+                    client.ConnectSocket(hostname, port);
+                    while (client.Active && !client.GetMessage(out timeStr))
+                    {
+                        Thread.Sleep(100);
+                    }
+                }
             });
             networkThread.Await(3000); // Timeout network request after 3 seconds
 
@@ -99,7 +107,7 @@ namespace MyHome.Modules
                 (hostname.Contains("nist") && DateTimeParser.NIST(timeStr, out datetime) ||
                  hostname.Contains("ntp") && DateTimeParser.NTP(timeStr, out datetime)))
             {
-                // Convert UTC to GMT
+                // Convert UTC/GMT to BST
                 if (datetime.IsBST())
                 {
                     datetime = datetime.AddHours(1);
@@ -113,29 +121,6 @@ namespace MyHome.Modules
             }
 
             return false;
-        }
-
-        private static string GetTimeString(string hostname, ushort port)
-        {
-            SocketClient client = new SocketClient();
-            try
-            {
-                client.ConnectSocket(hostname, port);
-                string message;
-                if (client.GetMessage(out message))
-                {
-                    return message;
-                }
-            }
-            catch
-            {
-                return string.Empty;
-            }
-            finally
-            {
-                client.CloseConnection();
-            }
-            return string.Empty;
         }
     }
 }

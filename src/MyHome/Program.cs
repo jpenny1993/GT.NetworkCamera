@@ -58,8 +58,8 @@ namespace MyHome
 
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
-            _networkManager.ModeStatic("192.168.2.2");
-            // _networkManager.ModeDhcp();
+            //_networkManager.ModeStatic("192.168.1.69", gateway: "192.168.1.1");
+            _networkManager.ModeDhcp();
             _networkManager.Enable();
 
             _cameraManager = new CameraManager(camera, _systemManager);

@@ -6,8 +6,10 @@ using Microsoft.SPOT;
 
 namespace MyHome.Utilities
 {
-    public sealed class SocketClient
+    public sealed class SocketClient : IDisposable
     {
+        private bool _disposed;
+        private bool _active;
         private Socket _socketConnection;
         private int _recieveTimeOut;
 
@@ -17,20 +19,28 @@ namespace MyHome.Utilities
             _recieveTimeOut = 30;
         }
 
-        public bool ConnectSocket(String server, Int32 port)
+        ~SocketClient()
+        {
+            Dispose();
+        }
+
+        public bool Active
+        {
+            get { return _active; }
+        }
+
+        public bool ConnectSocket(string server, ushort port)
         {
             try
             {
-                if (_socketConnection != null && _socketConnection.Available != 0) //close connection if already active
-                {
-                    _socketConnection.Close();
-                }
+                // Close connection if already active
+                CloseConnection();
                 // Get server's IP address.
                 IPHostEntry hostEntry = Dns.GetHostEntry(server);
                 _socketConnection = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 SetRecieveTimeout(5);
-                _socketConnection.Connect(new IPEndPoint(hostEntry.AddressList[0], port)); //sometimes gets stuck here if trying to connect
-                //may need to check to see if connection is active here, however i think it throws an exception if it cant connect
+                _socketConnection.Connect(new IPEndPoint(hostEntry.AddressList[0], port));
+                _active = true;
 
                 return true;
             }
@@ -45,18 +55,36 @@ namespace MyHome.Utilities
         {
             try
             {
-                _socketConnection.Close();
+                if (_socketConnection != null &&
+                    _socketConnection.Available != 0)
+                {
+                    _socketConnection.Close();
+                }
             }
             catch
             {
                 Debug.Print("Failed to close connection.");
+            }
+            _active = false;
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _disposed = true;
+                CloseConnection();
             }
         }
 
         public bool SendMessage(string request)
         {
             if (_socketConnection == null)
+            {
+                _active = false;
                 return false;
+            }
+
             try
             {
                 // Send request to the server.
@@ -65,6 +93,7 @@ namespace MyHome.Utilities
             }
             catch
             {
+                _active = false;
                 return false;
             }
             return true;
@@ -75,11 +104,12 @@ namespace MyHome.Utilities
             if (_socketConnection == null)
             {
                 message = string.Empty;
+                _active = false;
                 return false;
             }
             const Int32 cMicrosecondsPerSecond = 1000000;
             // Accumulates the received page as it is built from the buffer.
-            String recieved = String.Empty;
+            string recieved = string.Empty;
             try
             {
                 // Reusable buffer for receiving chunks of the document.
@@ -112,6 +142,7 @@ namespace MyHome.Utilities
             }
             catch
             {
+                _active = false;
                 return false;
             }
             finally
@@ -132,21 +163,6 @@ namespace MyHome.Utilities
         {
             if (_socketConnection == null) return;
             _socketConnection.SendTimeout = time;
-        }
-
-        ~SocketClient()
-        {
-            if (_socketConnection != null)
-            {
-                try
-                {
-                    _socketConnection.Close();
-                }
-                catch
-                {
-                    Debug.Print("Failed to close connection on Dispose.");
-                }
-            }
         }
     }
 }
