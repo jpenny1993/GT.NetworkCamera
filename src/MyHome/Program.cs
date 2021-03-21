@@ -57,6 +57,10 @@ namespace MyHome
             _fileManager = new FileManager(sdCard);
             new Awaitable(() => _fileManager.Remount());
 
+            Logger.Initialise(_fileManager);
+            Logger.SetupFileLogging(_fileManager.HasFileSystem());
+            var logger = Logger.ForContext("test");
+            logger.Information("Hello");
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
             //_networkManager.ModeStatic("192.168.1.69", gateway: "192.168.1.1");
