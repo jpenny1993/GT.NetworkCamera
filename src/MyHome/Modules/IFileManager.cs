@@ -6,6 +6,8 @@ namespace MyHome.Modules
 {
     public interface IFileManager
     {
+        event FileManager.DeviceSwapEnventHandler OnDeviceSwap;
+
         int CountFiles(string folderPath, bool recursive);
         void CreateDirectory(string folderPath);
         bool DirectoryExists(string folderPath);

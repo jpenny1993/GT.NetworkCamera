@@ -9,6 +9,7 @@ namespace MyHome.Modules
 #pragma warning disable 0612, 0618 // Ignore Camera obsolete warning
     public sealed class CameraManager : MyHome.Modules.ICameraManager
     {
+        private readonly Logger _logger;
         private readonly Camera _camera;
         private readonly ISystemManager _sys;
         private GT.Picture _picture;
@@ -20,6 +21,7 @@ namespace MyHome.Modules
 
         public CameraManager(Camera camera, ISystemManager systemManager)
         {
+            _logger = Logger.ForContext(this);
             _sys = systemManager;
             _camera = camera;
             _camera.CameraConnected += Camera_CameraConnected;
@@ -44,19 +46,19 @@ namespace MyHome.Modules
 
         private void Camera_CameraConnected(Camera sender, EventArgs e)
         {
-            Debug.Print("Camera: Connected");
+            _logger.Information("Connected");
             sender.CurrentPictureResolution = Camera.PictureResolution.Resolution320x240;
             sender.TakePictureStreamTimeout = new TimeSpan(0, 0, 3);
         }
 
         private void Camera_CameraDisconnected(Camera sender, EventArgs e)
         {
-            Debug.Print("Camera: Disconnected");
+            _logger.Information("Disconnected");
         }
 
         private void Camera_PictureCaptured(Camera sender, GT.Picture picture)
         {
-            Debug.Print("Camera: Picture captured");
+            _logger.Information("Picture captured");
             _pictureLastTaken = _sys.Time;
             _picture = picture;
             if (OnPictureTaken != null) 
@@ -69,12 +71,12 @@ namespace MyHome.Modules
         {
             if (_camera.CameraReady)
             {
-                Debug.Print("Camera: Take picture");
+                _logger.Information("Take picture");
                 _camera.TakePicture();
             }
             else 
             {
-                Debug.Print("Camera: Not ready to take picture");
+                _logger.Information("Not ready to take picture");
             }
         }
     }

@@ -14,14 +14,19 @@ using MyHome.Utilities;
 
 namespace MyHome.Modules
 {
-#pragma warning disable 0612, 0618 // Ignore MicroSDCard obsolete warning
+#pragma warning disable 0612, 0618 // Ignore SDCard obsolete warning
     public sealed class FileManager : IFileManager
     {
+        private readonly Logger _logger;
         private readonly SDCard _sdCard;
-        private Thread _saveThread;
+
+        public event FileManager.DeviceSwapEnventHandler OnDeviceSwap;
+
+        public delegate void DeviceSwapEnventHandler(bool diskInserted);
 
         public FileManager(SDCard sdCard)
         {
+            _logger = Logger.ForContext(this);
             _sdCard = sdCard;
             _sdCard.Mounted += SDCard_Mounted;
             _sdCard.Unmounted += SDCard_Unmounted;
@@ -46,14 +51,14 @@ namespace MyHome.Modules
         {
             if (!DirectoryExists(folderPath))
             {
-                Debug.Print("SD Card: Creating directory \"" + folderPath + "\"");
+                _logger.Information("Creating directory \"{0}\"", folderPath);
                 _sdCard.StorageDevice.CreateDirectory(folderPath);
             }
         }
 
         public bool DirectoryExists(string folderPath)
         {
-            Debug.Print("SD Card: Checking directory exists \"" + folderPath + "\"");
+            _logger.Information("Checking directory exists \"{0}\"", folderPath);
             var directory = Path.GetDirectoryName(folderPath);
             var directories = ListDirectories(directory);
             return directories.ContainsCaseInsensitive(folderPath);
@@ -73,7 +78,7 @@ namespace MyHome.Modules
                 throw new ApplicationException("SD card not available to read");
             }
 
-            Debug.Print("SD Card: Getting file content \"" + filePath + "\"");
+            _logger.Information("Getting file content \"{0}\"", filePath);
             return _sdCard.StorageDevice.ReadFile(filePath);
         }
 
@@ -84,7 +89,7 @@ namespace MyHome.Modules
                 throw new ApplicationException("SD card not available to read");
             }
 
-            Debug.Print("SD Card: Getting file stream \"" + filePath + "\"");
+            _logger.Information("Getting file stream \"{0}\"", filePath);
             return _sdCard.StorageDevice.Open(filePath, mode, access);   
         }
 
@@ -99,7 +104,7 @@ namespace MyHome.Modules
             {
                 try
                 {
-                    Debug.Print("SD Card: Listing directories in \"" + directory + "\"");
+                    _logger.Information("Listing directories in \"{0}\"", directory);
                     return _sdCard.StorageDevice.ListDirectories(directory);
                 }
                 catch
@@ -127,7 +132,7 @@ namespace MyHome.Modules
             {
                 try
                 {
-                    Debug.Print("SD Card: Listing files in \"" + directory + "\"");
+                    _logger.Information("Listing files in \"{0}\"", directory);
                     return _sdCard.StorageDevice.ListFiles(directory);
                 }
                 catch
@@ -199,7 +204,7 @@ namespace MyHome.Modules
             {
                 try
                 {
-                    Debug.Print("SD Card: Listing root directories");
+                    _logger.Information("Listing root directories");
                     return _sdCard.StorageDevice.ListRootDirectorySubdirectories();
                 }
                 catch
@@ -217,7 +222,7 @@ namespace MyHome.Modules
             {
                 try
                 {
-                    Debug.Print("SD Card: Listing root files");
+                    _logger.Information("Listing root files");
                     return _sdCard.StorageDevice.ListRootDirectoryFiles();
                 }
                 catch
@@ -231,16 +236,16 @@ namespace MyHome.Modules
 
         public bool RootDirectoryExists(string rootDirectory)
         {
-            Debug.Print("SD Card: Checking directory exists \"" + rootDirectory + "\"");
+            _logger.Information("Checking directory exists \"{0}\"", rootDirectory);
             var directories = ListRootDirectories();
             return directories.ContainsCaseInsensitive(rootDirectory);
         }
 
         private void SDCard_Mounted(SDCard sender, GT.StorageDevice device)
         {
-            Debug.Print("SD Card: Mounted");
+            _logger.Information("Mounted SD Card");
 
-            Debug.Print("SD Card: Listing directories");
+            _logger.Information("Listing directories");
             var directories = sender.StorageDevice.ListRootDirectorySubdirectories();
             var expectedDirectories = new[] 
             {
@@ -252,19 +257,29 @@ namespace MyHome.Modules
 
             foreach (var dir in expectedDirectories)
             {
-                Debug.Print("SD Card: Checking for " + dir);
+                _logger.Information("Checking for \"{0}\"", dir);
                 if (!directories.Contains(dir))
                 {
-                    Debug.Print("SD Card: Creating directory");
+                    _logger.Information("Creating directory");
                     sender.StorageDevice.CreateDirectory(dir);
-                    Debug.Print("SD Card: Created directory");
+                    _logger.Information("Created directory");
                 }
+            }
+
+            if (OnDeviceSwap != null)
+            {
+                OnDeviceSwap.Invoke(true);
             }
         }
 
         private void SDCard_Unmounted(SDCard sender, EventArgs e)
         {
-            Debug.Print("SD Card: Unmounted");
+            _logger.Information("Unmounted SD Card");
+
+            if (OnDeviceSwap != null)
+            {
+                OnDeviceSwap.Invoke(false);
+            }
         }
 
         public void Remount() 
@@ -275,11 +290,13 @@ namespace MyHome.Modules
             {
                 if (_sdCard.IsCardMounted)
                 {
-                    Debug.Print("SD Card: Remounting SD Card");
+                    _logger.Information("Remounting SD Card");
                     _sdCard.Unmount();
 
                     while (_sdCard.IsCardMounted)
+                    {
                         Thread.Sleep(100);
+                    }
 
                     _sdCard.Mount();
                 }
@@ -293,11 +310,11 @@ namespace MyHome.Modules
         private void SaveBitmap(string filepath, Bitmap bitmap)
         {
             CreateDirectory(Path.GetDirectoryName(filepath));
-            Debug.Print("SD Card: Converting image to file format");
+            _logger.Information("Converting image to file format");
             var bytes = bitmap.GetBytes();
-            Debug.Print("SD Card: Saving file");
+            _logger.Information("Saving file");
             _sdCard.StorageDevice.WriteFile(filepath, bytes);
-            Debug.Print("SD Card: File saved");
+            _logger.Information("File saved");
         }
 
         public void SaveFile(string filepath, string text)
@@ -305,11 +322,11 @@ namespace MyHome.Modules
             if (HasFileSystem())
             {
                 CreateDirectory(Path.GetDirectoryName(filepath));
-                Debug.Print("SD Card: Converting text to bytes");
+                _logger.Information("Converting text to bytes");
                 var bytes = Encoding.UTF8.GetBytes(text);
-                Debug.Print("SD Card: Saving file");
+                _logger.Information("Saving file");
                 _sdCard.StorageDevice.WriteFile(filepath, bytes);
-                Debug.Print("SD Card: File saved");
+                _logger.Information("File saved");
             }
         }
 
@@ -325,7 +342,7 @@ namespace MyHome.Modules
         {
             if (HasFileSystem())
             {
-                Debug.Print("SD Card: Converting picture to bitmap");
+                _logger.Information("Converting picture to bitmap");
                 var bitmap = picture.MakeBitmap();
                 SaveBitmap(filepath, bitmap);
             }

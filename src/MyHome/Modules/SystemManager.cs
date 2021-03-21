@@ -12,12 +12,14 @@ namespace MyHome.Modules
     public sealed class SystemManager : ISystemManager
     {
         private static readonly string[] TimeServers = { "time.nist.gov", "time-c.nist.gov", "0.uk.pool.ntp.org" };
+        private readonly Logger _logger;
         private DateTime _deviceStartTime;
         private bool _syncronisingTime;
         private bool _isTimeSynchronised;
 
         public SystemManager()
         {
+            _logger = Logger.ForContext(this);
             _deviceStartTime = DateTime.Now;
             _isTimeSynchronised = false;
             _syncronisingTime = false;
@@ -52,10 +54,10 @@ namespace MyHome.Modules
             DateTime currentTime;
             bool success = false;
 
-            Debug.Print("Attempting to synchronise time...");
+            _logger.Information("Attempting to synchronise time...");
             foreach (var hostname in TimeServers)
             {
-                Debug.Print("Using server: " + hostname);
+                _logger.Information("Using server: {0}", hostname);
                 if (GetTime(hostname, 13, out currentTime))
                 {
                     if (Time != currentTime)
@@ -67,7 +69,7 @@ namespace MyHome.Modules
                 }
                 else
                 {
-                    Debug.Print("Time synchronisation failed.");
+                    _logger.Information("Time synchronisation failed");
                 }
             }
 
@@ -75,12 +77,12 @@ namespace MyHome.Modules
             {
                 // Recalculate the start time using the current known uptime
                 _deviceStartTime = Time - (timeBeforeSync - _deviceStartTime);
-                Debug.Print("Synchronised time: " + JsonConvert.SerializeObject(Time));
-                Debug.Print("Recalculated uptime: " + JsonConvert.SerializeObject(Uptime));
+                _logger.Information("Synchronised time: ", JsonConvert.SerializeObject(Time));
+                _logger.Information("Recalculated uptime: ", JsonConvert.SerializeObject(Uptime));
             }
             else
             {
-                Debug.Print("Synchronisation to all time servers failed.");   
+                _logger.Information("Synchronisation to all time servers failed");
             }
 
             _syncronisingTime = false;

@@ -23,6 +23,7 @@ namespace MyHome
     public partial class Program
     {
         private GT.Timer _timer;
+        private Logger _logger;
         private CameraManager _cameraManager;
         private FileManager _fileManager;
         private NetworkManager _networkManager;
@@ -37,6 +38,7 @@ namespace MyHome
         {
             // DO NOT PUT BLOCKING CODE IN THE MAIN THREAD
             Debug.Print("Startup Initiated");
+            _logger = Logger.ForContext(this);
 
             SetupDevices();
 
@@ -45,7 +47,7 @@ namespace MyHome
             _timer.Tick += Update_Tick;
             _timer.Start();
 
-            Debug.Print("Startup Complete");
+            _logger.Information("Startup Complete");
         }
 
         private void SetupDevices()
@@ -55,12 +57,14 @@ namespace MyHome
             multicolorLED.TurnRed();
 
             _fileManager = new FileManager(sdCard);
+            Logger.Initialise(_fileManager);
+            _fileManager.OnDeviceSwap += (bool diskInserted) =>
+            {
+                Logger.SetupFileLogging(diskInserted);
+            };
+
             new Awaitable(() => _fileManager.Remount());
 
-            Logger.Initialise(_fileManager);
-            Logger.SetupFileLogging(_fileManager.HasFileSystem());
-            var logger = Logger.ForContext("test");
-            logger.Information("Hello");
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
             //_networkManager.ModeStatic("192.168.1.69", gateway: "192.168.1.1");
@@ -150,7 +154,7 @@ namespace MyHome
 
         private void Update_Tick(GT.Timer timer)
         {
-            Debug.Print("Tick: " + JsonConvert.SerializeObject(_systemManager.Uptime));
+            _logger.Information("Tick: {0}", JsonConvert.SerializeObject(_systemManager.Uptime));
             TakeSnapshot();
         }
     }

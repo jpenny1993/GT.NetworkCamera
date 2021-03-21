@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Microsoft.SPOT;
 
 using MyHome.Constants;
 using MyHome.Extensions;
@@ -33,13 +32,18 @@ namespace MyHome.Modules
         private static LogInstance Instance { get; set; }
 
         private const string DebugMessageTemplate = "{0}: {1}";
-        private const string FileMessageTemplate = "{0}|{1}|{2}|{3}";
+        private const string FileMessageTemplate = "{0}|{1}|{2}|{3}\r\n";
 
         private string _context;
 
         private Logger(string context)
         {
             _context = context;
+        }
+
+        public void Debug(string messageTemplate, params object[] args)
+        {
+            Log("DBG", _context, messageTemplate.Format(args));
         }
 
         public void Error(string messageTemplate, params object[] args)
@@ -52,14 +56,9 @@ namespace MyHome.Modules
             Log("INF", _context, messageTemplate.Format(args));
         }
 
-        public void Trace(string messageTemplate, params object[] args)
-        {
-            Log("TRACE", _context, messageTemplate.Format(args));
-        }
-
         public void Warning(string messageTemplate, params object[] args)
         {
-            Log("WARN", _context, messageTemplate.Format(args));
+            Log("WRN", _context, messageTemplate.Format(args));
         }
 
         public static void Initialise(IFileManager fm)
@@ -73,9 +72,9 @@ namespace MyHome.Modules
             };
         }
 
-        public static Logger ForContext(string context)
+        public static Logger ForContext(object caller)
         {
-            return new Logger(context);
+            return new Logger(caller.GetType().Name);
         }
 
         public static void SetupFileLogging(bool enabled)
@@ -83,17 +82,25 @@ namespace MyHome.Modules
             Instance.FileLogsEnabled = false;
             lock (Instance.FileWriteMutex)
             {
-                // Flush and clost existing log file
-                if (Instance.FileStream != null &&
-                        Instance.FileStream.CanWrite)
+                try 
                 {
-                    Instance.FileStream.Flush();
-                    Instance.FileStream.Close();
+                    // Flush and close the existing log file
+                    if (Instance.FileStream != null &&
+                        Instance.FileStream.CanWrite)
+                    {
+                        LogInternal("Closing existing file log");
+                        Instance.FileStream.Flush();
+                        Instance.FileStream.Close();
+                    }
+                }
+                catch
+                {
                 }
 
                 // Start new log file
                 if (enabled)
                 {
+                    LogInternal("Enabling file logging");
                     Instance.FileLogCounter = 0;
                     Instance.FileLogFlushThreshold = 50;
                     Instance.FileDate = DateTime.Today;
@@ -101,7 +108,17 @@ namespace MyHome.Modules
                     Instance.FileStream = Instance.FileManager.GetFileStream(Instance.FileLogPath, FileMode.Append, FileAccess.Write);
                     Instance.FileLogsEnabled = true;
                 }
+                else
+                {
+                    LogInternal("Disabling file logging");
+                }
             }
+        }
+
+        private static void LogInternal(string message)
+        {
+            var log = DebugMessageTemplate.Format("Logger", message);
+            Microsoft.SPOT.Debug.Print(log);
         }
 
         private static void Log(string status, string context, string message)
@@ -110,7 +127,7 @@ namespace MyHome.Modules
             if (Instance.ConsoleLogsEnabled)
             {
                 var debugLog = DebugMessageTemplate.Format(context, message);
-                Debug.Print(debugLog);
+                Microsoft.SPOT.Debug.Print(debugLog);
             }
 
             if (Instance.FileLogsEnabled)
@@ -120,6 +137,7 @@ namespace MyHome.Modules
 
                 if (Instance.FileDate < DateTime.Today)
                 {
+                    LogInternal("Generating new file for today");
                     SetupFileLogging(true);
                 }
 
@@ -130,6 +148,7 @@ namespace MyHome.Modules
 
                     if (Instance.FileLogCounter > Instance.FileLogFlushThreshold)
                     {
+                        LogInternal("Flushing logs to SD card");
                         Instance.FileStream.Flush();
                         Instance.FileLogCounter = 0;
                     }

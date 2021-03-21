@@ -25,7 +25,7 @@ namespace MyHome.Modules
             public string ContentType { get; set; }
         }
 
-
+        private readonly Logger _logger;
         private readonly ISystemManager _sys;
         private readonly ICameraManager _cam;
         private readonly IFileManager _fm;
@@ -38,6 +38,7 @@ namespace MyHome.Modules
             IFileManager fileManager,
             IWeatherManager weatherManager)
         {
+            _logger = Logger.ForContext(this);
             _sys = systemManager;
             _cam = cameraManager;
             _fm = fileManager;
@@ -62,17 +63,17 @@ namespace MyHome.Modules
         {
             if (_isRunning)
             {
-                Debug.Print("The web server is already running");
+                _logger.Information("The web server is already running");
                 return;
             }
 
             _isRunning = true;
-            Debug.Print("Starting web server");
+            _logger.Information("Starting web server");
             WebServer.StartLocalServer(ipAddress, port);
 
             RegisterWebEvents();
 
-            Debug.Print("Completed web server startup");
+            _logger.Information("Completed web server startup");
         }
 
         public void Stop()
@@ -165,29 +166,29 @@ namespace MyHome.Modules
             return response;
         }
 
+        private void Register(WebEvent.ReceivedWebEventHandler handler, string webRoute)
+        {
+            _logger.Information("Registering \"{0}\"", webRoute);
+            Register(handler, WebServer.SetupWebEvent(webRoute));
+        }
+
         private static string GetContentType(string fileExtension)
         {
             switch (fileExtension)
             {
                 default: return ContentTypes.Binary;
-                case FileExtensions.Bitmap:     return ContentTypes.Bitmap;
+                case FileExtensions.Bitmap: return ContentTypes.Bitmap;
                 case FileExtensions.Stylesheet: return ContentTypes.Stylesheet;
-                case FileExtensions.Gif:        return ContentTypes.Gif;
-                case FileExtensions.Html:       return ContentTypes.Html;
-                case FileExtensions.Icon:       return ContentTypes.Icon;
+                case FileExtensions.Gif: return ContentTypes.Gif;
+                case FileExtensions.Html: return ContentTypes.Html;
+                case FileExtensions.Icon: return ContentTypes.Icon;
                 case FileExtensions.Jpg:
-                case FileExtensions.Jpeg:       return ContentTypes.Jpeg;
+                case FileExtensions.Jpeg: return ContentTypes.Jpeg;
                 case FileExtensions.Javascript: return ContentTypes.Javascript;
-                case FileExtensions.Log:        return ContentTypes.Text;
-                case FileExtensions.Png:        return ContentTypes.Png;
-                case FileExtensions.Text:       return ContentTypes.Text;
+                case FileExtensions.Log: return ContentTypes.Text;
+                case FileExtensions.Png: return ContentTypes.Png;
+                case FileExtensions.Text: return ContentTypes.Text;
             }
-        }
-
-        private static void Register(WebEvent.ReceivedWebEventHandler handler, string webRoute)
-        {
-            Debug.Print("WebsiteManager: Registering \"" + webRoute + "\"");
-            Register(handler, WebServer.SetupWebEvent(webRoute));
         }
 
         private static void Register(WebEvent.ReceivedWebEventHandler handler, WebEvent webEvent)
