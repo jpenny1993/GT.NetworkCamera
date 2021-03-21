@@ -121,7 +121,7 @@ namespace MyHome.Utilities
 
         /// <summary>
         /// Parse date format from NTP time server
-        // 11 FEB 2014 17:11:32 CET
+        /// 11 FEB 2014 17:11:32 CET
         /// </summary>
         public static bool NTP(string str, out DateTime datetime)
         {
