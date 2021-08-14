@@ -153,6 +153,44 @@ namespace MyHome.Modules
             SendResponse(response, responder);
         }
 
+        private void WebEvent_WeatherMeasuerments(string path, WebServer.HttpMethod method, Responder responder)
+        {
+            if (!_fm.HasFileSystem())
+            {
+                responder.NotFound();
+                return;
+            }
+
+            // Check area exists on the device
+            if (!_fm.RootDirectoryExists(Directories.Weather))
+            {
+                responder.NotFound();
+                return;
+            }
+
+            // Return available files to download
+            var filename = responder.QueryString(QueryStrings.File);
+            if (filename.IsNullOrEmpty())
+            {
+                string[] files = _fm.ListFiles(Directories.Weather);
+
+                var list = new ArrayList();
+                foreach (var file in files)
+                {
+                    var leaf = GalleryObject.FromPath(Directories.Weather, file, WebRoutes.WeatherMeasurements + "?file=");
+                    list.Add(leaf);
+                }
+
+                var response = GetJsonReponse(list);
+                SendResponse(response, responder);
+                return;
+            }
+
+            // Get requested file
+            var response = GetFileResponse(Directories.Weather, filename);
+            SendResponse(response, responder);
+        }
+
         private void WebEvent_WeatherTemperature(string path, WebServer.HttpMethod method, Responder responder)
         {
             var response = GetJsonReponse(_we.Temperature);

@@ -347,6 +347,12 @@ namespace MyHome.Modules
                 SaveBitmap(filepath, bitmap);
             }
         }
+
+        public void WriteToFileStream(FileStream fs, string text)
+        {
+            var bytes = Encoding.UTF8.GetBytes(text);
+            fs.Write(text, 0, text.Length);
+        }
     }
 #pragma warning restore 0612, 0618
 }

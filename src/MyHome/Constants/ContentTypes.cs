@@ -8,6 +8,8 @@ namespace MyHome.Constants
         public const string Binary = "application/binary";
 
         public const string Bitmap = "image/bmp";
+
+        public const string Csv = "text/csv";
         
         public const string Gif = "image/gif";
 

@@ -12,5 +12,7 @@ namespace MyHome.Constants
         public const string Logs = "LOGS";
 
         public const string Website = "WWWROOT";
+
+        public const string Weather = "WEATHER";
     }
 }

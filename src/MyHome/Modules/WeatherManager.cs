@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Microsoft.SPOT;
 using Gadgeteer.Modules.GHIElectronics;
+using MyHome.Models;
 
 namespace MyHome.Modules
 {
@@ -10,33 +11,33 @@ namespace MyHome.Modules
     {
         private readonly LightSense _light;
         private readonly TempHumidity _sensor;
-        private double _humidity;
-        private double _temperature;
+        private WeatherModel _weather;
 
         public event WeatherManager.Measurement OnMeasurement;
 
-        public delegate void Measurement(double humidity, double temperature);
+        public delegate void Measurement(WeatherModel weather);
 
         public WeatherManager(TempHumidity tempHumidity, LightSense lightSense)
         {
             _light = lightSense;
             _sensor = tempHumidity;
             _sensor.MeasurementComplete += Sensor_MeasurementComplete;
+            _weather = new WeatherModel();
         }
 
         public double Luminosity
         {
-            get { return _light.GetIlluminance(); }
+            get { return _weather.Luminosity; }
         }
 
         public double Humidity
         {
-            get { return _humidity; }
+            get { return _weather.Humidity; }
         }
 
         public double Temperature
         {
-            get { return _temperature; }
+            get { return _weather.Temperature; }
         }
 
         public void Start()
@@ -59,12 +60,11 @@ namespace MyHome.Modules
 
         private void Sensor_MeasurementComplete(TempHumidity sender, TempHumidity.MeasurementCompleteEventArgs e)
         {
-            _humidity = e.RelativeHumidity;
-            _temperature = e.Temperature;
+            _weather = new WeatherModel(_light.GetIlluminance(), e.RelativeHumidity, e.Temperature);
 
             if (OnMeasurement != null)
             {
-                OnMeasurement.Invoke(_humidity, _temperature);
+                OnMeasurement.Invoke(_weather);
             }
         }
     }

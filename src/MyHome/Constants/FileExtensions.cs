@@ -7,6 +7,7 @@ namespace MyHome.Constants
     {
         public const string Bitmap = ".bmp";
         public const string Stylesheet = ".css";
+        public const string Csv = ".csv";
         public const string Gif = ".gif";
         public const string Html = ".html";
         public const string Icon = ".ico";

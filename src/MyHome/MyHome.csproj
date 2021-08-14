@@ -51,6 +51,7 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Models\GalleryObject.cs" />
     <Compile Include="Models\PathObject.cs" />
+    <Compile Include="Models\WeatherModel.cs" />
     <Compile Include="Modules\CameraManager.cs" />
     <Compile Include="Modules\FileManager.cs" />
     <Compile Include="Modules\ICameraManager.cs" />

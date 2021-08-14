@@ -17,6 +17,7 @@ using Json.Lite;
 using MyHome.Constants;
 using MyHome.Modules;
 using MyHome.Utilities;
+using MyHome.Models;
     
 namespace MyHome
 {
@@ -31,6 +32,7 @@ namespace MyHome
         private WeatherManager _weatherManager;
         private WebsiteManager _websiteManager;
 
+        private IAwaitable _saveMeasurementThread = Awaitable.Default;
         private IAwaitable _savePictureThread = Awaitable.Default;
 
         // This method is run when the mainboard is powered up or reset.   
@@ -78,6 +80,7 @@ namespace MyHome
             button.TurnLedOff();
 
             _weatherManager = new WeatherManager(tempHumidity, lightSense);
+            _weatherManager.OnMeasurement += WeatherManager_OnMeasurement;
             _weatherManager.Start();
 
             _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);
@@ -91,9 +94,8 @@ namespace MyHome
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
             var now = _systemManager.Time;
-            var dateDirectory = now.ToString("yyMMdd");
-            var filename = string.Concat("IMG_", now.ToString("yyMMddHHmmss"), FileExtensions.Bitmap);
-            var filepath = MyPath.Combine(Directories.Camera, dateDirectory, filename);
+            var filename = string.Concat("IMG_", now.Timestamp(), FileExtensions.Bitmap);
+            var filepath = MyPath.Combine(Directories.Camera, now.Datestamp(), filename);
             _savePictureThread = new Awaitable(() => _fileManager.SaveFile(filepath, picture));
         }
 
@@ -156,6 +158,43 @@ namespace MyHome
         {
             _logger.Information("Tick: {0}", JsonConvert.SerializeObject(_systemManager.Uptime));
             TakeSnapshot();
+        }
+
+        private void WeatherManager_OnMeasurement(WeatherModel weather)
+        {
+            _saveMeasurementThread.Await(1000);
+            if (_saveMeasurementThread.IsRunning)
+            {
+                _logger.Warning("Unable to save weather data, save measurements is still running....");
+                return;
+            }
+
+            _saveMeasurementThread = new Awaitable(() =>
+            {
+                var now = _systemManager.Time;
+                var filename = string.Concat("Measurements_", now.Datestamp(), FileExtensions.Csv);
+                var filepath = MyPath.Combine(Directories.Weather, filename);
+                var csvRow = string.Format(
+                    "{0}, {1}, {2}, {3}",
+                    now.SortableDateTime(),
+                    weather.Humidity,
+                    weather.Luminosity,
+                    weather.Temperature);
+
+                // Create a new CSV file
+                if (!_fileManager.FileExists(filepath))
+                {
+                    var file = string.Concat("DateTime, Humidity, Luminosity, Temperature\r\n", csvRow);
+                    _fileManager.SaveFile(filepath, file);
+                    return;
+                }
+
+                // Append line to existing CSV
+                using (var fs = _fileManager.GetFileStream(filepath, FileMode.Append, FileAccess.Write))
+                {
+                    _fileManager.WriteToFileStream(fs, csvRow);
+                }
+            });
         }
     }
 }

@@ -56,6 +56,7 @@ namespace MyHome.Modules
             Register(WebEvent_WeatherLuminosity, WebRoutes.WeatherLuminosity);
             Register(WebEvent_WeatherHumidity, WebRoutes.WeatherHumidity);
             Register(WebEvent_WeatherTemperature, WebRoutes.WeatherTemperature);
+            Register(WebEvent_WeatherMeasuerments, WebRoutes.WeatherMeasurements);
             Register(WebEvent_SystemUptime, WebRoutes.SystemUptime);
         }
 
@@ -80,6 +81,26 @@ namespace MyHome.Modules
         {
             WebServer.StopLocalServer();
             _isRunning = false;
+        }
+
+        private static string GetContentType(string fileExtension)
+        {
+            switch (fileExtension)
+            {
+                default: return ContentTypes.Binary;
+                case FileExtensions.Bitmap: return ContentTypes.Bitmap;
+                case FileExtensions.Stylesheet: return ContentTypes.Stylesheet;
+                case FileExtensions.Csv: return ContentTypes.Csv;
+                case FileExtensions.Gif: return ContentTypes.Gif;
+                case FileExtensions.Html: return ContentTypes.Html;
+                case FileExtensions.Icon: return ContentTypes.Icon;
+                case FileExtensions.Jpg:
+                case FileExtensions.Jpeg: return ContentTypes.Jpeg;
+                case FileExtensions.Javascript: return ContentTypes.Javascript;
+                case FileExtensions.Log: return ContentTypes.Text;
+                case FileExtensions.Png: return ContentTypes.Png;
+                case FileExtensions.Text: return ContentTypes.Text;
+            }
         }
 
         private WebsiteReponse GetFileResponse(string area, string path)
@@ -117,78 +138,10 @@ namespace MyHome.Modules
             };
         }
 
-        private WebsiteReponse BrowseDirectoryResponse(string area, string path, bool recursive)
-        {
-            var response = new WebsiteReponse();
-            if (!_fm.HasFileSystem()) return response;
-
-            // Check area exists on the device
-            if (!_fm.RootDirectoryExists(area)) return response;
-
-            // Define the full directory
-            var systemPath = MyPath.Combine(area, path);
-
-            if (!_fm.DirectoryExists(systemPath)) return response;
-
-            string[] directories;
-            string[] files;
-
-            if (recursive)
-            {
-                directories = new string[0];
-                files = _fm.ListFilesRecursive(systemPath).ToStringArray();
-            }
-            else
-            {
-                directories = _fm.ListDirectories(systemPath);
-                files = _fm.ListFiles(systemPath);
-            }
-
-            var list = new ArrayList();
-            foreach (var folder in directories)
-            {
-                var branch = PathObject.FromPath(area, folder, PathType.Directory, WebRoutes.GalleryList + "?directory=");
-                list.Add(branch);
-            }
-
-            foreach (var file in files)
-            {
-                var leaf = PathObject.FromPath(area, file, PathType.File, WebRoutes.GalleryImage + '/');
-                list.Add(leaf);
-            }
-
-            var json = JsonConvert.SerializeObject(list);
-            Debug.Print(json);
-            response.Content = json.GetBytes();
-            response.ContentType = ContentTypes.Json;
-            response.Found = true;
-
-            return response;
-        }
-
         private void Register(WebEvent.ReceivedWebEventHandler handler, string webRoute)
         {
             _logger.Information("Registering \"{0}\"", webRoute);
             Register(handler, WebServer.SetupWebEvent(webRoute));
-        }
-
-        private static string GetContentType(string fileExtension)
-        {
-            switch (fileExtension)
-            {
-                default: return ContentTypes.Binary;
-                case FileExtensions.Bitmap: return ContentTypes.Bitmap;
-                case FileExtensions.Stylesheet: return ContentTypes.Stylesheet;
-                case FileExtensions.Gif: return ContentTypes.Gif;
-                case FileExtensions.Html: return ContentTypes.Html;
-                case FileExtensions.Icon: return ContentTypes.Icon;
-                case FileExtensions.Jpg:
-                case FileExtensions.Jpeg: return ContentTypes.Jpeg;
-                case FileExtensions.Javascript: return ContentTypes.Javascript;
-                case FileExtensions.Log: return ContentTypes.Text;
-                case FileExtensions.Png: return ContentTypes.Png;
-                case FileExtensions.Text: return ContentTypes.Text;
-            }
         }
 
         private static void Register(WebEvent.ReceivedWebEventHandler handler, WebEvent webEvent)

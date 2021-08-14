@@ -6,6 +6,14 @@ namespace MyHome.Extensions
     public static class DateTimeExtensions
     {
         /// <summary>
+        /// Returns a timestamp as a string in the following format; yyMMdd.
+        /// </summary>
+        public static string Datestamp(this DateTime datetime)
+        {
+            return datetime.ToString("yyMMdd");
+        }
+
+        /// <summary>
         /// Returns true if the current date is British Summer Time.
         /// Always changes on the last Sunday of March and last Sunday of October.
         /// </summary>
@@ -39,6 +47,22 @@ namespace MyHome.Extensions
 
             // This should never happen
             return false;
+        }
+
+        /// <summary>
+        /// Returns a timestamp as a string in the following format; yyMMddHHmmss.
+        /// </summary>
+        public static string Timestamp(this DateTime datetime)
+        {
+            return now.ToString("yyMMddHHmmss");
+        }
+
+        /// <summary>
+        /// Returns a datetime as a string in a sortable datetime format.
+        /// </summary>
+        public static string SortableDateTime(this DateTime datetime)
+        {
+            return now.ToString("yyyy-MM-dd HH:mm:ss");
         }
     }
 }
