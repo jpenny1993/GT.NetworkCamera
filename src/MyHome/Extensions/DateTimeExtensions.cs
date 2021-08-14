@@ -54,7 +54,7 @@ namespace MyHome.Extensions
         /// </summary>
         public static string Timestamp(this DateTime datetime)
         {
-            return now.ToString("yyMMddHHmmss");
+            return datetime.ToString("yyMMddHHmmss");
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace MyHome.Extensions
         /// </summary>
         public static string SortableDateTime(this DateTime datetime)
         {
-            return now.ToString("yyyy-MM-dd HH:mm:ss");
+            return datetime.ToString("yyyy-MM-dd HH:mm:ss");
         }
     }
 }

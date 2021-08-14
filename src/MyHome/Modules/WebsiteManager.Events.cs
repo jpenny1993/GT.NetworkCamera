@@ -187,8 +187,8 @@ namespace MyHome.Modules
             }
 
             // Get requested file
-            var response = GetFileResponse(Directories.Weather, filename);
-            SendResponse(response, responder);
+            var fileResponse = GetFileResponse(Directories.Weather, filename);
+            SendResponse(fileResponse, responder);
         }
 
         private void WebEvent_WeatherTemperature(string path, WebServer.HttpMethod method, Responder responder)

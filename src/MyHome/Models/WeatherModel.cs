@@ -5,11 +5,11 @@ namespace MyHome.Models
 {
     public class WeatherModel
     {
-        public double Humidity { get; }
+        public double Humidity { get; private set; }
 
-        public double Luminosity { get; }
+        public double Luminosity { get; private set; }
 
-        public double Temperature { get; }
+        public double Temperature { get; private set; }
 
         public WeatherModel() { }
 

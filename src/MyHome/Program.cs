@@ -15,6 +15,7 @@ using GTM = Gadgeteer.Modules;
 using Gadgeteer.Modules.GHIElectronics;
 using Json.Lite;
 using MyHome.Constants;
+using MyHome.Extensions;
 using MyHome.Modules;
 using MyHome.Utilities;
 using MyHome.Models;
@@ -174,11 +175,10 @@ namespace MyHome
                 var now = _systemManager.Time;
                 var filename = string.Concat("Measurements_", now.Datestamp(), FileExtensions.Csv);
                 var filepath = MyPath.Combine(Directories.Weather, filename);
-                var csvRow = string.Format(
-                    "{0}, {1}, {2}, {3}",
-                    now.SortableDateTime(),
-                    weather.Humidity,
-                    weather.Luminosity,
+                var csvRow = string.Concat(
+                    now.SortableDateTime(), ", ",
+                    weather.Humidity, ", ",
+                    weather.Luminosity, ", ",
                     weather.Temperature);
 
                 // Create a new CSV file
