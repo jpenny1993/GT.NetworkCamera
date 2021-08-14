@@ -56,6 +56,7 @@ namespace MyHome
         private void SetupDevices()
         {
             _systemManager = new SystemManager();
+            _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
             multicolorLED.TurnRed();
 
@@ -82,7 +83,6 @@ namespace MyHome
 
             _weatherManager = new WeatherManager(tempHumidity, lightSense);
             _weatherManager.OnMeasurement += WeatherManager_OnMeasurement;
-            _weatherManager.Start();
 
             _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);
         }
@@ -125,31 +125,31 @@ namespace MyHome
                     multicolorLED.BlinkRepeatedly(GT.Color.Green);
                     break;
                 case NetworkStatus.NetworkAvailable:
-                {
-                    if (!_systemManager.IsTimeSynchronised)
-                    {
-                        multicolorLED.BlinkRepeatedly(GT.Color.Blue);
-                        _systemManager.SyncroniseInternetTime();
-                    }
-
-                    if (_systemManager.IsTimeSynchronised)
-                    {
-                        multicolorLED.TurnColor(GT.Color.Blue);
-                    }
-                    else
-                    {
-                        multicolorLED.TurnGreen();
-                    }
-
+                    multicolorLED.BlinkRepeatedly(GT.Color.Blue);
+                    _systemManager.SyncroniseInternetTime();
                     _websiteManager.Start(_networkManager.IpAddress);
-                }
                     break;
+            }
+        }
+
+        private void SystemManager_OnTimeSynchronised(bool synchronised)
+        {
+            if (synchronised)
+            {
+                multicolorLED.TurnColor(GT.Color.Blue);
+                _weatherManager.Start();
+            }
+            else
+            {
+                multicolorLED.TurnGreen();
             }
         }
 
         private void TakeSnapshot()
         {
-            if (button.IsLedOn && !_savePictureThread.IsRunning)
+            if (button.IsLedOn &&
+                _systemManager.IsTimeSynchronised &&
+                !_savePictureThread.IsRunning)
             {
                 _cameraManager.TakePicture();
             }
@@ -163,7 +163,7 @@ namespace MyHome
 
         private void WeatherManager_OnMeasurement(WeatherModel weather)
         {
-            if (_saveMeasurementThread.IsRunning) { return; }
+            if (_saveMeasurementThread.IsRunning || !_fileManager.HasFileSystem()) { return; }
 
             _saveMeasurementThread = new Awaitable(() =>
             {
@@ -181,12 +181,15 @@ namespace MyHome
                     }
 
                     // Append line to existing CSV
-                    _fileManager.WriteToFileStream(fs, string.Concat(
-                        now.SortableDateTime(), ", ",
-                        weather.Humidity, ", ",
-                        weather.Luminosity, ", ",
-                        weather.Temperature, "\r\n"));
+                    _fileManager.WriteToFileStream(fs, 
+                        "{0}, {1}, {2}, {3}\r\n".Format(
+                            now.SortableDateTime(),
+                            weather.Humidity,
+                            weather.Luminosity,
+                            weather.Temperature));
                 }
+
+                _logger.Information("{0} updated", filename);
             });
         }
     }

@@ -17,6 +17,10 @@ namespace MyHome.Modules
         private bool _syncronisingTime;
         private bool _isTimeSynchronised;
 
+        public event SystemManager.TimeSynchronised OnTimeSynchronised;
+
+        public delegate void TimeSynchronised(bool synchronised);
+
         public SystemManager()
         {
             _logger = Logger.ForContext(this);
@@ -83,6 +87,11 @@ namespace MyHome.Modules
             else
             {
                 _logger.Information("Synchronisation to all time servers failed");
+            }
+
+            if (OnTimeSynchronised != null)
+            {
+                OnTimeSynchronised.Invoke(success);
             }
 
             _syncronisingTime = false;

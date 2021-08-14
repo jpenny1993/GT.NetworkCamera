@@ -9,6 +9,8 @@ namespace MyHome.Modules
         DateTime Time { get; }
         TimeSpan Uptime { get; }
 
+        event SystemManager.TimeSynchronised OnTimeSynchronised;
+
         bool SyncroniseInternetTime();
     }
 }
