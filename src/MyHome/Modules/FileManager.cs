@@ -252,7 +252,8 @@ namespace MyHome.Modules
                 Directories.Camera,
                 Directories.Config,
                 Directories.Logs,
-                Directories.Website
+                Directories.Website,
+                Directories.Weather
             };
 
             foreach (var dir in expectedDirectories)
