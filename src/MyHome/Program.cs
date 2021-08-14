@@ -163,36 +163,29 @@ namespace MyHome
 
         private void WeatherManager_OnMeasurement(WeatherModel weather)
         {
-            _saveMeasurementThread.Await(1000);
-            if (_saveMeasurementThread.IsRunning)
-            {
-                _logger.Warning("Unable to save weather data, save measurements is still running....");
-                return;
-            }
+            if (_saveMeasurementThread.IsRunning) { return; }
 
             _saveMeasurementThread = new Awaitable(() =>
             {
                 var now = _systemManager.Time;
                 var filename = string.Concat("Measurements_", now.Datestamp(), FileExtensions.Csv);
                 var filepath = MyPath.Combine(Directories.Weather, filename);
-                var csvRow = string.Concat(
-                    now.SortableDateTime(), ", ",
-                    weather.Humidity, ", ",
-                    weather.Luminosity, ", ",
-                    weather.Temperature);
+                var fileExists = _fileManager.FileExists(filepath);
 
-                // Create a new CSV file
-                if (!_fileManager.FileExists(filepath))
-                {
-                    var file = string.Concat("DateTime, Humidity, Luminosity, Temperature\r\n", csvRow);
-                    _fileManager.SaveFile(filepath, file);
-                    return;
-                }
-
-                // Append line to existing CSV
                 using (var fs = _fileManager.GetFileStream(filepath, FileMode.Append, FileAccess.Write))
                 {
-                    _fileManager.WriteToFileStream(fs, csvRow);
+                     // Setup column headers when creating a new CSV file
+                    if (!fileExists)
+                    {
+                        _fileManager.WriteToFileStream(fs, "DateTime, Humidity, Luminosity, Temperature\r\n");
+                    }
+
+                    // Append line to existing CSV
+                    _fileManager.WriteToFileStream(fs, string.Concat(
+                        now.SortableDateTime(), ", ",
+                        weather.Humidity, ", ",
+                        weather.Luminosity, ", ",
+                        weather.Temperature, "\r\n"));
                 }
             });
         }
