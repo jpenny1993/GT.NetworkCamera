@@ -8,6 +8,7 @@ using Gadgeteer.Modules.GHIElectronics;
 using MyHome.Utilities;
 
 using GT = Gadgeteer;
+using System.Text;
 
 namespace MyHome.Modules
 {
@@ -19,7 +20,7 @@ namespace MyHome.Modules
         private readonly IFileManager _fm;
         private readonly RFIDReader _rfid;
         private GT.Timer _scanTimer;
-        private readonly Hashtable _tokens;
+        private readonly Hashtable _accounts;
         private string _newRfidUsername;
 
         public event SecurityManager.EventHandler OnScanEnabled;
@@ -43,7 +44,7 @@ namespace MyHome.Modules
             _rfid.IdReceived += Rfid_IdReceived;
             _rfid.MalformedIdReceived += Rfid_MalformedIdReceived;
             _fm = fileManager;
-            _tokens = new Hashtable();
+            _accounts = new Hashtable();
         }
 
         public void Initialise()
@@ -101,7 +102,7 @@ namespace MyHome.Modules
                     continue;
                 }
 
-                _tokens.Add(rfid, new UserAccount
+                _accounts.Add(rfid, new UserAccount
                 {
                     RFID = rfid,
                     Username = username,
@@ -126,12 +127,13 @@ namespace MyHome.Modules
             }
 
             _logger.Information("Adding new access token");
-            _tokens.Add(rfid, new UserAccount
+            _accounts.Add(rfid, new UserAccount
             {
                 RFID = rfid,
                 Username = username,
                 Allocated = DateTime.Now
             });
+            SaveFile();
         }
 
         public void AddViaRfidScan(string username)
@@ -161,14 +163,15 @@ namespace MyHome.Modules
             {
                 _logger.Information("Revoking access token");
                 token.Expired = DateTime.Now;
+                SaveFile();
             }
         }
 
         public UserAccount FindByRfid(string rfid)
         {
-            if (_tokens.Contains(rfid))
+            if (_accounts.Contains(rfid))
             {
-                return (UserAccount)_tokens[rfid];
+                return (UserAccount)_accounts[rfid];
             }
 
             return null;
@@ -176,7 +179,7 @@ namespace MyHome.Modules
 
         public UserAccount FindByUsername(string username)
         {
-            foreach (UserAccount token in _tokens.Values)
+            foreach (UserAccount token in _accounts.Values)
             {
                 if (token.Username == username)
                 {
@@ -189,10 +192,11 @@ namespace MyHome.Modules
 
         public void Remove(string rfid)
         {
-            if (_tokens.Contains(rfid))
+            if (_accounts.Contains(rfid))
             {
                 _logger.Information("Removing access token");
-                _tokens.Remove(rfid);
+                _accounts.Remove(rfid);
+                SaveFile();
             }
         }
 
@@ -226,6 +230,22 @@ namespace MyHome.Modules
             {
                 OnAccessGranted.Invoke(token.Username);
             }
+        }
+
+        private void SaveFile()
+        {
+            var builder = new StringBuilder();
+            foreach (UserAccount account in _accounts.Values)
+            {
+                builder.Append(
+                    "{0}, {1}, {2}, {3}\r\n".Format(
+                        account.RFID,
+                        account.Username,
+                        account.Allocated.SortableDateTime(),
+                        account.Expired.SortableDateTime()));
+            }
+
+            _fm.SaveFile(ConfigFilePath, builder.ToString());
         }
 
         private void Rfid_MalformedIdReceived(RFIDReader sender, EventArgs e)
