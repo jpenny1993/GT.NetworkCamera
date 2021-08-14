@@ -85,7 +85,8 @@ namespace MyHome.Modules
         public string GetFileString(string filePath)
         {
             var bytes = GetFileContent(filePath);
-            return new string(Encoding.UTF8.GetChars(bytes));
+            var str = new string(Encoding.UTF8.GetChars(bytes));
+            return str != null ? str : string.Empty;
         }
 
         public FileStream GetFileStream(string filePath, FileMode mode, FileAccess access)

@@ -13,7 +13,7 @@ namespace MyHome.Modules
 {
     public class SecurityManager : ISecurityManager
     {
-        private const string ConfigFilePath = Directories.Config + "/Accounts.csv";
+        private const string ConfigFilePath = Directories.Config + "\\Accounts.csv";
         private const int ScanTimeoutMs = 10000; // 10 seconds
         private readonly Logger _logger;
         private readonly IFileManager _fm;
@@ -48,6 +48,7 @@ namespace MyHome.Modules
 
         public void Initialise()
         {
+            _logger.Information("Initialising user accounts");
             if (!_fm.FileExists(ConfigFilePath))
             {
                 _fm.SaveFile(ConfigFilePath, string.Empty);
@@ -108,6 +109,8 @@ namespace MyHome.Modules
                     Expired = expired
                 });
             }
+
+            _logger.Information("Initialised all user accounts");
         }
 
         public void Add(string rfid, string username)
