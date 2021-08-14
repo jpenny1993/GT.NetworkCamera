@@ -49,6 +49,7 @@
     <Compile Include="Extensions\ResponderExtensions.cs" />
     <Compile Include="Extensions\StringCollectionExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Models\UserAccount.cs" />
     <Compile Include="Models\GalleryObject.cs" />
     <Compile Include="Models\PathObject.cs" />
     <Compile Include="Models\WeatherModel.cs" />
@@ -56,10 +57,12 @@
     <Compile Include="Modules\FileManager.cs" />
     <Compile Include="Modules\ICameraManager.cs" />
     <Compile Include="Modules\IFileManager.cs" />
+    <Compile Include="Modules\ISecurityManager.cs" />
     <Compile Include="Modules\ISystemManager.cs" />
     <Compile Include="Modules\IWeatherManager.cs" />
     <Compile Include="Modules\Logger.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
+    <Compile Include="Modules\SecurityManager.cs" />
     <Compile Include="Modules\SystemManager.cs" />
     <Compile Include="Modules\WeatherManager.cs" />
     <Compile Include="Modules\WebsiteManager.Events.cs" />
@@ -85,6 +88,9 @@
   <ItemGroup>
     <Reference Include="Gadgeteer" />
     <Reference Include="Gadgeteer.DaisyLink, Version=2.43.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="Gadgeteer.Serial, Version=2.43.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Gadgeteer.SPI, Version=2.43.1.0, Culture=neutral, processorArchitecture=MSIL">
@@ -118,6 +124,9 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="GTM.GHIElectronics.MulticolorLED, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="GTM.GHIElectronics.RFIDReader, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="GTM.GHIElectronics.SDCard, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">

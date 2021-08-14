@@ -82,6 +82,12 @@ namespace MyHome.Modules
             return _sdCard.StorageDevice.ReadFile(filePath);
         }
 
+        public string GetFileString(string filePath)
+        {
+            var bytes = GetFileContent(filePath);
+            return new string(Encoding.UTF8.GetChars(bytes));
+        }
+
         public FileStream GetFileStream(string filePath, FileMode mode, FileAccess access)
         {
             if (!HasFileSystem())

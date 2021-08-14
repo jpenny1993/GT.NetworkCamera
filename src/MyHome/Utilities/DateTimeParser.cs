@@ -185,6 +185,50 @@ namespace MyHome.Utilities
             return false;
         }
 
+        public static bool SortableDateTime(string str, out DateTime datetime)
+        {
+            var parts = str.Split(' ');
+            int year, month, day, hour, minute, second;
+
+            try
+            {
+                if (parts.Length > 0)
+                {
+                    var dateParts = parts[0].Split('-');
+                    year = int.Parse(dateParts[0]);
+                    month = int.Parse(dateParts[1]);
+                    day = int.Parse(dateParts[2]);
+                }
+                else 
+                {
+                    throw new InvalidCastException();
+                }
+
+                if (parts.Length > 1)
+                {
+                    var timeParts = parts[1].Split(':');
+                    hour = int.Parse(timeParts[0]);
+                    minute = int.Parse(timeParts[1]);
+                    second = int.Parse(timeParts[2].Substring(0, 2));
+                }
+                else 
+                {
+                    hour = 0;
+                    minute = 0;
+                    second = 0;
+                }
+
+                datetime = new DateTime(year, month, day, hour, minute, second);
+                return true;
+            }
+            catch
+            {
+                datetime = DateTime.MinValue;
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Parses ticks since 1st January 1970
         /// </summary>

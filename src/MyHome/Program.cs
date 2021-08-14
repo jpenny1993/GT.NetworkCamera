@@ -25,6 +25,7 @@ namespace MyHome
     public partial class Program
     {
         private GT.Timer _timer;
+        private GT.Color _prevColour;
         private Logger _logger;
         private CameraManager _cameraManager;
         private FileManager _fileManager;
@@ -32,6 +33,7 @@ namespace MyHome
         private SystemManager _systemManager;
         private WeatherManager _weatherManager;
         private WebsiteManager _websiteManager;
+        private SecurityManager _securityManager;
 
         private IAwaitable _saveMeasurementThread = Awaitable.Default;
         private IAwaitable _savePictureThread = Awaitable.Default;
@@ -61,10 +63,22 @@ namespace MyHome
             multicolorLED.TurnRed();
 
             _fileManager = new FileManager(sdCard);
+            _securityManager = new SecurityManager(rfidReader, _fileManager);
+            _securityManager.OnAccessDenied += SecurityManager_OnAccessDenied;
+            _securityManager.OnAccessGranted += SecurityManager_OnAccessGranted;
+            _securityManager.OnScanEnabled += SecurityManager_OnScanEnabled;
+            _securityManager.OnScanCompleted += SecurityManager_OnScanCompleted;
+
             Logger.Initialise(_fileManager);
+
             _fileManager.OnDeviceSwap += (bool diskInserted) =>
             {
                 Logger.SetupFileLogging(diskInserted);
+
+                if (diskInserted)
+                {
+                    _securityManager.Initialise();
+                }
             };
 
             new Awaitable(() => _fileManager.Remount());
@@ -130,6 +144,41 @@ namespace MyHome
                     _websiteManager.Start(_networkManager.IpAddress);
                     break;
             }
+        }
+
+        private void SecurityManager_OnAccessDenied()
+        {
+            _logger.Information("RFID login failed");
+            _prevColour = multicolorLED.GetCurrentColor();
+            multicolorLED.BlinkOnce(GT.Color.Red, new TimeSpan(0, 0, 3), _prevColour);
+        }
+
+        private void SecurityManager_OnAccessGranted(string username)
+        {
+            _logger.Information("Hello {0}", username);
+            _prevColour = multicolorLED.GetCurrentColor();
+            multicolorLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
+        }
+
+        private void SecurityManager_OnScanCompleted(bool timeoutOccurred)
+        {
+            if (timeoutOccurred)
+            {
+                _logger.Information("RFID scan timed out");
+                multicolorLED.BlinkOnce(GT.Color.Magenta, new TimeSpan(0, 0, 3), _prevColour);
+            }
+            else
+            { 
+                _logger.Information("RFID user scanned");
+                multicolorLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
+            }
+        }
+
+        private void SecurityManager_OnScanEnabled()
+        {
+            _logger.Information("RFID scan enabled");
+            _prevColour = multicolorLED.GetCurrentColor();
+            multicolorLED.TurnColor(GT.Color.Magenta);
         }
 
         private void SystemManager_OnTimeSynchronised(bool synchronised)

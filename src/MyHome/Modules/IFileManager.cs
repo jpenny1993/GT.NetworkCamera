@@ -13,6 +13,7 @@ namespace MyHome.Modules
         bool DirectoryExists(string folderPath);
         bool FileExists(string filePath);
         byte[] GetFileContent(string filePath);
+        string GetFileString(string filePath);
         FileStream GetFileStream(string filePath, FileMode mode, FileAccess access);
         bool HasFileSystem();
         string[] ListDirectories(string directory);
