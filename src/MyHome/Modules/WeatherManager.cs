@@ -4,6 +4,8 @@ using Microsoft.SPOT;
 using Gadgeteer.Modules.GHIElectronics;
 using MyHome.Models;
 
+using GT = Gadgeteer;
+
 namespace MyHome.Modules
 {
 #pragma warning disable 0612, 0618 // Ignore TempHumidity obsolete warning
@@ -12,6 +14,8 @@ namespace MyHome.Modules
         private const int TimerTickMs = 5000; // Every 5 seconds
         private readonly LightSense _light;
         private readonly TempHumidity _sensor;
+        private readonly GT.Timer _updateTimer;
+        private bool _started;
         private WeatherModel _weather;
 
         public event WeatherManager.Measurement OnMeasurement;
@@ -22,9 +26,11 @@ namespace MyHome.Modules
         {
             _light = lightSense;
             _sensor = tempHumidity;
-            _sensor.MeasurementInterval = TimerTickMs;
             _sensor.MeasurementComplete += Sensor_MeasurementComplete;
+            _updateTimer = new GT.Timer(TimerTickMs);
+            _updateTimer.Tick += UpdateTimer_Tick;
             _weather = new WeatherModel();
+            _started = false;
         }
 
         public double Luminosity
@@ -44,12 +50,22 @@ namespace MyHome.Modules
 
         public void Start()
         {
-            _sensor.StartTakingMeasurements();
+            if (!_started)
+            { 
+                _sensor.StartTakingMeasurements();
+                _updateTimer.Start();
+                _started = true;
+            }
         }
 
         public void Stop()
         {
-            _sensor.StopTakingMeasurements();
+            if (_started)
+            { 
+                _sensor.StopTakingMeasurements();
+                _updateTimer.Stop();
+                _started = false;
+            }
         }
 
         public void TakeMeasurement()
@@ -63,7 +79,10 @@ namespace MyHome.Modules
         private void Sensor_MeasurementComplete(TempHumidity sender, TempHumidity.MeasurementCompleteEventArgs e)
         {
             _weather = new WeatherModel(_light.GetIlluminance(), e.RelativeHumidity, e.Temperature);
+        }
 
+        private void UpdateTimer_Tick(GT.Timer timer)
+        {
             if (OnMeasurement != null)
             {
                 OnMeasurement.Invoke(_weather);
