@@ -9,6 +9,7 @@ namespace MyHome.Modules
 #pragma warning disable 0612, 0618 // Ignore TempHumidity obsolete warning
     public sealed class WeatherManager : IWeatherManager
     {
+        private const int TimerTickMs = 5000; // Every 5 seconds
         private readonly LightSense _light;
         private readonly TempHumidity _sensor;
         private WeatherModel _weather;
@@ -21,6 +22,7 @@ namespace MyHome.Modules
         {
             _light = lightSense;
             _sensor = tempHumidity;
+            _sensor.MeasurementInterval = TimerTickMs;
             _sensor.MeasurementComplete += Sensor_MeasurementComplete;
             _weather = new WeatherModel();
         }
