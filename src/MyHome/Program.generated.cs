@@ -36,11 +36,14 @@ namespace MyHome {
         /// <summary>The Temp&Humidity module using socket 6 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.TempHumidity tempHumidity;
         
-        /// <summary>The LightSense module using socket 10 of the mainboard.</summary>
+        /// <summary>The LightSense module using socket 9 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.LightSense lightSense;
         
         /// <summary>The RFID Reader module using socket 8 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.RFIDReader rfidReader;
+        
+        /// <summary>The Display T35 module using sockets 14, 13, 12 and 10 of the mainboard.</summary>
+        private Gadgeteer.Modules.GHIElectronics.DisplayT35 displayT35;
         
         /// <summary>This property provides access to the Mainboard API. This is normally not necessary for an end user program.</summary>
         protected new static GHIElectronics.Gadgeteer.FEZSpider Mainboard {
@@ -71,8 +74,9 @@ namespace MyHome {
             this.multicolorLED = new GTM.GHIElectronics.MulticolorLED(4);
             this.sdCard = new GTM.GHIElectronics.SDCard(5);
             this.tempHumidity = new GTM.GHIElectronics.TempHumidity(6);
-            this.lightSense = new GTM.GHIElectronics.LightSense(10);
+            this.lightSense = new GTM.GHIElectronics.LightSense(9);
             this.rfidReader = new GTM.GHIElectronics.RFIDReader(8);
+            this.displayT35 = new GTM.GHIElectronics.DisplayT35(14, 13, 12, 10);
         }
     }
 }

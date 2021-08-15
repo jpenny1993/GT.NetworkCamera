@@ -54,6 +54,7 @@
     <Compile Include="Models\PathObject.cs" />
     <Compile Include="Models\WeatherModel.cs" />
     <Compile Include="Modules\CameraManager.cs" />
+    <Compile Include="Modules\DisplayManager.cs" />
     <Compile Include="Modules\FileManager.cs" />
     <Compile Include="Modules\ICameraManager.cs" />
     <Compile Include="Modules\IFileManager.cs" />
@@ -81,9 +82,11 @@
     </Compile>
     <Compile Include="Utilities\Awaitable.cs" />
     <Compile Include="Utilities\DateTimeParser.cs" />
+    <Compile Include="Utilities\GuiBuilder.cs" />
     <Compile Include="Utilities\IAwaitable.cs" />
     <Compile Include="Utilities\Path.cs" />
     <Compile Include="Utilities\SocketClient.cs" />
+    <Compile Include="XmlDemo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Gadgeteer" />
@@ -115,6 +118,9 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="GTM.GHIElectronics.Camera, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="GTM.GHIElectronics.DisplayT35, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="GTM.GHIElectronics.EthernetJ11D, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
@@ -175,5 +181,23 @@
       <Project>{6CDF0655-9B91-4E35-80D6-390B0BF8412B}</Project>
       <Name>Json.Lite</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Humidity.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Sunshine.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Thermometer.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Humidity_Small.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Sunshine_Small.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Thermometer_Small.jpg" />
   </ItemGroup>
 </Project>

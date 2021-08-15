@@ -28,6 +28,7 @@ namespace MyHome
         private GT.Color _prevColour;
         private Logger _logger;
         private CameraManager _cameraManager;
+        private DisplayManager _displayManager;
         private FileManager _fileManager;
         private NetworkManager _networkManager;
         private SystemManager _systemManager;
@@ -46,6 +47,10 @@ namespace MyHome
             _logger = Logger.ForContext(this);
 
             SetupDevices();
+            //Dispatcher.BeginInvoke(delegate(object arg)
+            //{
+            //    return null;
+            //}, null);
 
             // Create timer to action events on a loop
             _timer = new GT.Timer(60000); // every 60 seconds
@@ -57,6 +62,7 @@ namespace MyHome
 
         private void SetupDevices()
         {
+            _displayManager = new DisplayManager(displayT35);
             _systemManager = new SystemManager();
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
