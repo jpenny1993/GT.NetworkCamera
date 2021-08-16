@@ -63,7 +63,7 @@ namespace MyHome.Modules
                         .Horizontal()
                         .HorizontalAlignRight()
                         .MarginAll()
-                        .AddChild(c => c.Button(b => b
+                        .AddChild(hc => hc.Button(b => b
                             .Content("Back")
                             .Background(GT.Color.LightGray)
                             .Foreground(GT.Color.Black)
@@ -76,10 +76,7 @@ namespace MyHome.Modules
             get
             {
                 return GuiBuilder.Create()
-                    .Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignTop()
-                        .AddChild(c => c.Panel(hp => hp
+                    .Panel(hp => hp
                         .Horizontal()
                         .HorizontalAlignStretch()
                         .AddChild(hc => hc.Label(l => l
@@ -88,7 +85,7 @@ namespace MyHome.Modules
                             .Foreground(GT.Color.White)
                             .TextMarginLeft(GuiBuilder.DeviceWidth / 2)
                             .TextAlignLeft()
-                            .Text(DateTime.Now.SortableDateTime()))))));
+                            .Text(DateTime.Now.SortableDateTime()))));
             }
         }
 
@@ -109,7 +106,7 @@ namespace MyHome.Modules
                                 .Foreground(GT.Color.White)
                                 .TextMarginLeft()
                                 .TextAlignLeft()
-                                .Text("IP Address: 0.0.0.0"))))));
+                                .Text("IP Address: {0}".Format(_networkManager.IpAddress)))))));
             }
         }
 
@@ -133,7 +130,7 @@ namespace MyHome.Modules
         {
             return GuiBuilder.Create()
                 .Button(b => b
-                    .Background(GT.Color.LightGray)
+                    .Background(GT.Color.White)
                     .MarginAll()
                     .OnPressed(GT.Color.DarkGray, onPressed)
                     .Content(bc => bc.Panel(vp => vp
@@ -161,7 +158,10 @@ namespace MyHome.Modules
         {
             return GuiBuilder.Create()
                 .Panel(root => root
-                    .AddChild(PageHeader)
+                    .AddChild(c => c.Panel(vp => vp
+                        .Vertical()
+                        .VerticalAlignTop()
+                        .AddChild(PageHeader)))
                     .AddChild(main => main.Panel(vp => vp
                         .Vertical()
                         .VerticalAlignCenter()
@@ -178,7 +178,7 @@ namespace MyHome.Modules
                             .HorizontalAlignCenter()
                             .MarginTopBottom()
                             .AddChild(DashboardButton(Resources.BinaryResources.Sunshine_Small, LightLevel, NavigationEvent(ScreenLight)))
-                            //.AddChild(DashboardButton(Resources.BinaryResources.Humidity_Small, "Placeholder", NavigationEvent(ScreenTemperature)))
+                            //.AddChild(DashboardButton(Resources.BinaryResources.Padlock_Small, "Lock Device", NavigationEvent(ScreenLock)))
                         ))))
                     .AddChild(PageFooter));
         }
@@ -187,9 +187,12 @@ namespace MyHome.Modules
         {
             return GuiBuilder.Create()
                 .Panel(root => root
-                    .AddChild(PageHeader)
-                    .AddChild(BackButtonPanel)
-                    .AddChild(PageBody(Resources.BinaryResources.Sunshine, LightLevel, "{0} Lux".Format(_weatherManager.Luminosity)))
+                    .AddChild(main => main.Panel(vp => vp
+                        .Vertical()
+                        .VerticalAlignTop()
+                        .AddChild(PageHeader)
+                        .AddChild(BackButtonPanel)
+                        .AddChild(PageBody(Resources.BinaryResources.Sunshine, LightLevel, "{0} Lux".Format(_weatherManager.Luminosity)))))
                     .AddChild(PageFooter));
         }
 
@@ -197,9 +200,12 @@ namespace MyHome.Modules
         {
             return GuiBuilder.Create()
                 .Panel(root => root
-                    .AddChild(PageHeader)
-                    .AddChild(BackButtonPanel)
-                    .AddChild(PageBody(Resources.BinaryResources.Humidity, Humidity, "{0} g.m-3".Format(_weatherManager.Humidity)))
+                    .AddChild(main => main.Panel(vp => vp
+                        .Vertical()
+                        .VerticalAlignTop()
+                        .AddChild(PageHeader)
+                        .AddChild(BackButtonPanel)
+                        .AddChild(PageBody(Resources.BinaryResources.Humidity, Humidity, "{0} g.m-3".Format(_weatherManager.Humidity)))))
                     .AddChild(PageFooter));
         }
 
@@ -207,9 +213,12 @@ namespace MyHome.Modules
         {
             return GuiBuilder.Create()
                 .Panel(root => root
-                    .AddChild(PageHeader)
-                    .AddChild(BackButtonPanel)
-                    .AddChild(PageBody(Resources.BinaryResources.Thermometer, Temperature, "{0} °C".Format(_weatherManager.Temperature)))
+                    .AddChild(main => main.Panel(vp => vp
+                        .Vertical()
+                        .VerticalAlignTop()
+                        .AddChild(PageHeader)
+                        .AddChild(BackButtonPanel)
+                        .AddChild(PageBody(Resources.BinaryResources.Thermometer, Temperature, "{0} °C".Format(_weatherManager.Temperature)))))
                     .AddChild(PageFooter));
         }
 
@@ -227,6 +236,7 @@ namespace MyHome.Modules
         {
             if (!_lcd.BacklightEnabled)
             {
+                _window.Child = ScreenDashboard();
                 _lcd.BacklightEnabled = true;
                 _timer.Start();
             }
