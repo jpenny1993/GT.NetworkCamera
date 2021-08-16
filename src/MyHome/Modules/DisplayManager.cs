@@ -14,7 +14,7 @@ namespace MyHome.Modules
 {
     public class DisplayManager
     {
-        private const int TimerTickMs = 5000;
+        private const int TimerTickMs = 20000;
         private const string Humidity = "Humidity";
         private const string LightLevel = "Light Level";
         private const string Temperature = "Temperature";
@@ -27,7 +27,7 @@ namespace MyHome.Modules
         private readonly INetworkManager _networkManager;
         private readonly IWeatherManager _weatherManager;
 
-        private TimeSpan _backlightTimeout = new TimeSpan(0, 0, 10);
+        private TimeSpan _backlightTimeout = new TimeSpan(0, 0, 20);
         private DateTime _lastTouch;
 
         public DisplayManager(DisplayT35 lcd,
@@ -192,7 +192,7 @@ namespace MyHome.Modules
                         .VerticalAlignTop()
                         .AddChild(PageHeader)
                         .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Sunshine, LightLevel, "{0} Lux".Format(_weatherManager.Luminosity)))))
+                        .AddChild(PageBody(Resources.BinaryResources.Sunshine, LightLevel, "{0} Lux".Format(_weatherManager.Luminosity.ToString("N2"))))))
                     .AddChild(PageFooter));
         }
 
@@ -205,7 +205,7 @@ namespace MyHome.Modules
                         .VerticalAlignTop()
                         .AddChild(PageHeader)
                         .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Humidity, Humidity, "{0} g.m-3".Format(_weatherManager.Humidity)))))
+                        .AddChild(PageBody(Resources.BinaryResources.Humidity, Humidity, "{0} g.m-3".Format(_weatherManager.Humidity.ToString("N2"))))))
                     .AddChild(PageFooter));
         }
 
@@ -218,7 +218,7 @@ namespace MyHome.Modules
                         .VerticalAlignTop()
                         .AddChild(PageHeader)
                         .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Thermometer, Temperature, "{0} °C".Format(_weatherManager.Temperature)))))
+                        .AddChild(PageBody(Resources.BinaryResources.Thermometer, Temperature, "{0} °C".Format(_weatherManager.Temperature.ToString("N2"))))))
                     .AddChild(PageFooter));
         }
 
