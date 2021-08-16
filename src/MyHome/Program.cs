@@ -47,10 +47,6 @@ namespace MyHome
             _logger = Logger.ForContext(this);
 
             SetupDevices();
-            //Dispatcher.BeginInvoke(delegate(object arg)
-            //{
-            //    return null;
-            //}, null);
 
             // Create timer to action events on a loop
             _timer = new GT.Timer(60000); // every 60 seconds
@@ -62,7 +58,6 @@ namespace MyHome
 
         private void SetupDevices()
         {
-            _displayManager = new DisplayManager(displayT35);
             _systemManager = new SystemManager();
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
@@ -105,6 +100,7 @@ namespace MyHome
             _weatherManager.OnMeasurement += WeatherManager_OnMeasurement;
 
             _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);
+            _displayManager = new DisplayManager(displayT35, _networkManager, _weatherManager);
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)

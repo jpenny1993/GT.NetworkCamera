@@ -19,7 +19,7 @@ namespace MyHome.Modules
         NetworkAvailable = 5
     }
 
-    public sealed class NetworkManager
+    public sealed class NetworkManager : INetworkManager
     {
         private const int TimerTickMs = 5000; // Every 5 seconds
         private const string EmptyIpAddress = "0.0.0.0";

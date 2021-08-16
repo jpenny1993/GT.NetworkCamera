@@ -388,6 +388,8 @@ namespace MyHome.Utilities
 
         public static Font Font { get; private set; }
 
+        public delegate UIElement UiElementEvent();
+
         public delegate UIElement GuiBuilderEvent(GuiBuilder gui);
 
         public delegate ButtonBuilder ButtonBuilderEvent(ButtonBuilder button);
