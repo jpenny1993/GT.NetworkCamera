@@ -153,12 +153,13 @@ namespace MyHome.Utilities
 
     public class ButtonBuilder
     {
-        private int _rm;
+        private int _bm, _lm, _rm, _tm;
         private GT.Color _backgroundColour = GT.Color.Gray;
         private GT.Color _foregroundColour = GT.Color.Black;
         private GT.Color _pressedColour = GT.Color.DarkGray;
         private TouchEventHandler _onPressedHandler;
         private string _text = string.Empty;
+        private UIElement _child;
 
         public ButtonBuilder Background(GT.Color colour)
         {
@@ -166,9 +167,28 @@ namespace MyHome.Utilities
             return this;
         }
 
+        public ButtonBuilder Content(string text)
+        {
+            _text = text;
+            return this;
+        }
+
+        public ButtonBuilder Content(GuiBuilder.GuiBuilderEvent childBuilder)
+        {
+            var builder = GuiBuilder.Create();
+            _child = childBuilder.Invoke(builder);
+            return this;
+        }
+
         public ButtonBuilder Foreground(GT.Color colour)
         {
             _foregroundColour = colour;
+            return this;
+        }
+
+        public ButtonBuilder MarginAll()
+        {
+            _bm = _lm = _rm = _tm = GuiBuilder.Margin;
             return this;
         }
 
@@ -185,24 +205,20 @@ namespace MyHome.Utilities
             return this;
         }
 
-        public ButtonBuilder Text(string text)
-        {
-            _text = text;
-            return this;
-        }
-
         private UIElement Build()
         {
             var button = new Border()
             {
-                BorderBrush = new SolidColorBrush(_backgroundColour),
-                Child = new Text(GuiBuilder.Font, _text)
+                BorderBrush = new SolidColorBrush(_backgroundColour)
+            };
+
+            button.Child = _child != null ? _child
+                : new Text(GuiBuilder.Font, _text)
                 {
                     ForeColor = _foregroundColour,
                     TextAlignment = TextAlignment.Center,
                     TextWrap = true
-                }
-            };
+                };
 
             button.SetBorderThickness(5);
 
@@ -231,7 +247,7 @@ namespace MyHome.Utilities
 
             if (_rm > 0)
             {
-                button.SetMargin(0, 0, _rm, 0);
+                button.SetMargin(_lm, _tm, _rm, _bm);
             }
 
             return button;

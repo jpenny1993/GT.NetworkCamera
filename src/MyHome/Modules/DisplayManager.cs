@@ -42,7 +42,7 @@ namespace MyHome.Modules
                         .HorizontalAlignRight()
                         .MarginAll()
                         .AddChild(c => c.Button(b => b
-                            .Text("Back")
+                            .Content("Back")
                             .Background(GT.Color.LightGray)
                             .Foreground(GT.Color.Black)
                             .OnPressed(GT.Color.DarkGray, (sender, args) =>
@@ -52,25 +52,7 @@ namespace MyHome.Modules
             }
         }
 
-        private UIElement PageHeader 
-        {
-            get 
-            {
-                return GuiBuilder.Create()
-                    .Panel(hp => hp
-                        .Horizontal()
-                        .HorizontalAlignStretch()
-                        .AddChild(hc => hc.Label(l => l
-                            .Width(GuiBuilder.DeviceWidth)
-                            .Background(GT.Color.Blue)
-                            .Foreground(GT.Color.White)
-                            .TextMarginLeft(GuiBuilder.DeviceWidth / 2)
-                            .TextAlignLeft()
-                            .Text(DateTime.Now.SortableDateTime()))));
-            } 
-        }
-
-        private UIElement PageHeader2
+        private UIElement PageHeader
         {
             get
             {
@@ -128,38 +110,33 @@ namespace MyHome.Modules
                         .AddChild(x => x.Label(l => l.Text(value))))));
         }
 
-        private UIElement DashboardButton(Resources.BinaryResources icon)
+        private UIElement DashboardButton(Resources.BinaryResources icon, string text)
         {
-            // TODO make fluent,fix black borders, add click actions
-            var vpanel = (StackPanel)GuiBuilder.Create().Panel(p => p.Vertical().VerticalAlignCenter().MarginTopBottom());
-            var hpanel1 = (StackPanel)GuiBuilder.Create().Panel(p => p.Horizontal().HorizontalAlignCenter().MarginLeftRight());
-            var hpanel2 = (StackPanel)GuiBuilder.Create().Panel(p => p.Horizontal().HorizontalAlignCenter().MarginLeftRight());
-            var image = GuiBuilder.Create().Image(Resources.GetBytes(icon));
-            var text = GuiBuilder.Create().Label(x => x.Text("Placeholder"));
-
-            hpanel1.Children.Add(image);
-            hpanel2.Children.Add(text);
-
-            vpanel.Children.Add(hpanel1);
-            vpanel.Children.Add(hpanel2);
-
-            var border = new Border
-            {
-                Background = new SolidColorBrush(GT.Color.LightGray),
-                Child = vpanel
-            };
-
-            border.SetBorderThickness(GuiBuilder.HalfMargin);
-            border.SetMargin(GuiBuilder.Margin);
-
-            return border;
+            return GuiBuilder.Create()
+                .Button(b => b
+                    .Background(GT.Color.LightGray)
+                    .MarginAll()
+                    .Panel(vp => vp
+                        .Vertical()
+                        .VerticalAlignCenter()
+                        .MarginTopBottom()
+                        .AddChild(vc => vc.Panel(hp => hp
+                            .Horizontal()
+                            .HorizontalAlignCenter()
+                            .MarginLeftRight()
+                            .AddChild(hc => hc.Image(Resources.GetBytes(icon)))))
+                        .AddChild(vc => vc.Panel(hp => hp
+                            .Horizontal()
+                            .HorizontalAlignCenter()
+                            .MarginLeftRight()
+                            .AddChild(hc => hc.Label(l => l.Text(text)))))));
         }
 
         private UIElement ScreenDashboard()
         {
             return GuiBuilder.Create()
                 .Panel(root => root
-                    .AddChild(PageHeader2)
+                    .AddChild(PageHeader)
                     .AddChild(main => main.Panel(vp => vp
                         .Vertical()
                         .VerticalAlignCenter()
@@ -185,12 +162,9 @@ namespace MyHome.Modules
         {
             return GuiBuilder.Create()
                 .Panel(root => root
-                    .AddChild(main => main.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignTop()
-                        .AddChild(PageHeader)
-                        .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Sunshine, "Light Level", "X Lux"))))
+                    .AddChild(PageHeader)
+                    .AddChild(BackButtonPanel)
+                    .AddChild(PageBody(Resources.BinaryResources.Sunshine, "Light Level", "X Lux"))
                     .AddChild(PageFooter));
         }
 
@@ -198,12 +172,9 @@ namespace MyHome.Modules
         {
             return GuiBuilder.Create()
                 .Panel(root => root
-                    .AddChild(main => main.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignTop()
-                        .AddChild(PageHeader)
-                        .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Humidity, "Humidity", "X g.m-3"))))
+                    .AddChild(PageHeader)
+                    .AddChild(BackButtonPanel)
+                    .AddChild(PageBody(Resources.BinaryResources.Humidity, "Humidity", "X g.m-3"))
                     .AddChild(PageFooter));
         }
 
@@ -211,12 +182,9 @@ namespace MyHome.Modules
         {
             return GuiBuilder.Create()
                 .Panel(root => root
-                    .AddChild(main => main.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignTop()
-                        .AddChild(PageHeader)
-                        .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Thermometer, "Temperature", "X °C"))))
+                    .AddChild(PageHeader)
+                    .AddChild(BackButtonPanel)
+                    .AddChild(PageBody(Resources.BinaryResources.Thermometer, "Temperature", "X °C"))
                     .AddChild(PageFooter));
         }
     }
