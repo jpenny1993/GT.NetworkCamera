@@ -27,13 +27,13 @@ namespace MyHome {
         /// <summary>The Button module using socket 11 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.Button button;
         
-        /// <summary>The Multicolor LED module using socket 4 of the mainboard.</summary>
+        /// <summary>The Multicolor LED module using socket 6 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.MulticolorLED multicolorLED;
         
         /// <summary>The SD Card module using socket 5 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.SDCard sdCard;
         
-        /// <summary>The Temp&Humidity module using socket 6 of the mainboard.</summary>
+        /// <summary>The Temp&Humidity module using socket 4 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.TempHumidity tempHumidity;
         
         /// <summary>The LightSense module using socket 9 of the mainboard.</summary>
@@ -71,9 +71,9 @@ namespace MyHome {
             this.usbClientDP = new GTM.GHIElectronics.USBClientDP(1);
             this.ethernetJ11D = new GTM.GHIElectronics.EthernetJ11D(7);
             this.button = new GTM.GHIElectronics.Button(11);
-            this.multicolorLED = new GTM.GHIElectronics.MulticolorLED(4);
+            this.multicolorLED = new GTM.GHIElectronics.MulticolorLED(6);
             this.sdCard = new GTM.GHIElectronics.SDCard(5);
-            this.tempHumidity = new GTM.GHIElectronics.TempHumidity(6);
+            this.tempHumidity = new GTM.GHIElectronics.TempHumidity(4);
             this.lightSense = new GTM.GHIElectronics.LightSense(9);
             this.rfidReader = new GTM.GHIElectronics.RFIDReader(8);
             this.displayT35 = new GTM.GHIElectronics.DisplayT35(14, 13, 12, 10);
