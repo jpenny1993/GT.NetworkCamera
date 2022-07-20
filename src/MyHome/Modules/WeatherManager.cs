@@ -11,11 +11,9 @@ namespace MyHome.Modules
 #pragma warning disable 0612, 0618 // Ignore TempHumidity obsolete warning
     public sealed class WeatherManager : IWeatherManager
     {
-        private const int TimerTickMs = 5000; // Every 5 seconds
+        private readonly Logger _logger;
         private readonly LightSense _light;
         private readonly TempHumidity _sensor;
-        private readonly GT.Timer _updateTimer;
-        private bool _started;
         private WeatherModel _weather;
 
         public event WeatherManager.Measurement OnMeasurement;
@@ -24,13 +22,11 @@ namespace MyHome.Modules
 
         public WeatherManager(TempHumidity tempHumidity, LightSense lightSense)
         {
+            _logger = Logger.ForContext(this);
             _light = lightSense;
             _sensor = tempHumidity;
             _sensor.MeasurementComplete += Sensor_MeasurementComplete;
-            _updateTimer = new GT.Timer(TimerTickMs);
-            _updateTimer.Tick += UpdateTimer_Tick;
             _weather = new WeatherModel();
-            _started = false;
         }
 
         public double Luminosity
@@ -48,41 +44,19 @@ namespace MyHome.Modules
             get { return _weather.Temperature; }
         }
 
-        public void Start()
-        {
-            if (!_started)
-            { 
-                _sensor.StartTakingMeasurements();
-                _updateTimer.Start();
-                _started = true;
-            }
-        }
-
-        public void Stop()
-        {
-            if (_started)
-            { 
-                _sensor.StopTakingMeasurements();
-                _updateTimer.Stop();
-                _started = false;
-            }
-        }
-
         public void TakeMeasurement()
         {
             if (!_sensor.IsTakingMeasurements)
-            { 
+            {
+                _logger.Information("Taking measurements from sensors");
                 _sensor.RequestSingleMeasurement();
             }
         }
 
         private void Sensor_MeasurementComplete(TempHumidity sender, TempHumidity.MeasurementCompleteEventArgs e)
         {
+            _logger.Information("Updated sensor readings");
             _weather = new WeatherModel(_light.GetIlluminance(), e.RelativeHumidity, e.Temperature);
-        }
-
-        private void UpdateTimer_Tick(GT.Timer timer)
-        {
             if (OnMeasurement != null)
             {
                 OnMeasurement.Invoke(_weather);
