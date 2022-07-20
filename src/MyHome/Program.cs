@@ -51,7 +51,6 @@ namespace MyHome
             // Create timer to action events on a loop
             _timer = new GT.Timer(60000); // every 60 seconds
             _timer.Tick += Update_Tick;
-            _timer.Start();
 
             _logger.Information("Startup Complete");
         }
@@ -82,6 +81,7 @@ namespace MyHome
                 }
             };
 
+            // fix SD card mount being unreliable on startup
             new Awaitable(() => _fileManager.Remount());
 
             _networkManager = new NetworkManager(ethernetJ11D);
@@ -100,7 +100,7 @@ namespace MyHome
             _weatherManager.OnMeasurement += WeatherManager_OnMeasurement;
 
             _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);
-            _displayManager = new DisplayManager(displayT35, _networkManager, _weatherManager);
+            //_displayManager = new DisplayManager(displayT35, _networkManager, _weatherManager);
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
@@ -188,19 +188,17 @@ namespace MyHome
             if (synchronised)
             {
                 multicolorLED.TurnColor(GT.Color.Blue);
-                _weatherManager.Start();
+                _timer.Start();
             }
             else
             {
-                multicolorLED.TurnGreen();
+                multicolorLED.TurnGreen(); // Network Up colour
             }
         }
 
         private void TakeSnapshot()
         {
-            if (button.IsLedOn &&
-                _systemManager.IsTimeSynchronised &&
-                !_savePictureThread.IsRunning)
+            if (button.IsLedOn && !_savePictureThread.IsRunning)
             {
                 _cameraManager.TakePicture();
             }
@@ -209,6 +207,7 @@ namespace MyHome
         private void Update_Tick(GT.Timer timer)
         {
             _logger.Information("Tick: {0}", JsonConvert.SerializeObject(_systemManager.Uptime));
+            _weatherManager.TakeMeasurement();
             TakeSnapshot();
         }
 
