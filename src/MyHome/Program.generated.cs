@@ -28,7 +28,7 @@ namespace MyHome {
         private Gadgeteer.Modules.GHIElectronics.Button button;
         
         /// <summary>The Multicolor LED module using socket 6 of the mainboard.</summary>
-        private Gadgeteer.Modules.GHIElectronics.MulticolorLED multicolorLED;
+        private Gadgeteer.Modules.GHIElectronics.MulticolorLED infoLED;
         
         /// <summary>The SD Card module using socket 5 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.SDCard sdCard;
@@ -44,6 +44,9 @@ namespace MyHome {
         
         /// <summary>The Display T35 module using sockets 14, 13, 12 and 10 of the mainboard.</summary>
         private Gadgeteer.Modules.GHIElectronics.DisplayT35 displayT35;
+        
+        /// <summary>The Multicolor LED module using socket * of infoLED.</summary>
+        private Gadgeteer.Modules.GHIElectronics.MulticolorLED networkLED;
         
         /// <summary>This property provides access to the Mainboard API. This is normally not necessary for an end user program.</summary>
         protected new static GHIElectronics.Gadgeteer.FEZSpider Mainboard {
@@ -71,12 +74,13 @@ namespace MyHome {
             this.usbClientDP = new GTM.GHIElectronics.USBClientDP(1);
             this.ethernetJ11D = new GTM.GHIElectronics.EthernetJ11D(7);
             this.button = new GTM.GHIElectronics.Button(11);
-            this.multicolorLED = new GTM.GHIElectronics.MulticolorLED(6);
+            this.infoLED = new GTM.GHIElectronics.MulticolorLED(6);
             this.sdCard = new GTM.GHIElectronics.SDCard(5);
             this.tempHumidity = new GTM.GHIElectronics.TempHumidity(4);
             this.lightSense = new GTM.GHIElectronics.LightSense(9);
             this.rfidReader = new GTM.GHIElectronics.RFIDReader(8);
             this.displayT35 = new GTM.GHIElectronics.DisplayT35(14, 13, 12, 10);
+            this.networkLED = new GTM.GHIElectronics.MulticolorLED(this.infoLED.DaisyLinkSocketNumber);
         }
     }
 }

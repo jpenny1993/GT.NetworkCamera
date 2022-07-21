@@ -42,16 +42,15 @@ namespace MyHome
         // This method is run when the mainboard is powered up or reset.   
         void ProgramStarted()
         {
-            // DO NOT PUT BLOCKING CODE IN THE MAIN THREAD
             Debug.Print("Startup Initiated");
+            networkLED.TurnRed();
             _logger = Logger.ForContext(this);
 
             SetupDevices();
 
-            // Create timer to action events on a loop
+            // Create timer to trigger events once the network time has been synchronised
             _timer = new GT.Timer(60000); // every 60 seconds
             _timer.Tick += Update_Tick;
-
             _logger.Information("Startup Complete");
         }
 
@@ -59,8 +58,6 @@ namespace MyHome
         {
             _systemManager = new SystemManager();
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
-
-            multicolorLED.TurnRed();
 
             _fileManager = new FileManager(sdCard);
             _securityManager = new SecurityManager(rfidReader, _fileManager);
@@ -126,22 +123,23 @@ namespace MyHome
             switch(status) 
             {
                 case NetworkStatus.Disabled:
-                    multicolorLED.TurnRed();
+                    networkLED.TurnRed();
                     break;
                 case NetworkStatus.Enabled:
-                    multicolorLED.TurnColor(GT.Color.Orange);
+                    networkLED.TurnColor(GT.Color.Orange);
                     break;
                 case NetworkStatus.NetworkStuck:
-                    multicolorLED.BlinkRepeatedly(GT.Color.Yellow);
+                    networkLED.BlinkRepeatedly(GT.Color.Yellow);
                     break;
                 case NetworkStatus.NetworkDown:
-                    multicolorLED.TurnColor(GT.Color.Yellow);
+                    networkLED.TurnColor(GT.Color.Yellow);
                     break;
                 case NetworkStatus.NetworkUp:
-                    multicolorLED.BlinkRepeatedly(GT.Color.Green);
+                    networkLED.BlinkRepeatedly(GT.Color.Green);
                     break;
                 case NetworkStatus.NetworkAvailable:
-                    multicolorLED.BlinkRepeatedly(GT.Color.Blue);
+                    networkLED.TurnGreen();
+                    infoLED.BlinkRepeatedly(GT.Color.Blue);
                     _systemManager.SyncroniseInternetTime();
                     _websiteManager.Start(_networkManager.IpAddress);
                     break;
@@ -151,15 +149,15 @@ namespace MyHome
         private void SecurityManager_OnAccessDenied()
         {
             _logger.Information("RFID login failed");
-            _prevColour = multicolorLED.GetCurrentColor();
-            multicolorLED.BlinkOnce(GT.Color.Red, new TimeSpan(0, 0, 3), _prevColour);
+            _prevColour = infoLED.GetCurrentColor();
+            infoLED.BlinkOnce(GT.Color.Red, new TimeSpan(0, 0, 3), _prevColour);
         }
 
         private void SecurityManager_OnAccessGranted(string username)
         {
             _logger.Information("Hello {0}", username);
-            _prevColour = multicolorLED.GetCurrentColor();
-            multicolorLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
+            _prevColour = infoLED.GetCurrentColor();
+            infoLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
         }
 
         private void SecurityManager_OnScanCompleted(bool timeoutOccurred)
@@ -167,32 +165,33 @@ namespace MyHome
             if (timeoutOccurred)
             {
                 _logger.Information("RFID scan timed out");
-                multicolorLED.BlinkOnce(GT.Color.Magenta, new TimeSpan(0, 0, 3), _prevColour);
+                infoLED.BlinkOnce(GT.Color.Magenta, new TimeSpan(0, 0, 3), _prevColour);
             }
             else
             { 
                 _logger.Information("RFID user scanned");
-                multicolorLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
+                infoLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
             }
         }
 
         private void SecurityManager_OnScanEnabled()
         {
             _logger.Information("RFID scan enabled");
-            _prevColour = multicolorLED.GetCurrentColor();
-            multicolorLED.TurnColor(GT.Color.Magenta);
+            _prevColour = infoLED.GetCurrentColor();
+            infoLED.TurnColor(GT.Color.Magenta);
         }
 
         private void SystemManager_OnTimeSynchronised(bool synchronised)
         {
             if (synchronised)
             {
-                multicolorLED.TurnColor(GT.Color.Blue);
+                infoLED.TurnColor(GT.Color.Blue);
+                _weatherManager.TakeMeasurement();
                 _timer.Start();
             }
             else
             {
-                multicolorLED.TurnGreen(); // Network Up colour
+                infoLED.TurnRed();
             }
         }
 
