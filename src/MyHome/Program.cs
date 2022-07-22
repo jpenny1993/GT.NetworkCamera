@@ -49,13 +49,54 @@ namespace MyHome
             SetupDevices();
 
             // Create timer to trigger events once the network time has been synchronised
-            _timer = new GT.Timer(60000); // every 60 seconds
+            _timer = new GT.Timer(1000); // Occurs every second
             _timer.Tick += Update_Tick;
             _logger.Information("Startup Complete");
         }
 
+        private void Update_Tick(GT.Timer timer)
+        {
+            var utcNow = DateTime.UtcNow;
+
+            // Every 30 seconds
+            if (utcNow.Second % 30 == 0)
+            {
+                _logger.Information("Triggering events [30 seconds]");
+                _weatherManager.TakeMeasurement();
+                _displayManager.DismissBacklight();
+            }
+
+            // Every 60 seconds
+            if (utcNow.Second == 0)
+            {
+                _logger.Information("Triggering events [60 seconds]");
+                _displayManager.ShowDashboard(
+                   DateTime.Now,
+                   _networkManager.IpAddress,
+                   _weatherManager.Humidity,
+                   _weatherManager.Luminosity,
+                   _weatherManager.Temperature,
+                   _fileManager.TotalFreeSpaceInMb);
+            }
+
+            // Every 5 minutes
+            if (utcNow.Minute % 5 == 0 && utcNow.Second == 0)
+            {
+                _logger.Information("Triggering events [5 minutes]");
+                TakeSnapshot();
+            }
+
+            // At 3 AM every morning
+            if (utcNow.Hour == 3 && utcNow.Minute == 0 && utcNow.Second == 0)
+            {
+                _logger.Information("Triggering events [3 AM]");
+                _systemManager.SyncroniseInternetTime();
+            }
+        }
+
         private void SetupDevices()
         {
+            _displayManager = new DisplayManager(displayT35);
             _systemManager = new SystemManager();
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
@@ -97,7 +138,6 @@ namespace MyHome
             _weatherManager.OnMeasurement += WeatherManager_OnMeasurement;
 
             _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);
-            //_displayManager = new DisplayManager(displayT35, _networkManager, _weatherManager);
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
@@ -187,6 +227,7 @@ namespace MyHome
             {
                 infoLED.TurnColor(GT.Color.Blue);
                 _weatherManager.TakeMeasurement();
+                _displayManager.TouchScreen();
                 _timer.Start();
             }
             else
@@ -201,13 +242,6 @@ namespace MyHome
             {
                 _cameraManager.TakePicture();
             }
-        }
-
-        private void Update_Tick(GT.Timer timer)
-        {
-            _logger.Information("Tick: {0}", JsonConvert.SerializeObject(_systemManager.Uptime));
-            _weatherManager.TakeMeasurement();
-            TakeSnapshot();
         }
 
         private void WeatherManager_OnMeasurement(WeatherModel weather)

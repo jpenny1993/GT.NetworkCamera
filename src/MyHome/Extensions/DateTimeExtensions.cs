@@ -60,9 +60,11 @@ namespace MyHome.Extensions
         /// <summary>
         /// Returns a datetime as a string in a sortable datetime format.
         /// </summary>
-        public static string SortableDateTime(this DateTime datetime)
+        public static string SortableDateTime(this DateTime datetime, bool includeSeconds = true)
         {
-            return datetime.ToString("yyyy-MM-dd HH:mm:ss");
+            return includeSeconds
+                ? datetime.ToString("yyyy-MM-dd HH:mm:ss")
+                : datetime.ToString("yyyy-MM-dd HH:mm");
         }
     }
 }

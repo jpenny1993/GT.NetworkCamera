@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
+using Microsoft.SPOT.IO;
 using Gadgeteer.Modules.GHIElectronics;
 
 using GT = Gadgeteer;
@@ -17,12 +18,19 @@ namespace MyHome.Modules
 #pragma warning disable 0612, 0618 // Ignore SDCard obsolete warning
     public sealed class FileManager : IFileManager
     {
+        private const int TotalBytesInMegabyte = 1024 * 1024;
         private readonly Logger _logger;
         private readonly SDCard _sdCard;
 
         public event FileManager.DeviceSwapEnventHandler OnDeviceSwap;
 
         public delegate void DeviceSwapEnventHandler(bool diskInserted);
+
+        public double TotalSizeInMb { get { return (double)_sdCard.StorageDevice.Volume.TotalSize / TotalBytesInMegabyte; } }
+
+        public double TotalFreeSpaceInMb { get { return (double)_sdCard.StorageDevice.Volume.TotalFreeSpace / TotalBytesInMegabyte; } }
+
+        public double TotalUsedSpaceInMb { get { return (double)(_sdCard.StorageDevice.Volume.TotalSize - _sdCard.StorageDevice.Volume.TotalFreeSpace) / TotalBytesInMegabyte; } }
 
         public FileManager(SDCard sdCard)
         {

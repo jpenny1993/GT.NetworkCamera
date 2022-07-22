@@ -8,6 +8,10 @@ namespace MyHome.Modules
     {
         event FileManager.DeviceSwapEnventHandler OnDeviceSwap;
 
+        double TotalSizeInMb { get; }
+        double TotalFreeSpaceInMb { get; }
+        double TotalUsedSpaceInMb { get; }
+
         int CountFiles(string folderPath, bool recursive);
         void CreateDirectory(string folderPath);
         bool DirectoryExists(string folderPath);
