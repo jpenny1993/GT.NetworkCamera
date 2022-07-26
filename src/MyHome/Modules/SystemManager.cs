@@ -24,12 +24,17 @@ namespace MyHome.Modules
         private DateTime _deviceStartTime;
         private bool _syncronisingTime;
 
+        public DateTime TimeLastSyncronised { get; private set; }
+
+        public bool HasTimeSyncronised { get { return TimeLastSyncronised != DateTime.MinValue; } }
+
         public event SystemManager.TimeSynchronised OnTimeSynchronised;
 
         public delegate void TimeSynchronised(bool synchronised);
 
         public SystemManager()
         {
+            TimeLastSyncronised = DateTime.MinValue;
             _logger = Logger.ForContext(this);
             _deviceStartTime = DateTime.Now;
             _syncronisingTime = false;
@@ -43,6 +48,11 @@ namespace MyHome.Modules
         public DateTime Time
         {
             get { return DateTime.Now; }
+        }
+
+        public DateTime UtcTime 
+        {
+            get { return DateTime.UtcNow; }
         }
 
         public TimeSpan Uptime
@@ -77,6 +87,7 @@ namespace MyHome.Modules
             if (OnTimeSynchronised != null)
             {
                 OnTimeSynchronised.Invoke(success);
+                TimeLastSyncronised = Time;
             }
 
             _syncronisingTime = false;

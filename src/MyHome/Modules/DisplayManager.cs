@@ -12,63 +12,89 @@ using GT = Gadgeteer;
 
 namespace MyHome.Modules
 {
+    public enum DisplayStatus
+    {
+        LoadingScreen = 0,
+        Dashboard = 1
+    }
+
     public class DisplayManager
     {
+        private static readonly Brush WhiteBackgroundBrush = new SolidColorBrush(GT.Color.White);
+        private static readonly TimeSpan OneSecond = TimeSpan.FromTicks(TimeSpan.TicksPerSecond);
+
         private readonly Logger _logger;
         private readonly DisplayT35 _lcd;
         private readonly Window _window;
 
-        private TimeSpan _backlightTimeout = new TimeSpan(0, 0, 30);
+        private readonly TimeSpan _backlightTimeout;
         private DateTime _lastTouch;
+        private DisplayStatus _status;
+
+        public bool IsDisplayActive { get { return _lcd.BacklightEnabled; } }
+
+        public TimeSpan TimeSinceLastTouch { get { return DateTime.Now - _lastTouch; } }
+
+        public bool IsReadyForScreenWake { get { return !IsDisplayActive && TimeSinceLastTouch < OneSecond; } }
+
+        public bool IsReadyForScreenTimeout { get { return IsDisplayActive && TimeSinceLastTouch > _backlightTimeout; } }
+
+        public bool IsLoadingScreen { get { return _status == DisplayStatus.LoadingScreen;  } }
 
         public DisplayManager(DisplayT35 lcd)
         {
             _logger = Logger.ForContext(this);
+            _backlightTimeout = new TimeSpan(0, 0, 30);
+            _status = DisplayStatus.LoadingScreen;
             _lcd = lcd;
             _window = lcd.WPFWindow;
             _window.TouchUp += Window_TouchUp;
 
-            var loadingScreen = GuiBuilder.Create()
-                .Panel(vp => vp.Vertical().VerticalAlignCenter().AddChild(c1 => c1
-                    .Panel(hp => hp.Horizontal().HorizontalAlignCenter().AddChild(c2 => c2
-                        .Label(l => l.Text("Loading..."))
-                    ))
-                ));
-
-            _window.Dispatcher.BeginInvoke((object obj) =>
-            {
-                _window.Background = new SolidColorBrush(GT.Color.White);
-                _window.Child = loadingScreen;
-                return null;
-            }, null);
+            UpdateStatus("Loading...");
         }
 
         public void TouchScreen()
         {
             _lastTouch = DateTime.Now;
-            if (!_lcd.BacklightEnabled)
-            {
-                _lcd.BacklightEnabled = true;
-            }
+        }
+
+        public void EnableBacklight()
+        {
+            _lcd.BacklightEnabled = true;
         }
 
         public void DismissBacklight()
         {
-            var diff = DateTime.Now - _lastTouch;
-            if (diff > _backlightTimeout)
-            {
-                _lcd.BacklightEnabled = false;
-            }
+            _lcd.BacklightEnabled = false;
         }
 
-        public void ShowDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
+        public void UpdateStatus(string status)
         {
-            var screen = BuildDashboard(now, ipAddress, humidity, luminosity, temperature, totalFreeSpaceInMb);
-            _window.Dispatcher.BeginInvoke((object obj) =>
+            if (!IsLoadingScreen) return;
+
+            var screen = GuiBuilder.Create()
+                .Panel(vp => vp.Vertical().VerticalAlignCenter().AddChild(c1 => c1
+                    .Panel(hp => hp.Horizontal().HorizontalAlignCenter().AddChild(c2 => c2
+                        .Label(l => l.Text(status).Foreground(GT.Color.Black))
+                    ))
+                ));
+
+            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+        }
+
+        public void UpdateDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
+        {
+            if (_status == DisplayStatus.LoadingScreen)
             {
-                _window.Child = screen;
-                return null;
-            }, null);
+                _status = DisplayStatus.Dashboard;
+            }
+            else if (_status != DisplayStatus.Dashboard) // Placeholder for when extra screens
+            {
+                return;
+            }
+
+            var screen = BuildDashboard(now, ipAddress, humidity, luminosity, temperature, totalFreeSpaceInMb);
+            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
         }
 
         private UIElement BuildDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
@@ -137,6 +163,20 @@ namespace MyHome.Modules
             );
         }
 
+        private void DispatchScreenUpdate(Brush background, UIElement screen)
+        {
+            _window.Dispatcher.BeginInvoke((object obj) =>
+            {
+                if (_window.Background != background)
+                {
+                    _window.Background = background;
+                }
+
+                _window.Child = screen;
+                return null;
+            }, null);
+        }
+
         //private UIElement BackButtonPanel
         //{
         //    get
@@ -184,12 +224,7 @@ namespace MyHome.Modules
 
         private void Window_TouchUp(object sender, TouchEventArgs e)
         {
-            if (!_lcd.BacklightEnabled)
-            {
-                _lcd.BacklightEnabled = true;
-            }
-
-            _lastTouch = DateTime.Now;
+            TouchScreen();
         }
     }
 }

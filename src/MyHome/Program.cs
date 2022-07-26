@@ -24,7 +24,7 @@ namespace MyHome
 {
     public partial class Program
     {
-        private GT.Timer _timer;
+        private GT.Timer _eventTimer;
         private GT.Color _prevColour;
         private Logger _logger;
         private CameraManager _cameraManager;
@@ -48,49 +48,80 @@ namespace MyHome
 
             SetupDevices();
 
-            // Create timer to trigger events once the network time has been synchronised
-            _timer = new GT.Timer(1000); // Occurs every second
-            _timer.Tick += Update_Tick;
+            const int OneSecondInterval = 1000;
+            _eventTimer = new GT.Timer(OneSecondInterval);
+            _eventTimer.Tick += EventTimer_Tick;
+            _eventTimer.Start();
             _logger.Information("Startup Complete");
         }
 
-        private void Update_Tick(GT.Timer timer)
+        private void EventTimer_Tick(GT.Timer timer)
         {
-            var utcNow = DateTime.UtcNow;
+            var time = _systemManager.UtcTime;
 
-            // Every 30 seconds
-            if (utcNow.Second % 30 == 0)
+            if (time.Second % 5 == 0)
             {
-                _logger.Information("Triggering events [30 seconds]");
-                _weatherManager.TakeMeasurement();
-                _displayManager.DismissBacklight();
+                _logger.Debug("Triggering events [5th sec]");
+                _networkManager.UpdateNetworkStatus();
             }
 
-            // Every 60 seconds
-            if (utcNow.Second == 0)
+            // There is no point running any other events until time has been synchronised once
+            if (!_systemManager.HasTimeSyncronised) return;
+
+            if (time.Second % 30 == 0)
             {
-                _logger.Information("Triggering events [60 seconds]");
-                _displayManager.ShowDashboard(
-                   DateTime.Now,
+                _logger.Debug("Triggering events [30th sec]");
+                _weatherManager.TakeMeasurement();
+            }
+
+            if (time.Second == 0)
+            {
+                _logger.Debug("Triggering events [60th sec]");
+                if (_displayManager.IsDisplayActive)
+                {
+                    _displayManager.UpdateDashboard(
+                       _systemManager.Time,
+                       _networkManager.IpAddress,
+                       _weatherManager.Humidity,
+                       _weatherManager.Luminosity,
+                       _weatherManager.Temperature,
+                       _fileManager.TotalFreeSpaceInMb);
+                }
+            }
+
+            if (time.Minute % 5 == 0 && time.Second == 0)
+            {
+                _logger.Debug("Triggering events [5th min]");
+                if (!_savePictureThread.IsRunning)
+                {
+                    _cameraManager.TakePicture();
+                }
+            }
+
+            // At 3 AM UTC every morning
+            if (time.Hour == 3 && time.Minute == 0 && time.Second == 0)
+            {
+                _logger.Debug("Triggering events [Maintenance]");
+                _systemManager.SyncroniseInternetTime();
+            }
+
+            if (_displayManager.IsReadyForScreenWake)
+            {
+                _logger.Debug("Triggering screen wake-up events");
+                _displayManager.UpdateDashboard(
+                   _systemManager.Time,
                    _networkManager.IpAddress,
                    _weatherManager.Humidity,
                    _weatherManager.Luminosity,
                    _weatherManager.Temperature,
                    _fileManager.TotalFreeSpaceInMb);
-            }
 
-            // Every 5 minutes
-            if (utcNow.Minute % 5 == 0 && utcNow.Second == 0)
-            {
-                _logger.Information("Triggering events [5 minutes]");
-                TakeSnapshot();
+                _displayManager.EnableBacklight();
             }
-
-            // At 3 AM every morning
-            if (utcNow.Hour == 3 && utcNow.Minute == 0 && utcNow.Second == 0)
+            else if (_displayManager.IsReadyForScreenTimeout)
             {
-                _logger.Information("Triggering events [3 AM]");
-                _systemManager.SyncroniseInternetTime();
+                _logger.Debug("Triggering screen timeout events");
+                _displayManager.DismissBacklight();
             }
         }
 
@@ -147,6 +178,8 @@ namespace MyHome
 
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
+            if (!_fileManager.HasFileSystem) return;
+
             var now = _systemManager.Time;
             var filename = string.Concat("IMG_", now.Timestamp(), FileExtensions.Bitmap);
             var filepath = MyPath.Combine(Directories.Camera, now.Datestamp(), filename);
@@ -164,23 +197,32 @@ namespace MyHome
             {
                 case NetworkStatus.Disabled:
                     networkLED.TurnRed();
+                    _displayManager.UpdateStatus("Network disabled");
                     break;
                 case NetworkStatus.Enabled:
                     networkLED.TurnColor(GT.Color.Orange);
+                    _displayManager.UpdateStatus("Ethernet cable disconnected");
                     break;
                 case NetworkStatus.NetworkStuck:
                     networkLED.BlinkRepeatedly(GT.Color.Yellow);
+                    _displayManager.UpdateStatus("Network stuck, reconnect ethernet cable");
                     break;
                 case NetworkStatus.NetworkDown:
                     networkLED.TurnColor(GT.Color.Yellow);
+                    _displayManager.UpdateStatus("Ethernet cable connected, network down");
                     break;
                 case NetworkStatus.NetworkUp:
                     networkLED.BlinkRepeatedly(GT.Color.Green);
+                    _displayManager.UpdateStatus("Network up, waiting for IP Address");
                     break;
                 case NetworkStatus.NetworkAvailable:
                     networkLED.TurnGreen();
                     infoLED.BlinkRepeatedly(GT.Color.Blue);
-                    _systemManager.SyncroniseInternetTime();
+                    _displayManager.UpdateStatus("Network online, synchronising time");
+                    if (!_systemManager.HasTimeSyncronised)
+                    {
+                        _systemManager.SyncroniseInternetTime();
+                    }
                     _websiteManager.Start(_networkManager.IpAddress);
                     break;
             }
@@ -226,27 +268,28 @@ namespace MyHome
             if (synchronised)
             {
                 infoLED.TurnColor(GT.Color.Blue);
-                _weatherManager.TakeMeasurement();
-                _displayManager.TouchScreen();
-                _timer.Start();
+                if (_displayManager.IsLoadingScreen)
+                { 
+                    _displayManager.UpdateStatus("Waiting for sensor readings");
+                    _weatherManager.TakeMeasurement();
+                }
             }
             else
             {
+                _displayManager.UpdateStatus("Unable to synchronise time");
                 infoLED.TurnRed();
-            }
-        }
-
-        private void TakeSnapshot()
-        {
-            if (button.IsLedOn && !_savePictureThread.IsRunning)
-            {
-                _cameraManager.TakePicture();
             }
         }
 
         private void WeatherManager_OnMeasurement(WeatherModel weather)
         {
-            if (_saveMeasurementThread.IsRunning || !_fileManager.HasFileSystem()) { return; }
+            if (_saveMeasurementThread.IsRunning || !_fileManager.HasFileSystem) { return; }
+
+            if (_displayManager.IsLoadingScreen)
+            {
+                _displayManager.EnableBacklight();
+                _displayManager.TouchScreen();
+            }
 
             _saveMeasurementThread = new Awaitable(() =>
             {

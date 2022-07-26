@@ -6,6 +6,7 @@ namespace MyHome.Modules
     {
         DateTime StartTime { get; }
         DateTime Time { get; }
+        DateTime UtcTime { get; }
         TimeSpan Uptime { get; }
 
         event SystemManager.TimeSynchronised OnTimeSynchronised;

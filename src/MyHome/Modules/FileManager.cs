@@ -26,11 +26,37 @@ namespace MyHome.Modules
 
         public delegate void DeviceSwapEnventHandler(bool diskInserted);
 
-        public double TotalSizeInMb { get { return (double)_sdCard.StorageDevice.Volume.TotalSize / TotalBytesInMegabyte; } }
+        public bool HasFileSystem { get { return _sdCard.IsCardInserted && _sdCard.IsCardMounted; } }
 
-        public double TotalFreeSpaceInMb { get { return (double)_sdCard.StorageDevice.Volume.TotalFreeSpace / TotalBytesInMegabyte; } }
+        public double TotalSizeInMb
+        { 
+            get 
+            {
+                return HasFileSystem
+                    ? (double)_sdCard.StorageDevice.Volume.TotalSize / TotalBytesInMegabyte
+                    : 0;
+            }
+        }
 
-        public double TotalUsedSpaceInMb { get { return (double)(_sdCard.StorageDevice.Volume.TotalSize - _sdCard.StorageDevice.Volume.TotalFreeSpace) / TotalBytesInMegabyte; } }
+        public double TotalFreeSpaceInMb
+        { 
+            get 
+            {
+                return HasFileSystem
+                    ? (double)_sdCard.StorageDevice.Volume.TotalFreeSpace / TotalBytesInMegabyte
+                    : 0;
+            }
+        }
+
+        public double TotalUsedSpaceInMb
+        { 
+            get 
+            {
+                return HasFileSystem
+                    ? (double)(_sdCard.StorageDevice.Volume.TotalSize - _sdCard.StorageDevice.Volume.TotalFreeSpace) / TotalBytesInMegabyte
+                    : 0;
+            }
+        }
 
         public FileManager(SDCard sdCard)
         {
@@ -81,7 +107,7 @@ namespace MyHome.Modules
 
         public byte[] GetFileContent(string filePath)
         {
-            if (!HasFileSystem())
+            if (!HasFileSystem)
             {
                 throw new ApplicationException("SD card not available to read");
             }
@@ -99,7 +125,7 @@ namespace MyHome.Modules
 
         public FileStream GetFileStream(string filePath, FileMode mode, FileAccess access)
         {
-            if (!HasFileSystem())
+            if (!HasFileSystem)
             {
                 throw new ApplicationException("SD card not available to read");
             }
@@ -108,14 +134,9 @@ namespace MyHome.Modules
             return _sdCard.StorageDevice.Open(filePath, mode, access);   
         }
 
-        public bool HasFileSystem()
-        {
-            return _sdCard.IsCardInserted && _sdCard.IsCardMounted;
-        }
-
         public string[] ListDirectories(string directory)
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 try
                 {
@@ -133,7 +154,7 @@ namespace MyHome.Modules
 
         public ArrayList ListDirectoriesRecursive(string directory)
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 return GetDirectoriesRecursiveInternal(directory);
             }
@@ -143,7 +164,7 @@ namespace MyHome.Modules
 
         public string[] ListFiles(string directory)
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 try
                 {
@@ -161,7 +182,7 @@ namespace MyHome.Modules
 
         public ArrayList ListFilesRecursive(string directory)
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 return GetFilesRecursiveInternal(directory);
             }
@@ -215,7 +236,7 @@ namespace MyHome.Modules
 
         public string[] ListRootDirectories()
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 try
                 {
@@ -233,7 +254,7 @@ namespace MyHome.Modules
 
         public string[] ListRootFiles()
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 try
                 {
@@ -335,7 +356,7 @@ namespace MyHome.Modules
 
         public void SaveFile(string filepath, string text)
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 CreateDirectory(Path.GetDirectoryName(filepath));
                 _logger.Information("Converting text to bytes");
@@ -348,7 +369,7 @@ namespace MyHome.Modules
 
         public void SaveFile(string filepath, Bitmap bitmap) 
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 SaveBitmap(filepath, bitmap);
             }
@@ -356,7 +377,7 @@ namespace MyHome.Modules
 
         public void SaveFile(string filepath, GT.Picture picture)
         {
-            if (HasFileSystem())
+            if (HasFileSystem)
             {
                 _logger.Information("Converting picture to bitmap");
                 var bitmap = picture.MakeBitmap();
