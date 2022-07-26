@@ -135,6 +135,9 @@ namespace MyHome.Modules
 
             if (!fm.HasFileSystem) return;
 
+            // if no file exists then people aren't clocked-in
+            if (!fm.FileExists(AttendanceCsvFilePath)) return;
+
             _logger.Information("Running auto clock-out");
             using (var fs = fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
             {
@@ -144,7 +147,7 @@ namespace MyHome.Modules
                         user.LastClockedOut < user.LastClockedIn)   // has clocked-in again since last clock-out
                     {
                         var closingTime = DateTime.Today.Add(_closingHours);
-                        AppendAttendance(fs, closingTime, user.RFID, AttendanceStatus.ClockOut, "Automated clock-out by system");
+                        AppendAttendance(fs, closingTime, user.RFID, AttendanceStatus.ClockOut, "Automated clock-out by system", false);
                         user.LastClockedOut = closingTime;
                     }
                 }
