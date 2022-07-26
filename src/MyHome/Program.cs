@@ -296,7 +296,7 @@ namespace MyHome
             _saveMeasurementThread = new Awaitable(() =>
             {
                 var now = _systemManager.Time;
-                var filename = string.Concat("Measurements_", now.Datestamp(), FileExtensions.Csv);
+                var filename = string.Concat("measurements_", now.Datestamp(), FileExtensions.Csv);
                 var filepath = MyPath.Combine(Directories.Weather, filename);
                 var fileExists = _fileManager.FileExists(filepath);
 

@@ -18,9 +18,11 @@ namespace MyHome.Modules
         public delegate void EventHandler();
         public delegate void ScanEventHandler(string rfid, string displayName, string status);
 
-        private const string UserAccountsFilePath = Directories.Config + "\\users.csv";
+        private const string UsersCsvFilePath = Directories.Config + "\\users.csv";
+        private const string UsersCsvRowTemplate = "{0},{1},{2},{3}\r\n";
 
-        private static string AttendanceFilePath { get { return Path.Combine(Directories.Config,  "attendance_{0}.csv".Format(DateTime.Today.Monthstamp())); } }
+        private static string AttendanceCsvFilePath { get { return Path.Combine(Directories.Attendance,  "attendance_log_{0}.csv".Format(DateTime.Today.Monthstamp())); } }
+        private const string AttendanceCsvRowTemplate = "{0},{1},{2},{3}\r\n";
 
         private readonly Logger _logger;
         private readonly RFIDReader _rfid;
@@ -46,24 +48,21 @@ namespace MyHome.Modules
 
         public void Initialise(IFileManager fm, bool allowNewUsers, TimeSpan openingHours, TimeSpan closingHours)
         {
-            _logger.Information("Initialising user accounts");
             _allowNewUsers = allowNewUsers;
             _openingHours = openingHours;
             _closingHours = closingHours;
-            
-            // Create users file if missing
-            if (!fm.FileExists(UserAccountsFilePath))
-            {
-                fm.SaveFile(UserAccountsFilePath, string.Empty);
-            }
+
+            if (!fm.FileExists(UsersCsvFilePath)) return;
 
             // Get users file
-            var file = fm.GetFileString(UserAccountsFilePath);
+            _logger.Information("Initialising user accounts");
+            var file = fm.GetFileString(UsersCsvFilePath);
             var rows = file.Split('\r', '\n');
 
             // For each line create user model
-            foreach (var line in rows)
+            for (int i = 1; i < rows.Length; i++)
             {
+                var line = rows[i];
                 var trimmedLine = line.Trim();
                 if (trimmedLine.IsNullOrEmpty()) continue;
 
@@ -93,9 +92,10 @@ namespace MyHome.Modules
             if (user == null) return;
 
             _logger.Information("Performing user clock-in");
-            using (var fs = fm.GetFileStream(AttendanceFilePath, FileMode.Append, FileAccess.Write))
+            var isFirstRow = !fm.FileExists(AttendanceCsvFilePath);
+            using (var fs = fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
             {
-                AppendAttendance(fs, timestamp, rfid, AttendanceStatus.ClockIn, reason);
+                AppendAttendance(fs, timestamp, rfid, AttendanceStatus.ClockIn, reason, isFirstRow);
                 fs.Flush();
                 fs.Close();
             }
@@ -117,9 +117,10 @@ namespace MyHome.Modules
             if (user == null) return;
 
             _logger.Information("Performing user clock-out");
-            using (var fs = fm.GetFileStream(AttendanceFilePath, FileMode.Append, FileAccess.Write))
+            var isFirstRow = !fm.FileExists(AttendanceCsvFilePath);
+            using (var fs = fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
             {
-                AppendAttendance(fs, timestamp, rfid, AttendanceStatus.ClockOut, reason);
+                AppendAttendance(fs, timestamp, rfid, AttendanceStatus.ClockOut, reason, isFirstRow);
                 fs.Flush();
                 fs.Close();
             }
@@ -135,7 +136,7 @@ namespace MyHome.Modules
             if (!fm.HasFileSystem) return;
 
             _logger.Information("Running auto clock-out");
-            using (var fs = fm.GetFileStream(AttendanceFilePath, FileMode.Append, FileAccess.Write))
+            using (var fs = fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
             {
                 foreach (UserAccount user in _users.Values)
                 {
@@ -193,9 +194,17 @@ namespace MyHome.Modules
             return user;
         }
 
-        private void AppendAttendance(FileStream fs, DateTime timestamp, string rfid, string status, string reason)
+        private void AppendAttendance(FileStream fs, DateTime timestamp, string rfid, string status, string reason, bool isFirstRow)
         {
-            var bytes = "{0},{1},{2},{3}"
+            if (isFirstRow)
+            { 
+                var firstRow = AttendanceCsvRowTemplate
+                        .Format("Timestamp", "RFID", "Status", "Reason")
+                        .GetBytes();
+                fs.Write(firstRow, 0, firstRow.Length);
+            }
+
+            var bytes = AttendanceCsvRowTemplate
                     .Format(timestamp.SortableDateTime(), rfid, status, reason)
                     .GetBytes();
             fs.Write(bytes, 0, bytes.Length);
@@ -222,10 +231,19 @@ namespace MyHome.Modules
         private void SaveUserAccountsToFile(IFileManager fm)
         {
             var builder = new StringBuilder();
+
+            builder.Append(UsersCsvRowTemplate.Format(
+                "RFID",
+                "Display name",
+                "Last clock-in",
+                "Last clock-out"
+                )
+            );
+
             foreach (UserAccount user in _users.Values)
             {
-                builder.AppendLine(
-                    "{0},{1},{2},{3}".Format(
+                builder.Append(
+                    UsersCsvRowTemplate.Format(
                         user.RFID,
                         user.DisplayName,
                         user.LastClockedIn.SortableDateTime(),
@@ -234,7 +252,7 @@ namespace MyHome.Modules
                 );
             }
 
-            fm.SaveFile(UserAccountsFilePath, builder.ToString());
+            fm.SaveFile(UsersCsvFilePath, builder.ToString());
         }
 
         private void Rfid_MalformedIdReceived(RFIDReader sender, EventArgs e)

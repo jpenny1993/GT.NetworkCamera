@@ -285,6 +285,7 @@ namespace MyHome.Modules
             var directories = sender.StorageDevice.ListRootDirectorySubdirectories();
             var expectedDirectories = new[] 
             {
+                Directories.Attendance,
                 Directories.Camera,
                 Directories.Config,
                 Directories.Logs,
