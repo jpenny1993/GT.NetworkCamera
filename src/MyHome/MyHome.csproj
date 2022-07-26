@@ -39,6 +39,7 @@
   <!-- Everything below here is custom to .NET MF / Gadgeteer template-->
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
+    <Compile Include="Constants\AttendanceStatus.cs" />
     <Compile Include="Constants\ContentTypes.cs" />
     <Compile Include="Constants\DateTypes.cs" />
     <Compile Include="Constants\Directories.cs" />
@@ -50,6 +51,7 @@
     <Compile Include="Extensions\ResponderExtensions.cs" />
     <Compile Include="Extensions\StringCollectionExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Models\Attendance.cs" />
     <Compile Include="Models\UserAccount.cs" />
     <Compile Include="Models\GalleryObject.cs" />
     <Compile Include="Models\PathObject.cs" />
@@ -60,12 +62,12 @@
     <Compile Include="Modules\ICameraManager.cs" />
     <Compile Include="Modules\IFileManager.cs" />
     <Compile Include="Modules\INetworkManager.cs" />
-    <Compile Include="Modules\ISecurityManager.cs" />
+    <Compile Include="Modules\IAttendanceManager.cs" />
     <Compile Include="Modules\ISystemManager.cs" />
     <Compile Include="Modules\IWeatherManager.cs" />
     <Compile Include="Modules\Logger.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
-    <Compile Include="Modules\SecurityManager.cs" />
+    <Compile Include="Modules\AttendanceManager.cs" />
     <Compile Include="Modules\SystemManager.cs" />
     <Compile Include="Modules\WeatherManager.cs" />
     <Compile Include="Modules\WebsiteManager.Events.cs" />

@@ -14,6 +14,14 @@ namespace MyHome.Extensions
         }
 
         /// <summary>
+        /// Returns a timestamp as a string in the following format; yyMM.
+        /// </summary>
+        public static string Monthstamp(this DateTime datetime)
+        {
+            return datetime.ToString("yyMM");
+        }
+
+        /// <summary>
         /// Returns true if the current date is British Summer Time.
         /// Always changes on the last Sunday of March and last Sunday of October.
         /// </summary>

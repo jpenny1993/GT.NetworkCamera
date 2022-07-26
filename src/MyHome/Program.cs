@@ -34,7 +34,7 @@ namespace MyHome
         private SystemManager _systemManager;
         private WeatherManager _weatherManager;
         private WebsiteManager _websiteManager;
-        private SecurityManager _securityManager;
+        private AttendanceManager _attendanceManager;
 
         private IAwaitable _saveMeasurementThread = Awaitable.Default;
         private IAwaitable _savePictureThread = Awaitable.Default;
@@ -61,7 +61,7 @@ namespace MyHome
 
             if (time.Second % 5 == 0)
             {
-                _logger.Debug("Triggering events [5th sec]");
+                _logger.Print("Triggering events [5th sec]");
                 _networkManager.UpdateNetworkStatus();
             }
 
@@ -70,13 +70,13 @@ namespace MyHome
 
             if (time.Second % 30 == 0)
             {
-                _logger.Debug("Triggering events [30th sec]");
+                _logger.Print("Triggering events [30th sec]");
                 _weatherManager.TakeMeasurement();
             }
 
             if (time.Second == 0)
             {
-                _logger.Debug("Triggering events [60th sec]");
+                _logger.Print("Triggering events [60th sec]");
                 if (_displayManager.IsDisplayActive)
                 {
                     _displayManager.UpdateDashboard(
@@ -91,23 +91,32 @@ namespace MyHome
 
             if (time.Minute % 5 == 0 && time.Second == 0)
             {
-                _logger.Debug("Triggering events [5th min]");
+                _logger.Print("Triggering events [5th min]");
                 if (!_savePictureThread.IsRunning)
                 {
                     _cameraManager.TakePicture();
                 }
             }
 
+            if (time.Minute % 58 == 0 && time.Second == 0)
+            {
+                _logger.Print("Triggering events [58th min]");
+                _attendanceManager.AutoClockOut(_fileManager);
+            }
+
             // At 3 AM UTC every morning
             if (time.Hour == 3 && time.Minute == 0 && time.Second == 0)
             {
-                _logger.Debug("Triggering events [Maintenance]");
+                _logger.Print("Triggering events [Maintenance]");
                 _systemManager.SyncroniseInternetTime();
             }
 
+            // Keep screen active until first sensor reading has been done
+            if (_displayManager.IsLoadingScreen) return;
+
             if (_displayManager.IsReadyForScreenWake)
             {
-                _logger.Debug("Triggering screen wake-up events");
+                _logger.Print("Triggering screen wake-up events");
                 _displayManager.UpdateDashboard(
                    _systemManager.Time,
                    _networkManager.IpAddress,
@@ -120,7 +129,7 @@ namespace MyHome
             }
             else if (_displayManager.IsReadyForScreenTimeout)
             {
-                _logger.Debug("Triggering screen timeout events");
+                _logger.Print("Triggering screen timeout events");
                 _displayManager.DismissBacklight();
             }
         }
@@ -132,11 +141,9 @@ namespace MyHome
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
             _fileManager = new FileManager(sdCard);
-            _securityManager = new SecurityManager(rfidReader, _fileManager);
-            _securityManager.OnAccessDenied += SecurityManager_OnAccessDenied;
-            _securityManager.OnAccessGranted += SecurityManager_OnAccessGranted;
-            _securityManager.OnScanEnabled += SecurityManager_OnScanEnabled;
-            _securityManager.OnScanCompleted += SecurityManager_OnScanCompleted;
+            _attendanceManager = new AttendanceManager(rfidReader);
+            _attendanceManager.OnAccessDenied += AttendanceManager_OnAccessDenied;
+            _attendanceManager.OnScannedKeycard += AttendanceManager_OnScannedKeycard;
 
             Logger.Initialise(_fileManager);
 
@@ -146,7 +153,7 @@ namespace MyHome
 
                 if (diskInserted)
                 {
-                    _securityManager.Initialise();
+                    _attendanceManager.Initialise(_fileManager, true, new TimeSpan(9, 0, 0), new TimeSpan(17, 30, 0));
                 }
             };
 
@@ -209,7 +216,7 @@ namespace MyHome
                     break;
                 case NetworkStatus.NetworkDown:
                     networkLED.TurnColor(GT.Color.Yellow);
-                    _displayManager.UpdateStatus("Ethernet cable connected, network down");
+                    _displayManager.UpdateStatus("Ethernet cable connected");
                     break;
                 case NetworkStatus.NetworkUp:
                     networkLED.BlinkRepeatedly(GT.Color.Green);
@@ -228,39 +235,34 @@ namespace MyHome
             }
         }
 
-        private void SecurityManager_OnAccessDenied()
+        private void AttendanceManager_OnAccessDenied()
         {
             _logger.Information("RFID login failed");
             _prevColour = infoLED.GetCurrentColor();
             infoLED.BlinkOnce(GT.Color.Red, new TimeSpan(0, 0, 3), _prevColour);
         }
 
-        private void SecurityManager_OnAccessGranted(string username)
+        private void AttendanceManager_OnScannedKeycard(string rfid, string displayName, string status)
         {
-            _logger.Information("Hello {0}", username);
             _prevColour = infoLED.GetCurrentColor();
             infoLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
-        }
 
-        private void SecurityManager_OnScanCompleted(bool timeoutOccurred)
-        {
-            if (timeoutOccurred)
+            switch (status)
             {
-                _logger.Information("RFID scan timed out");
-                infoLED.BlinkOnce(GT.Color.Magenta, new TimeSpan(0, 0, 3), _prevColour);
-            }
-            else
-            { 
-                _logger.Information("RFID user scanned");
-                infoLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
-            }
-        }
+                case AttendanceStatus.ClockIn:
+                    _logger.Information("Hello {0}", displayName);
+                    _attendanceManager.ClockIn(_fileManager, _systemManager.Time, rfid);
+                    break;
 
-        private void SecurityManager_OnScanEnabled()
-        {
-            _logger.Information("RFID scan enabled");
-            _prevColour = infoLED.GetCurrentColor();
-            infoLED.TurnColor(GT.Color.Magenta);
+                case AttendanceStatus.ClockOut:
+                    _logger.Information("Goodbye {0}", displayName);
+                    _attendanceManager.ClockOut(_fileManager, _systemManager.Time, rfid);
+                    break;
+
+                default: 
+                    _logger.Warning("Unhandled attendance status \"{0}\"", status);
+                    break;
+            }
         }
 
         private void SystemManager_OnTimeSynchronised(bool synchronised)

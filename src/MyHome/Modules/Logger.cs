@@ -42,6 +42,16 @@ namespace MyHome.Modules
             _context = context;
         }
 
+        public void Print(string messageTemplate, params object[] args)
+        {
+            if (Instance.ConsoleLogsEnabled)
+            {
+                var formatetdMessage = messageTemplate.Format(args);
+                var logMessage = DebugMessageTemplate.Format(_context, formatetdMessage);
+                Microsoft.SPOT.Debug.Print(logMessage);
+            }
+        }
+
         public void Debug(string messageTemplate, params object[] args)
         {
             Log("DBG", _context, messageTemplate.Format(args));
