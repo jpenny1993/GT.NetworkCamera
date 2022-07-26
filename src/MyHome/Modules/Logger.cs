@@ -31,6 +31,7 @@ namespace MyHome.Modules
 
         private static LogInstance Instance { get; set; }
 
+        private const string LogFileExtension = ".log";
         private const string DebugMessageTemplate = "{0}: {1}";
         private const string FileMessageTemplate = "{0}|{1}|{2}|{3}\r\n";
 
@@ -104,7 +105,7 @@ namespace MyHome.Modules
                     Instance.FileLogCounter = 0;
                     Instance.FileLogFlushThreshold = 50;
                     Instance.FileDate = DateTime.Today;
-                    Instance.FileLogPath = Path.Combine(Directories.Logs, Instance.FileDate.ToString("yyyyMMdd.log"));
+                    Instance.FileLogPath = Path.Combine(Directories.Logs, Instance.FileDate.Datestamp() + LogFileExtension);
                     Instance.FileStream = Instance.FileManager.GetFileStream(Instance.FileLogPath, FileMode.Append, FileAccess.Write);
                     Instance.FileLogsEnabled = true;
                 }
@@ -132,7 +133,7 @@ namespace MyHome.Modules
 
             if (Instance.FileLogsEnabled)
             {
-                var fileLog = FileMessageTemplate.Format(now.ToString("yyyy/MM/dd HH:mm:ss"), status, context, message);
+                var fileLog = FileMessageTemplate.Format(now.SortableDateTime(), status, context, message);
                 var bytes = fileLog.GetBytes();
 
                 if (Instance.FileDate < DateTime.Today)
