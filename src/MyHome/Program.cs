@@ -101,7 +101,7 @@ namespace MyHome
             if (time.Minute % 58 == 0 && time.Second == 0)
             {
                 _logger.Print("Triggering events [58th min]");
-                _attendanceManager.AutoClockOut(_fileManager);
+                _attendanceManager.AutoClockOut();
             }
 
             // At 3 AM UTC every morning
