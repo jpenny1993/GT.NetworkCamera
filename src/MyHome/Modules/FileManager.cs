@@ -342,6 +342,12 @@ namespace MyHome.Modules
                 {
                     _sdCard.Mount();
                 }
+
+                // Wait for sd card to be mounted
+                while (!_sdCard.IsCardMounted)
+                {
+                    Thread.Sleep(100);
+                }
             }
         }
 

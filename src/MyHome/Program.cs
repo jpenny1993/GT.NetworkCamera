@@ -19,11 +19,16 @@ using MyHome.Extensions;
 using MyHome.Modules;
 using MyHome.Utilities;
 using MyHome.Models;
+using MyHome.Configuration;
     
 namespace MyHome
 {
     public partial class Program
     {
+        private static readonly string GlobalConfigFilePath = Path.Combine(Directories.Config, "system.xml");
+
+        private GlobalConfiguration Configuration;
+
         private GT.Timer _eventTimer;
         private GT.Color _prevColour;
         private Logger _logger;
@@ -134,37 +139,40 @@ namespace MyHome
             }
         }
 
+        private void ReadGlobalConfigurationFile()
+        {
+            if (!_fileManager.FileExists(GlobalConfigFilePath))
+            {
+                using (var fs = _fileManager.GetFileStream(GlobalConfigFilePath, FileMode.CreateNew, FileAccess.Write))
+                {
+                    Configuration = GlobalConfiguration.DefaultConfiguration;
+                    GlobalConfiguration.Write(fs, Configuration);
+                }
+            }
+            else
+            {
+                using (var fs = _fileManager.GetFileStream(GlobalConfigFilePath, FileMode.Open, FileAccess.Read))
+                {
+                    Configuration = GlobalConfiguration.Read(fs);
+                }
+            }
+        }
+
         private void SetupDevices()
         {
             _displayManager = new DisplayManager(displayT35);
+
             _systemManager = new SystemManager();
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
             _fileManager = new FileManager(sdCard);
+
             _attendanceManager = new AttendanceManager(rfidReader, _fileManager);
             _attendanceManager.OnAccessDenied += AttendanceManager_OnAccessDenied;
             _attendanceManager.OnScannedKeycard += AttendanceManager_OnScannedKeycard;
 
-            Logger.Initialise(_fileManager);
-
-            _fileManager.OnDeviceSwap += (bool diskInserted) =>
-            {
-                Logger.SetupFileLogging(diskInserted);
-
-                if (diskInserted)
-                {
-                    _attendanceManager.Initialise(true, new TimeSpan(9, 0, 0), new TimeSpan(17, 30, 0));
-                }
-            };
-
-            // fix SD card mount being unreliable on startup
-            new Awaitable(() => _fileManager.Remount());
-
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
-            //_networkManager.ModeStatic("192.168.1.69", gateway: "192.168.1.1");
-            _networkManager.ModeDhcp();
-            _networkManager.Enable();
 
             _cameraManager = new CameraManager(camera, _systemManager);
             _cameraManager.OnPictureTaken += CameraManager_OnPictureTaken;
@@ -176,6 +184,34 @@ namespace MyHome
             _weatherManager.OnMeasurement += WeatherManager_OnMeasurement;
 
             _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);
+
+            Logger.Initialise(_fileManager);
+
+            // Code to trigger once the SD card is ready
+            _fileManager.OnDeviceSwap += (bool diskInserted) =>
+            {
+                // First time global configuration
+                if (diskInserted && Configuration == null)
+                {
+                    ReadGlobalConfigurationFile();
+
+                    Logger.SetupFileLogging(
+                        Configuration.Logging.FileLogsEnabled,
+                        Configuration.Logging.ConsoleLogsEnabled);
+
+                    _attendanceManager.Initialise(Configuration.Attendance);
+                    _cameraManager.Initialise(Configuration.Camera);
+                    _networkManager.Initialise(Configuration.Network);
+                }
+                else if (!diskInserted)
+                {
+                    // Disable file logging on disk removal
+                    Logger.SetupFileLogging(false);
+                }
+            };
+
+            // Fix SD card mount being unreliable on startup
+            _fileManager.Remount();
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
@@ -185,7 +221,9 @@ namespace MyHome
 
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
-            if (!_fileManager.HasFileSystem) return;
+            if (!_fileManager.HasFileSystem ||
+                !Configuration.Camera.SavePicturesToSdCard)
+                return;
 
             var now = _systemManager.Time;
             var filename = string.Concat("IMG_", now.Timestamp(), FileExtensions.Bitmap);
@@ -285,13 +323,16 @@ namespace MyHome
 
         private void WeatherManager_OnMeasurement(WeatherModel weather)
         {
-            if (_saveMeasurementThread.IsRunning || !_fileManager.HasFileSystem) { return; }
-
             if (_displayManager.IsLoadingScreen)
             {
                 _displayManager.EnableBacklight();
                 _displayManager.TouchScreen();
             }
+
+            if (_saveMeasurementThread.IsRunning ||
+                !_fileManager.HasFileSystem ||
+                !Configuration.Sensors.SaveMeasurementsToSdCard)
+                return;
 
             _saveMeasurementThread = new Awaitable(() =>
             {

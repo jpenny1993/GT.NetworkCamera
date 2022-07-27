@@ -1,4 +1,7 @@
 using System;
+using System.Ext.Xml;
+using System.IO;
+using System.Xml;
 
 namespace MyHome.Configuration
 {
@@ -16,7 +19,7 @@ namespace MyHome.Configuration
 
         public SensorConfiguration Sensors;
 
-        public static GlobalConfiguration DefaultConfiguration 
+        public static GlobalConfiguration DefaultConfiguration
         { 
             get 
             {
@@ -60,6 +63,55 @@ namespace MyHome.Configuration
                     }
                 };
             } 
+        }
+
+        public static GlobalConfiguration Read(Stream fileStream)
+        {
+            var readerSettings = new XmlReaderSettings
+            {
+                IgnoreWhitespace = true,
+                IgnoreComments = true
+            };
+
+            var reader = XmlReader.Create(fileStream, readerSettings);
+
+            reader.Read(); // <xml/>
+            reader.Read(); // <GlobalConfiguration>
+
+            var configuration = new GlobalConfiguration
+            {
+                Attendance = AttendanceConfiguration.Read(reader),
+                Camera = CameraConfiguration.Read(reader),
+                Lights = LightConfiguration.Read(reader),
+                Logging = LoggerConfiguration.Read(reader),
+                Network = NetworkConfiguration.Read(reader),
+                Sensors = SensorConfiguration.Read(reader),
+            };
+
+            reader.Read(); // </GlobalConfiguration>
+
+            var eof = reader.EOF;
+
+            return configuration;
+        }
+
+        public static void Write(Stream fileStream, GlobalConfiguration configuration)
+        {
+            var writer = XmlWriter.Create(fileStream);
+
+            writer.WriteProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
+            writer.WriteStartElement("GlobalConfiguration");
+
+            AttendanceConfiguration.Write(writer, configuration.Attendance);
+            CameraConfiguration.Write(writer, configuration.Camera);
+            LightConfiguration.Write(writer, configuration.Lights);
+            LoggerConfiguration.Write(writer, configuration.Logging);
+            NetworkConfiguration.Write(writer, configuration.Network);
+            SensorConfiguration.Write(writer, configuration.Sensors);
+
+            writer.WriteEndElement();
+            writer.Flush();
+            writer.Close();
         }
     }
 }

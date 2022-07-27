@@ -10,6 +10,7 @@ using MyHome.Utilities;
 
 using GT = Gadgeteer;
 using System.IO;
+using MyHome.Configuration;
 
 namespace MyHome.Modules
 {
@@ -29,9 +30,7 @@ namespace MyHome.Modules
         private readonly IFileManager _fm;
         private readonly Hashtable _users;
 
-        private bool _allowNewUsers;
-        private TimeSpan _openingHours;
-        private TimeSpan _closingHours;
+        private AttendanceConfiguration _configuration;
 
         public event AttendanceManager.EventHandler OnAccessDenied;
 
@@ -40,7 +39,6 @@ namespace MyHome.Modules
         public AttendanceManager(RFIDReader rfidReader, IFileManager fm)
         {
             _logger = Logger.ForContext(this);
-            _allowNewUsers = false;
             _fm = fm;
             _rfid = rfidReader;
             _rfid.IdReceived += Rfid_IdReceived;
@@ -48,11 +46,9 @@ namespace MyHome.Modules
             _users = new Hashtable();
         }
 
-        public void Initialise(bool allowNewUsers, TimeSpan openingHours, TimeSpan closingHours)
+        public void Initialise(AttendanceConfiguration configuration)
         {
-            _allowNewUsers = allowNewUsers;
-            _openingHours = openingHours;
-            _closingHours = closingHours;
+            _configuration = configuration;
 
             if (!_fm.FileExists(UsersCsvFilePath)) return;
 
@@ -133,7 +129,7 @@ namespace MyHome.Modules
 
         public void AutoClockOut(DateTime today, DateTime now)
         {
-            if (now.TimeOfDay < _closingHours) return;
+            if (now.TimeOfDay < _configuration.ClosingHours) return;
 
             if (!_fm.HasFileSystem) return;
 
@@ -148,7 +144,7 @@ namespace MyHome.Modules
                     if (user.LastClockedIn > today &&      // has clocked-in today
                         user.LastClockedOut < user.LastClockedIn)   // has clocked-in again since last clock-out
                     {
-                        var closingTime = today.Add(_closingHours);
+                        var closingTime = today.Add(_configuration.ClosingHours);
                         AppendAttendance(fs, closingTime, user.RFID, AttendanceStatus.ClockOut, "Automated clock-out by system", false);
                         user.LastClockedOut = closingTime;
                     }
@@ -175,12 +171,14 @@ namespace MyHome.Modules
 
             DateTime lastClockIn = DateTime.MinValue;
             var clockInSet = !StringExtensions.IsNullOrEmpty(lastClockedIn)
-                ? DateTimeParser.SortableDateTime(lastClockedIn, out lastClockIn)
+                ? DateTimeParser.SortableDateTime(lastClockedIn, out lastClockIn) ||
+                  DateTimeParser.ISO_UK(lastClockedIn, out lastClockIn)
                 : false;
 
             DateTime lastClockOut = DateTime.MinValue;
             var clockOutSet = !StringExtensions.IsNullOrEmpty(lastClockedOut)
-                ? DateTimeParser.SortableDateTime(lastClockedOut, out lastClockIn)
+                ? DateTimeParser.SortableDateTime(lastClockedOut, out lastClockIn) ||
+                  DateTimeParser.ISO_UK(lastClockedIn, out lastClockIn)
                 : false;
             
             var user = new UserAccount
@@ -262,6 +260,12 @@ namespace MyHome.Modules
 
         private void Rfid_MalformedIdReceived(RFIDReader sender, EventArgs e)
         {
+            if (_configuration == null)
+            {
+                _logger.Information("Malformed RFID received before configuration was set.");
+                return;
+            }
+
             _logger.Warning("Malformed RFID received...");
             if (OnAccessDenied != null)
             {
@@ -271,10 +275,16 @@ namespace MyHome.Modules
 
         private void Rfid_IdReceived(RFIDReader sender, string rfid)
         {
+            if (_configuration == null) 
+            {
+                _logger.Information("RFID received before configuration was set.");
+                return;
+            }
+
             _logger.Information("RFID received...");
             var user = FindUser(rfid);
             
-            if (user == null && !_allowNewUsers)
+            if (user == null && !_configuration.AllowNewUsers)
             {
                 if (OnAccessDenied != null)
                 {

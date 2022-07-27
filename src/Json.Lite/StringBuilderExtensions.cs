@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Json.Lite
 {
-    internal static class StringBuilderExtensions
+    public static class StringBuilderExtensions
     {
         private const int IndentSize = 3;
 
@@ -24,10 +24,11 @@ namespace Json.Lite
             };
         }
 
-        public static void WriteBoolean(this StringBuilder sb, object value)
+        public static StringBuilder WriteBoolean(this StringBuilder sb, object value)
         {
             if ((bool)value) sb.Append("true");
             else sb.Append("false");
+            return sb;
         }
 
         public static void WriteColon(this StringBuilder sb)
@@ -41,6 +42,20 @@ namespace Json.Lite
             WriteQuote(sb);
             sb.Append(datetime.ToString(IsoDateFormat));
             WriteQuote(sb);
+        }
+
+        public static StringBuilder WriteArrayAsCsv(this StringBuilder sb, DayOfWeek[] array)
+        {
+            var lastIndex = array.Length - 1;
+            for (int index = 0; index < array.Length; index++)
+            {
+                WriteNumber(sb, array[index]);
+                if (index < lastIndex)
+                {
+                    WriteComma(sb);
+                }
+            }
+            return sb;
         }
 
         public static void WriteEnumerable(this StringBuilder sb, object value, int indent)
@@ -100,7 +115,7 @@ namespace Json.Lite
                 }
                 else if (keyType.IsTimeSpan())
                 {
-                    WriteTimeSpan(sb, item.Key);
+                    WriteTimeSpanInQuotes(sb, item.Key);
                 }
                 else if (keyType.IsString() || keyType.IsNumeric())
                 {
@@ -245,7 +260,7 @@ namespace Json.Lite
             }
             else if (type.IsTimeSpan())
             {
-                WriteTimeSpan(sb, value);
+                WriteTimeSpanInQuotes(sb, value);
             }
             else if (type.IsHashtable())
             {
@@ -274,16 +289,14 @@ namespace Json.Lite
             WriteQuote(sb);
         }
 
-        public static void WriteTimeSpan(this StringBuilder sb, object value)
+        public static StringBuilder WriteTimeSpan(this StringBuilder sb, TimeSpan timespan)
         {
-            var timespan = (TimeSpan)value;
-            WriteQuote(sb);
             if (timespan.Days < 10)
             {
                 sb.Append('0');
             }
 
-            sb.Append(timespan.Days);
+            sb.Append(timespan.Hours);
             WriteColon(sb);
             if (timespan.Minutes < 10)
             {
@@ -298,6 +311,13 @@ namespace Json.Lite
             }
 
             sb.Append(timespan.Seconds);
+            return sb;
+        }
+
+        public static void WriteTimeSpanInQuotes(this StringBuilder sb, object value)
+        {
+            WriteQuote(sb);
+            WriteTimeSpan(sb, (TimeSpan)value);
             WriteQuote(sb);
         }
     }

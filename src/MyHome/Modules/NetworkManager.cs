@@ -6,6 +6,7 @@ using Gadgeteer.Networking;
 
 using GT = Gadgeteer;
 using GTM = Gadgeteer.Modules;
+using MyHome.Configuration;
 
 namespace MyHome.Modules
 {
@@ -40,6 +41,23 @@ namespace MyHome.Modules
         }
 
         public string IpAddress { get { return _ethernet.NetworkSettings.IPAddress; } }
+
+        public void Initialise(NetworkConfiguration configuration)
+        {
+            if (configuration.UseDHCP)
+            {
+                ModeDhcp();
+            }
+            else
+            { 
+                ModeStatic(
+                    configuration.IPAddress,
+                    configuration.SubnetMask,
+                    configuration.Gateway);
+            }
+
+            Enable();
+        }
 
         public void ModeDhcp()
         {

@@ -7,8 +7,6 @@ namespace MyHome.Modules
         event AttendanceManager.EventHandler OnAccessDenied;
         event AttendanceManager.ScanEventHandler OnScannedKeycard;
 
-        void Initialise(bool allowNewUsers, TimeSpan openingHours, TimeSpan closingHours);
-
         void ClockIn(DateTime timestamp, string rfid);
 
         void ClockIn(DateTime timestamp, string rfid, string reason);

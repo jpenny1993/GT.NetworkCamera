@@ -3,6 +3,7 @@ using Microsoft.SPOT;
 using Gadgeteer.Modules.GHIElectronics;
 
 using GT = Gadgeteer;
+using MyHome.Configuration;
 
 namespace MyHome.Modules
 {
@@ -14,6 +15,8 @@ namespace MyHome.Modules
         private readonly ISystemManager _sys;
         private GT.Picture _picture;
         private DateTime _pictureLastTaken;
+
+        private CameraConfiguration _configuration;
 
         public event CameraManager.PictureTakenEventHandler OnPictureTaken;
 
@@ -27,6 +30,11 @@ namespace MyHome.Modules
             _camera.CameraConnected += Camera_CameraConnected;
             _camera.CameraDisconnected += Camera_CameraDisconnected;
             _camera.PictureCaptured += Camera_PictureCaptured;
+        }
+
+        public void Initialise(CameraConfiguration configuration)
+        {
+            _configuration = configuration;
         }
 
         public bool Ready

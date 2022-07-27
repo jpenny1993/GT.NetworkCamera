@@ -88,8 +88,9 @@ namespace MyHome.Modules
             return new Logger(caller.GetType().Name);
         }
 
-        public static void SetupFileLogging(bool enabled)
+        public static void SetupFileLogging(bool enableFileLogging, bool enableConsoleLogging = true)
         {
+            Instance.ConsoleLogsEnabled = enableConsoleLogging;
             Instance.FileLogsEnabled = false;
             lock (Instance.FileWriteMutex)
             {
@@ -109,7 +110,7 @@ namespace MyHome.Modules
                 }
 
                 // Start new log file
-                if (enabled)
+                if (enableFileLogging)
                 {
                     LogInternal("Enabling file logging");
                     Instance.FileLogCounter = 0;
