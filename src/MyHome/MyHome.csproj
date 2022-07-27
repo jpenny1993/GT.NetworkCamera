@@ -39,6 +39,12 @@
   <!-- Everything below here is custom to .NET MF / Gadgeteer template-->
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
+    <Compile Include="Configuration\CameraConfiguration.cs" />
+    <Compile Include="Configuration\LightConfiguration.cs" />
+    <Compile Include="Configuration\LoggerConfiguration.cs" />
+    <Compile Include="Configuration\NetworkConfiguration.cs" />
+    <Compile Include="Configuration\SensorConfiguration.cs" />
+    <Compile Include="Configuration\AttendanceConfiguration.cs" />
     <Compile Include="Constants\AttendanceStatus.cs" />
     <Compile Include="Constants\ContentTypes.cs" />
     <Compile Include="Constants\DateTypes.cs" />
@@ -52,6 +58,7 @@
     <Compile Include="Extensions\StringCollectionExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Models\Attendance.cs" />
+    <Compile Include="Configuration\GlobalConfiguration.cs" />
     <Compile Include="Models\UserAccount.cs" />
     <Compile Include="Models\GalleryObject.cs" />
     <Compile Include="Models\PathObject.cs" />
