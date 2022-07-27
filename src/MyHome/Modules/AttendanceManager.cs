@@ -26,6 +26,7 @@ namespace MyHome.Modules
 
         private readonly Logger _logger;
         private readonly RFIDReader _rfid;
+        private readonly IFileManager _fm;
         private readonly Hashtable _users;
 
         private bool _allowNewUsers;
@@ -36,27 +37,28 @@ namespace MyHome.Modules
 
         public event AttendanceManager.ScanEventHandler OnScannedKeycard;
 
-        public AttendanceManager(RFIDReader rfidReader)
+        public AttendanceManager(RFIDReader rfidReader, IFileManager fm)
         {
             _logger = Logger.ForContext(this);
             _allowNewUsers = false;
+            _fm = fm;
             _rfid = rfidReader;
             _rfid.IdReceived += Rfid_IdReceived;
             _rfid.MalformedIdReceived += Rfid_MalformedIdReceived;
             _users = new Hashtable();
         }
 
-        public void Initialise(IFileManager fm, bool allowNewUsers, TimeSpan openingHours, TimeSpan closingHours)
+        public void Initialise(bool allowNewUsers, TimeSpan openingHours, TimeSpan closingHours)
         {
             _allowNewUsers = allowNewUsers;
             _openingHours = openingHours;
             _closingHours = closingHours;
 
-            if (!fm.FileExists(UsersCsvFilePath)) return;
+            if (!_fm.FileExists(UsersCsvFilePath)) return;
 
             // Get users file
             _logger.Information("Initialising user accounts");
-            var file = fm.GetFileString(UsersCsvFilePath);
+            var file = _fm.GetFileString(UsersCsvFilePath);
             var rows = file.Split('\r', '\n');
 
             // For each line create user model
@@ -79,21 +81,21 @@ namespace MyHome.Modules
             _logger.Information("Initialised all user accounts");
         }
 
-        public void ClockIn(IFileManager fm, DateTime timestamp, string rfid)
+        public void ClockIn(DateTime timestamp, string rfid)
         {
-            ClockIn(fm, timestamp, rfid, string.Empty);
+            ClockIn(timestamp, rfid, string.Empty);
         }
 
-        public void ClockIn(IFileManager fm, DateTime timestamp, string rfid, string reason)
+        public void ClockIn(DateTime timestamp, string rfid, string reason)
         {
-            if (!fm.HasFileSystem) return;
+            if (!_fm.HasFileSystem) return;
 
             var user = FindUser(rfid);
             if (user == null) return;
 
             _logger.Information("Performing user clock-in");
-            var isFirstRow = !fm.FileExists(AttendanceCsvFilePath);
-            using (var fs = fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
+            var isFirstRow = !_fm.FileExists(AttendanceCsvFilePath);
+            using (var fs = _fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
             {
                 AppendAttendance(fs, timestamp, rfid, AttendanceStatus.ClockIn, reason, isFirstRow);
                 fs.Flush();
@@ -101,24 +103,24 @@ namespace MyHome.Modules
             }
 
             user.LastClockedIn = timestamp;
-            SaveUserAccountsToFile(fm);
+            SaveUserAccountsToFile(_fm);
         }
 
-        public void ClockOut(IFileManager fm, DateTime timestamp, string rfid)
+        public void ClockOut(DateTime timestamp, string rfid)
         {
-            ClockOut(fm, timestamp, rfid, string.Empty);
+            ClockOut(timestamp, rfid, string.Empty);
         }
 
-        public void ClockOut(IFileManager fm, DateTime timestamp, string rfid, string reason)
+        public void ClockOut(DateTime timestamp, string rfid, string reason)
         {
-            if (!fm.HasFileSystem) return;
+            if (!_fm.HasFileSystem) return;
 
             var user = FindUser(rfid);
             if (user == null) return;
 
             _logger.Information("Performing user clock-out");
-            var isFirstRow = !fm.FileExists(AttendanceCsvFilePath);
-            using (var fs = fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
+            var isFirstRow = !_fm.FileExists(AttendanceCsvFilePath);
+            using (var fs = _fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
             {
                 AppendAttendance(fs, timestamp, rfid, AttendanceStatus.ClockOut, reason, isFirstRow);
                 fs.Flush();
@@ -126,20 +128,20 @@ namespace MyHome.Modules
             }
 
             user.LastClockedOut = timestamp;
-            SaveUserAccountsToFile(fm);
+            SaveUserAccountsToFile(_fm);
         }
 
-        public void AutoClockOut(IFileManager fm)
+        public void AutoClockOut()
         {
             if (DateTime.Now.TimeOfDay < _closingHours) return;
 
-            if (!fm.HasFileSystem) return;
+            if (!_fm.HasFileSystem) return;
 
             // if no file exists then people aren't clocked-in
-            if (!fm.FileExists(AttendanceCsvFilePath)) return;
+            if (!_fm.FileExists(AttendanceCsvFilePath)) return;
 
             _logger.Information("Running auto clock-out");
-            using (var fs = fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
+            using (var fs = _fm.GetFileStream(AttendanceCsvFilePath, FileMode.Append, FileAccess.Write))
             {
                 foreach (UserAccount user in _users.Values)
                 {
@@ -155,7 +157,7 @@ namespace MyHome.Modules
                 fs.Close();
             }
 
-            SaveUserAccountsToFile(fm);
+            SaveUserAccountsToFile(_fm);
         }
 
         private UserAccount AddUser(string rfid, string displayName = null, string lastClockedIn = null, string lastClockedOut = null)

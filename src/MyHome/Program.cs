@@ -141,7 +141,7 @@ namespace MyHome
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
             _fileManager = new FileManager(sdCard);
-            _attendanceManager = new AttendanceManager(rfidReader);
+            _attendanceManager = new AttendanceManager(rfidReader, _fileManager);
             _attendanceManager.OnAccessDenied += AttendanceManager_OnAccessDenied;
             _attendanceManager.OnScannedKeycard += AttendanceManager_OnScannedKeycard;
 
@@ -153,7 +153,7 @@ namespace MyHome
 
                 if (diskInserted)
                 {
-                    _attendanceManager.Initialise(_fileManager, true, new TimeSpan(9, 0, 0), new TimeSpan(17, 30, 0));
+                    _attendanceManager.Initialise(true, new TimeSpan(9, 0, 0), new TimeSpan(17, 30, 0));
                 }
             };
 
@@ -251,12 +251,12 @@ namespace MyHome
             {
                 case AttendanceStatus.ClockIn:
                     _logger.Information("Hello {0}", displayName);
-                    _attendanceManager.ClockIn(_fileManager, _systemManager.Time, rfid);
+                    _attendanceManager.ClockIn(_systemManager.Time, rfid);
                     break;
 
                 case AttendanceStatus.ClockOut:
                     _logger.Information("Goodbye {0}", displayName);
-                    _attendanceManager.ClockOut(_fileManager, _systemManager.Time, rfid);
+                    _attendanceManager.ClockOut(_systemManager.Time, rfid);
                     break;
 
                 default: 
