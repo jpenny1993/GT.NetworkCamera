@@ -17,6 +17,6 @@ namespace MyHome.Modules
 
         void ClockOut(DateTime timestamp, string rfid, string reason);
 
-        void AutoClockOut();
+        void AutoClockOut(DateTime today, DateTime now);
     }
 }

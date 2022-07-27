@@ -131,9 +131,9 @@ namespace MyHome.Modules
             SaveUserAccountsToFile(_fm);
         }
 
-        public void AutoClockOut()
+        public void AutoClockOut(DateTime today, DateTime now)
         {
-            if (DateTime.Now.TimeOfDay < _closingHours) return;
+            if (now.TimeOfDay < _closingHours) return;
 
             if (!_fm.HasFileSystem) return;
 
@@ -145,10 +145,10 @@ namespace MyHome.Modules
             {
                 foreach (UserAccount user in _users.Values)
                 {
-                    if (user.LastClockedIn > DateTime.Today &&      // has clocked-in today
+                    if (user.LastClockedIn > today &&      // has clocked-in today
                         user.LastClockedOut < user.LastClockedIn)   // has clocked-in again since last clock-out
                     {
-                        var closingTime = DateTime.Today.Add(_closingHours);
+                        var closingTime = today.Add(_closingHours);
                         AppendAttendance(fs, closingTime, user.RFID, AttendanceStatus.ClockOut, "Automated clock-out by system", false);
                         user.LastClockedOut = closingTime;
                     }

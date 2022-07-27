@@ -45,6 +45,11 @@ namespace MyHome.Modules
             get { return _deviceStartTime; }
         }
 
+        public DateTime Date
+        {
+            get { return DateTime.Today; }
+        }
+
         public DateTime Time
         {
             get { return DateTime.Now; }
