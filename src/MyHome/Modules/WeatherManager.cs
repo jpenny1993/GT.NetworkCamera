@@ -5,6 +5,8 @@ using Gadgeteer.Modules.GHIElectronics;
 using MyHome.Models;
 
 using GT = Gadgeteer;
+using MyHome.Utilities;
+using MyHome.Configuration;
 
 namespace MyHome.Modules
 {
@@ -15,6 +17,9 @@ namespace MyHome.Modules
         private readonly LightSense _light;
         private readonly TempHumidity _sensor;
         private WeatherModel _weather;
+
+        private SensorConfiguration _configuration;
+        private IAwaitable _saveMeasurementThread = Awaitable.Default;
 
         public event WeatherManager.Measurement OnMeasurement;
 
@@ -44,6 +49,11 @@ namespace MyHome.Modules
             get { return _weather.Temperature; }
         }
 
+        public void Initialise(SensorConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         public void TakeMeasurement()
         {
             if (!_sensor.IsTakingMeasurements)
@@ -61,6 +71,39 @@ namespace MyHome.Modules
             {
                 OnMeasurement.Invoke(_weather);
             }
+        }
+
+        public void SaveMeasurementToSdCard(IFileManager _fileManager, WeatherModel weather, DateTime timestamp)
+        {
+            if (!_configuration.SaveMeasurementsToSdCard) return;
+            if (_saveMeasurementThread.IsRunning) return;
+            if (!_fileManager.HasFileSystem) return;
+
+            _saveMeasurementThread = new Awaitable(() =>
+            {
+                var filename = string.Concat("measurements_", timestamp.Datestamp(), FileExtensions.Csv);
+                var filepath = MyPath.Combine(Directories.Weather, filename);
+                var fileExists = _fileManager.FileExists(filepath);
+
+                using (var fs = _fileManager.GetFileStream(filepath, FileMode.Append, FileAccess.Write))
+                {
+                     // Setup column headers when creating a new CSV file
+                    if (!fileExists)
+                    {
+                        _fileManager.WriteToFileStream(fs, "DateTime, Humidity, Luminosity, Temperature\r\n");
+                    }
+
+                    // Append line to existing CSV
+                    _fileManager.WriteToFileStream(fs, 
+                        "{0}, {1}, {2}, {3}\r\n".Format(
+                            timestamp.SortableDateTime(),
+                            weather.Humidity,
+                            weather.Luminosity,
+                            weather.Temperature));
+                }
+
+                _logger.Information("{0} updated", filename);
+            });
         }
     }
 #pragma warning restore 0612, 0618

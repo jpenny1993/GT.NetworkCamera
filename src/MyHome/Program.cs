@@ -41,8 +41,6 @@ namespace MyHome
         private WebsiteManager _websiteManager;
         private AttendanceManager _attendanceManager;
 
-        private IAwaitable _saveMeasurementThread = Awaitable.Default;
-
         // This method is run when the mainboard is powered up or reset.   
         void ProgramStarted()
         {
@@ -197,6 +195,7 @@ namespace MyHome
 
                     _attendanceManager.Initialise(Configuration.Attendance);
                     _cameraManager.Initialise(Configuration.Camera);
+                    _weatherManager.Initialise(Configuration.Sensors);
                     _networkManager.Initialise(Configuration.Network);
                 }
                 else if (!diskInserted)
@@ -318,37 +317,7 @@ namespace MyHome
                 _displayManager.TouchScreen();
             }
 
-            if (_saveMeasurementThread.IsRunning ||
-                !_fileManager.HasFileSystem ||
-                !Configuration.Sensors.SaveMeasurementsToSdCard)
-                return;
-
-            _saveMeasurementThread = new Awaitable(() =>
-            {
-                var now = _systemManager.Time;
-                var filename = string.Concat("measurements_", now.Datestamp(), FileExtensions.Csv);
-                var filepath = MyPath.Combine(Directories.Weather, filename);
-                var fileExists = _fileManager.FileExists(filepath);
-
-                using (var fs = _fileManager.GetFileStream(filepath, FileMode.Append, FileAccess.Write))
-                {
-                     // Setup column headers when creating a new CSV file
-                    if (!fileExists)
-                    {
-                        _fileManager.WriteToFileStream(fs, "DateTime, Humidity, Luminosity, Temperature\r\n");
-                    }
-
-                    // Append line to existing CSV
-                    _fileManager.WriteToFileStream(fs, 
-                        "{0}, {1}, {2}, {3}\r\n".Format(
-                            now.SortableDateTime(),
-                            weather.Humidity,
-                            weather.Luminosity,
-                            weather.Temperature));
-                }
-
-                _logger.Information("{0} updated", filename);
-            });
+            _weatherManager.SaveMeasurementToSdCard(_fileManager, weather, _systemManager.Time);
         }
     }
 }
