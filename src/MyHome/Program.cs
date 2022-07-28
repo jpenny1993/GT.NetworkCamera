@@ -122,11 +122,19 @@ namespace MyHome
                     _weatherManager.Initialise(Configuration.Sensors);
                     _networkManager.Initialise(Configuration.Network);
                 }
-                else if (!diskInserted)
+                else if (diskInserted)
+                {
+                    // Re-enable file logging on disk restoration
+                    Logger.SetupFileLogging(
+                        Configuration.Logging.FileLogsEnabled,
+                        Configuration.Logging.ConsoleLogsEnabled);
+                }
+                else
                 {
                     // Disable file logging on disk removal
                     Logger.SetupFileLogging(false);
                 }
+
             };
 
             // Fix SD card mount being unreliable on startup
