@@ -90,6 +90,24 @@ namespace MyHome.Modules
             }
         }
 
+        public void DeleteDirectory(string folderPath)
+        {
+            if (DirectoryExists(folderPath))
+            {
+                _logger.Information("Deleting directory \"{0}\"", folderPath);
+                _sdCard.StorageDevice.DeleteDirectory(folderPath);
+            }
+        }
+
+        public void DeleteFile(string filePath)
+        {
+            if (FileExists(filePath))
+            {
+                _logger.Information("Deleting file\"{0}\"", filePath);
+                _sdCard.StorageDevice.Delete(filePath);
+            }
+        }
+
         public bool DirectoryExists(string folderPath)
         {
             _logger.Information("Checking directory exists \"{0}\"", folderPath);
@@ -390,12 +408,6 @@ namespace MyHome.Modules
                 var bitmap = picture.MakeBitmap();
                 SaveBitmap(filepath, bitmap);
             }
-        }
-
-        public void WriteToFileStream(FileStream fs, string text)
-        {
-            var bytes = Encoding.UTF8.GetBytes(text);
-            fs.Write(bytes, 0, text.Length);
         }
     }
 #pragma warning restore 0612, 0618

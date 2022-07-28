@@ -2,11 +2,14 @@ using System;
 using System.Collections;
 using Microsoft.SPOT;
 using Gadgeteer.Modules.GHIElectronics;
+using MyHome.Configuration;
+using MyHome.Constants;
+using MyHome.Extensions;
 using MyHome.Models;
+using MyHome.Utilities;
 
 using GT = Gadgeteer;
-using MyHome.Utilities;
-using MyHome.Configuration;
+using System.IO;
 
 namespace MyHome.Modules
 {
@@ -87,19 +90,18 @@ namespace MyHome.Modules
 
                 using (var fs = _fileManager.GetFileStream(filepath, FileMode.Append, FileAccess.Write))
                 {
-                     // Setup column headers when creating a new CSV file
                     if (!fileExists)
                     {
-                        _fileManager.WriteToFileStream(fs, "DateTime, Humidity, Luminosity, Temperature\r\n");
+                        fs.WriteText("DateTime, Humidity, Luminosity, Temperature\r\n");
                     }
 
-                    // Append line to existing CSV
-                    _fileManager.WriteToFileStream(fs, 
-                        "{0}, {1}, {2}, {3}\r\n".Format(
-                            timestamp.SortableDateTime(),
-                            weather.Humidity,
-                            weather.Luminosity,
-                            weather.Temperature));
+                    fs.WriteText(
+                        "{0}, {1}, {2}, {3}\r\n",
+                        timestamp.SortableDateTime(),
+                        weather.Humidity,
+                        weather.Luminosity,
+                        weather.Temperature
+                    );
                 }
 
                 _logger.Information("{0} updated", filename);

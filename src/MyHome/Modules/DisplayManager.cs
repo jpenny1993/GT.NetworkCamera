@@ -97,6 +97,74 @@ namespace MyHome.Modules
             DispatchScreenUpdate(WhiteBackgroundBrush, screen);
         }
 
+        public void ClockInOutDeniedScreen()
+        {
+            var screen = GuiBuilder.Create()
+                .Panel(vp => vp.Vertical().VerticalAlignCenter()
+                    .AddChild(c1 => c1
+                        .Panel(hp => hp.Horizontal().HorizontalAlignCenter()
+                            .AddChild(c2 => c2.Label(l => l.Text("Access Denied").Foreground(GT.Color.Black)))
+                        )
+                    )
+                    .AddChild(c1 => c1
+                        .Panel(hp => hp.Horizontal().HorizontalAlignCenter()
+                            .AddChild(c2 => c2.Image(Resources.GetBytes(Resources.BinaryResources.Deny)))
+                        )
+                    )
+                );
+
+            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+        }
+
+        public void ClockInOutOnTimeScreen(DateTime timestamp, string status, string displayName)
+        {
+            var screen = GuiBuilder.Create().Panel(c1 => c1.Vertical().VerticalAlignCenter().MarginLeftRight()
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Image(Resources.GetBytes(Resources.BinaryResources.Clock)))
+                    .AddChild(c7 => c7.Panel(cvp => cvp.Vertical().VerticalAlignCenter().MarginLeftRight()
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(displayName).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(status).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(timestamp.TimeOfDay()).TextAlignLeft().TextMarginLeft()))
+                    ))
+                ))
+            );
+
+            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+        }
+
+        public void ClockInOutConfirmationScreen(DateTime timestamp, string status, string displayName, string question, TouchEventHandler acceptAction, TouchEventHandler denyAction)
+        {
+            var screen = GuiBuilder.Create().Panel(c1 => c1.Vertical().VerticalAlignCenter().MarginLeftRight()
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Image(Resources.GetBytes(Resources.BinaryResources.Clock)))
+                    .AddChild(c7 => c7.Panel(cvp => cvp.Vertical().VerticalAlignCenter().MarginLeftRight()
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(displayName).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(status).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(timestamp.TimeOfDay()).TextAlignLeft().TextMarginLeft()))
+                    ))
+                ))
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Label(l => l.Text(question).Foreground(GT.Color.Black)))
+                ))
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Button(b => b
+                        .Content(c5 => c5.Image(Resources.GetBytes(Resources.BinaryResources.Accept)))
+                        .Background(GT.Color.White)
+                        .MarginRight()
+                        .OnPressed(GT.Color.Blue, acceptAction)
+                    ))
+                    .AddChild(c4 => c4.Button(b => b
+                        .Content(c5 => c5.Image(Resources.GetBytes(Resources.BinaryResources.Deny)))
+                        .Background(GT.Color.White)
+                        .MarginRight()
+                        .OnPressed(GT.Color.Blue, denyAction)
+                    ))
+                ))
+            );
+
+            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+        }
+
         private UIElement BuildDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
         {
             return GuiBuilder.Create().Panel(root => root

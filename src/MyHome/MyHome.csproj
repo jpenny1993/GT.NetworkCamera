@@ -54,6 +54,7 @@
     <Compile Include="Constants\WebRoutes.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />
+    <Compile Include="Extensions\FileStreamExtensions.cs" />
     <Compile Include="Extensions\ResponderExtensions.cs" />
     <Compile Include="Extensions\StringCollectionExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
@@ -205,5 +206,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Thermometer_Small.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Accept.jpg" />
+    <Content Include="Resources\Clock.jpg" />
+    <Content Include="Resources\Deny.jpg" />
   </ItemGroup>
 </Project>

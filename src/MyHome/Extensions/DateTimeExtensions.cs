@@ -22,6 +22,14 @@ namespace MyHome.Extensions
         }
 
         /// <summary>
+        /// Returns a a string in the following format; HH:mm.
+        /// </summary>
+        public static string TimeOfDay(this DateTime datetime)
+        {
+            return datetime.ToString("HH:mm");
+        }
+
+        /// <summary>
         /// Returns true if the current date is British Summer Time.
         /// Always changes on the last Sunday of March and last Sunday of October.
         /// </summary>

@@ -1,11 +1,12 @@
 using System;
 using Microsoft.SPOT;
 using Gadgeteer.Modules.GHIElectronics;
-
-using GT = Gadgeteer;
 using MyHome.Configuration;
 using MyHome.Constants;
+using MyHome.Extensions;
 using MyHome.Utilities;
+
+using GT = Gadgeteer;
 
 namespace MyHome.Modules
 {

@@ -20,6 +20,7 @@ using MyHome.Modules;
 using MyHome.Utilities;
 using MyHome.Models;
 using MyHome.Configuration;
+using Microsoft.SPOT.Input;
     
 namespace MyHome
 {
@@ -271,32 +272,63 @@ namespace MyHome
 
         private void AttendanceManager_OnAccessDenied()
         {
-            _logger.Information("RFID login failed");
+            _displayManager.ClockInOutDeniedScreen();
             _prevColour = infoLED.GetCurrentColor();
             infoLED.BlinkOnce(GT.Color.Red, new TimeSpan(0, 0, 3), _prevColour);
         }
 
-        private void AttendanceManager_OnScannedKeycard(string rfid, string displayName, string status)
+        private void AttendanceManager_OnScannedKeycard(string rfid, string displayName, string attendanceStatus)
         {
-            _prevColour = infoLED.GetCurrentColor();
-            infoLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
-
-            switch (status)
+            var timestamp = _systemManager.Time;
+            switch (attendanceStatus)
             {
                 case AttendanceStatus.ClockIn:
-                    _logger.Information("Hello {0}", displayName);
-                    _attendanceManager.ClockIn(_systemManager.Time, rfid);
+                    _displayManager.ClockInOutOnTimeScreen(timestamp, attendanceStatus, displayName);
+                    _attendanceManager.ClockIn(timestamp, rfid);
+                    //_displayManager.ClockInOutConfirmationScreen(
+                    //    timestamp,
+                    //    attendanceStatus,
+                    //    displayName,
+                    //    "Its out of hours, please confirm to clock-in",
+                    //    new TouchEventHandler((sender, args) => 
+                    //    {
+                    //        _attendanceManager.ClockIn(timestamp, rfid);
+                    //    }),
+                    //    new TouchEventHandler((sender, args) => 
+                    //    {
+                    //        // cancel action
+                    //    }));
+                    _displayManager.TouchScreen();
+                    _displayManager.EnableBacklight();
                     break;
 
                 case AttendanceStatus.ClockOut:
-                    _logger.Information("Goodbye {0}", displayName);
-                    _attendanceManager.ClockOut(_systemManager.Time, rfid);
+                    _displayManager.ClockInOutOnTimeScreen(timestamp, attendanceStatus, displayName);
+                    _attendanceManager.ClockOut(timestamp, rfid);
+                    //_displayManager.ClockInOutConfirmationScreen(
+                    //    timestamp,
+                    //    attendanceStatus,
+                    //    displayName,
+                    //    "Its out of hours, please confirm to clock-out",
+                    //    new TouchEventHandler((sender, args) => 
+                    //    {
+                    //        _attendanceManager.ClockOut(timestamp, rfid);
+                    //    }),
+                    //    new TouchEventHandler((sender, args) =>
+                    //    {
+                    //        // cancel action
+                    //    }));
+                    _displayManager.TouchScreen();
+                    _displayManager.EnableBacklight();
                     break;
 
                 default: 
-                    _logger.Warning("Unhandled attendance status \"{0}\"", status);
+                    _logger.Warning("Unhandled attendance status \"{0}\"", attendanceStatus);
                     break;
             }
+
+            _prevColour = infoLED.GetCurrentColor();
+            infoLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
         }
 
         private void SystemManager_OnTimeSynchronised(bool synchronised)

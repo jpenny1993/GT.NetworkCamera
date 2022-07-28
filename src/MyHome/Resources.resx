@@ -133,4 +133,13 @@
   <data name="Thermometer_Small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Thermometer_Small.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
+  <data name="Accept" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\accept.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="Deny" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\deny.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="Clock" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\clock.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
 </root>

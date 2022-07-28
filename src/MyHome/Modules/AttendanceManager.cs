@@ -200,17 +200,11 @@ namespace MyHome.Modules
         private void AppendAttendance(FileStream fs, DateTime timestamp, string rfid, string status, string reason, bool isFirstRow)
         {
             if (isFirstRow)
-            { 
-                var firstRow = AttendanceCsvRowTemplate
-                        .Format("Timestamp", "RFID", "Status", "Reason")
-                        .GetBytes();
-                fs.Write(firstRow, 0, firstRow.Length);
+            {
+                fs.WriteText(AttendanceCsvRowTemplate, "Timestamp", "RFID", "Status", "Reason");
             }
 
-            var bytes = AttendanceCsvRowTemplate
-                    .Format(timestamp.SortableDateTime(), rfid, status, reason)
-                    .GetBytes();
-            fs.Write(bytes, 0, bytes.Length);
+            fs.WriteText(AttendanceCsvRowTemplate, timestamp.SortableDateTime(), rfid, status, reason);
         }
 
         private UserAccount FindUser(string rfid)

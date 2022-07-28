@@ -15,6 +15,8 @@ namespace MyHome.Modules
 
         int CountFiles(string folderPath, bool recursive);
         void CreateDirectory(string folderPath);
+        void DeleteDirectory(string folderPath);
+        void DeleteFile(string filePath);
         bool DirectoryExists(string folderPath);
         bool FileExists(string filePath);
         byte[] GetFileContent(string filePath);
