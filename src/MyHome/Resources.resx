@@ -124,20 +124,11 @@
   <data name="small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\small.tinyfnt;System.Byte[], mscorlib, Culture=neutral, PublicKeyToken=null</value>
   </data>
-  <data name="Humidity" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\Humidity.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
-  </data>
   <data name="Humidity_Small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Humidity_Small.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
-  <data name="Sunshine" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\Sunshine.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
-  </data>
   <data name="Sunshine_Small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Sunshine_Small.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
-  </data>
-  <data name="Thermometer" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\Thermometer.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="Thermometer_Small" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Thermometer_Small.jpg;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>

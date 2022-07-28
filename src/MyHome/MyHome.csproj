@@ -198,15 +198,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Humidity.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Sunshine.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Thermometer.jpg" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\Humidity_Small.jpg" />
   </ItemGroup>
   <ItemGroup>

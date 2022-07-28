@@ -36,10 +36,7 @@ namespace MyHome
         [System.SerializableAttribute()]
         internal enum BinaryResources : short
         {
-            Sunshine = -27856,
-            Thermometer = -8883,
             Sunshine_Small = -5953,
-            Humidity = -571,
             Thermometer_Small = 16826,
             Humidity_Small = 22614,
         }
