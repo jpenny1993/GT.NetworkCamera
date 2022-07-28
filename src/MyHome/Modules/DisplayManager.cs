@@ -102,13 +102,13 @@ namespace MyHome.Modules
             var screen = GuiBuilder.Create()
                 .Panel(vp => vp.Vertical().VerticalAlignCenter()
                     .AddChild(c1 => c1
-                        .Panel(hp => hp.Horizontal().HorizontalAlignCenter()
-                            .AddChild(c2 => c2.Label(l => l.Text("Access Denied").Foreground(GT.Color.Black)))
+                        .Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                            .AddChild(c2 => c2.Image(Resources.GetBytes(Resources.BinaryResources.Deny)))
                         )
                     )
                     .AddChild(c1 => c1
-                        .Panel(hp => hp.Horizontal().HorizontalAlignCenter()
-                            .AddChild(c2 => c2.Image(Resources.GetBytes(Resources.BinaryResources.Deny)))
+                        .Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                            .AddChild(c2 => c2.Label(l => l.Text("Access Denied").Foreground(GT.Color.Black)))
                         )
                     )
                 );
