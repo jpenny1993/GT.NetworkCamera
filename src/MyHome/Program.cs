@@ -42,7 +42,6 @@ namespace MyHome
         private AttendanceManager _attendanceManager;
 
         private IAwaitable _saveMeasurementThread = Awaitable.Default;
-        private IAwaitable _savePictureThread = Awaitable.Default;
 
         // This method is run when the mainboard is powered up or reset.   
         void ProgramStarted()
@@ -97,10 +96,7 @@ namespace MyHome
             if (time.Minute % 5 == 0 && time.Second == 0)
             {
                 _logger.Print("Triggering events [5th min]");
-                if (!_savePictureThread.IsRunning)
-                {
-                    _cameraManager.TakePicture(_systemManager.Time);
-                }
+                _cameraManager.TakePicture(_systemManager.Time);
             }
 
             if (time.Minute % 58 == 0 && time.Second == 0)
@@ -221,14 +217,7 @@ namespace MyHome
 
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
-            if (!_fileManager.HasFileSystem ||
-                !Configuration.Camera.SavePicturesToSdCard)
-                return;
-
-            var now = _systemManager.Time;
-            var filename = string.Concat("IMG_", now.Timestamp(), FileExtensions.Bitmap);
-            var filepath = MyPath.Combine(Directories.Camera, now.Datestamp(), filename);
-            _savePictureThread = new Awaitable(() => _fileManager.SaveFile(filepath, picture));
+            _cameraManager.SavePictureToSdCard(_fileManager, picture, _systemManager.Time);
         }
 
         private void NetworkManager_OnStatusChanged(NetworkStatus status, NetworkStatus previousStatus)

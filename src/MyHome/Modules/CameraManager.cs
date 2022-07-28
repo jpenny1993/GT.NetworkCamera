@@ -4,6 +4,8 @@ using Gadgeteer.Modules.GHIElectronics;
 
 using GT = Gadgeteer;
 using MyHome.Configuration;
+using MyHome.Constants;
+using MyHome.Utilities;
 
 namespace MyHome.Modules
 {
@@ -17,6 +19,7 @@ namespace MyHome.Modules
         private DateTime _pictureLastTaken;
 
         private CameraConfiguration _configuration;
+        private IAwaitable _savePictureThread = Awaitable.Default;
 
         public event CameraManager.PictureTakenEventHandler OnPictureTaken;
 
@@ -81,8 +84,7 @@ namespace MyHome.Modules
         public void TakePicture(DateTime timestamp)
         {
             if (!_configuration.Enabled) return;
-
-            // Check the hardware is ready first as it's a less expensive operation
+            if (_savePictureThread.IsRunning) return;
             if (!_camera.CameraReady) return;
 
             // Check day of week, .Contains() doesn't exist in .NetMF
@@ -113,7 +115,7 @@ namespace MyHome.Modules
         /// </summary>
         public void TakePicture()
         {
-            if (_camera.CameraReady)
+            if (_camera.CameraReady && !_savePictureThread.IsRunning)
             {
                 _logger.Information("Take picture");
                 _camera.TakePicture();
@@ -122,6 +124,16 @@ namespace MyHome.Modules
             {
                 _logger.Information("Not ready to take picture");
             }
+        }
+
+        public void SavePictureToSdCard(IFileManager fm, GT.Picture picture, DateTime timestamp)
+        {
+            if (!_configuration.SavePicturesToSdCard) return;
+            if (!fm.HasFileSystem) return;
+
+            var filename = string.Concat("IMG_", timestamp.Timestamp(), FileExtensions.Bitmap);
+            var filepath = MyPath.Combine(Directories.Camera, timestamp.Datestamp(), filename);
+            _savePictureThread = new Awaitable(() => fm.SaveFile(filepath, picture));
         }
     }
 #pragma warning restore 0612, 0618
