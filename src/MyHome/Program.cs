@@ -57,82 +57,6 @@ namespace MyHome
             _logger.Information("Startup Complete");
         }
 
-        private void EventTimer_Tick(GT.Timer timer)
-        {
-            var time = _systemManager.UtcTime;
-
-            if (time.Second % 5 == 0)
-            {
-                _logger.Print("Triggering events [5th sec]");
-                _networkManager.UpdateNetworkStatus();
-            }
-
-            // There is no point running any other events until time has been synchronised once
-            if (!_systemManager.HasTimeSyncronised) return;
-
-            if (time.Second % 30 == 0)
-            {
-                _logger.Print("Triggering events [30th sec]");
-                _weatherManager.TakeMeasurement();
-            }
-
-            if (time.Second == 0)
-            {
-                _logger.Print("Triggering events [60th sec]");
-                if (_displayManager.IsDisplayActive)
-                {
-                    _displayManager.UpdateDashboard(
-                       _systemManager.Time,
-                       _networkManager.IpAddress,
-                       _weatherManager.Humidity,
-                       _weatherManager.Luminosity,
-                       _weatherManager.Temperature,
-                       _fileManager.TotalFreeSpaceInMb);
-                }
-            }
-
-            if (time.Minute % 5 == 0 && time.Second == 0)
-            {
-                _logger.Print("Triggering events [5th min]");
-                _cameraManager.TakePicture(_systemManager.Time);
-            }
-
-            if (time.Minute % 58 == 0 && time.Second == 0)
-            {
-                _logger.Print("Triggering events [58th min]");
-                _attendanceManager.AutoClockOut(_systemManager.Date, _systemManager.Time);
-            }
-
-            // At 3 AM UTC every morning
-            if (time.Hour == 3 && time.Minute == 0 && time.Second == 0)
-            {
-                _logger.Print("Triggering events [Maintenance]");
-                _systemManager.SyncroniseInternetTime();
-            }
-
-            // Keep screen active until first sensor reading has been done
-            if (_displayManager.IsLoadingScreen) return;
-
-            if (_displayManager.IsReadyForScreenWake)
-            {
-                _logger.Print("Triggering screen wake-up events");
-                _displayManager.UpdateDashboard(
-                   _systemManager.Time,
-                   _networkManager.IpAddress,
-                   _weatherManager.Humidity,
-                   _weatherManager.Luminosity,
-                   _weatherManager.Temperature,
-                   _fileManager.TotalFreeSpaceInMb);
-
-                _displayManager.EnableBacklight();
-            }
-            else if (_displayManager.IsReadyForScreenTimeout)
-            {
-                _logger.Print("Triggering screen timeout events");
-                _displayManager.DismissBacklight();
-            }
-        }
-
         private void ReadGlobalConfigurationFile()
         {
             if (!_fileManager.FileExists(GlobalConfigFilePath))
@@ -207,6 +131,82 @@ namespace MyHome
 
             // Fix SD card mount being unreliable on startup
             _fileManager.Remount();
+        }
+
+        private void EventTimer_Tick(GT.Timer timer)
+        {
+            var time = _systemManager.UtcTime;
+
+            if (time.Second % 5 == 0)
+            {
+                _logger.Print("Triggering events [5th sec]");
+                _networkManager.UpdateNetworkStatus();
+            }
+
+            // There is no point running any other events until time has been synchronised once
+            if (!_systemManager.HasTimeSyncronised) return;
+
+            if (time.Second % 30 == 0)
+            {
+                _logger.Print("Triggering events [30th sec]");
+                _weatherManager.TakeMeasurement();
+            }
+
+            if (time.Second == 0)
+            {
+                _logger.Print("Triggering events [60th sec]");
+                if (_displayManager.IsDisplayActive)
+                {
+                    _displayManager.UpdateDashboard(
+                       _systemManager.Time,
+                       _networkManager.IpAddress,
+                       _weatherManager.Humidity,
+                       _weatherManager.Luminosity,
+                       _weatherManager.Temperature,
+                       _fileManager.TotalFreeSpaceInMb);
+                }
+            }
+
+            if (time.Minute % 5 == 0 && time.Second == 0)
+            {
+                _logger.Print("Triggering events [5th min]");
+                _cameraManager.TakePicture(_systemManager.Time);
+            }
+
+            if (time.Minute % 58 == 0 && time.Second == 0)
+            {
+                _logger.Print("Triggering events [58th min]");
+                _attendanceManager.AutoClockOut(_systemManager.Date, _systemManager.Time);
+            }
+
+            // At 3 AM UTC every morning
+            if (time.Hour == 3 && time.Minute == 0 && time.Second == 0)
+            {
+                _logger.Print("Triggering events [Maintenance]");
+                _systemManager.SyncroniseInternetTime();
+            }
+
+            // Keep screen active until first sensor reading has been done
+            if (_displayManager.IsLoadingScreen) return;
+
+            if (_displayManager.IsReadyForScreenWake)
+            {
+                _logger.Print("Triggering screen wake-up events");
+                _displayManager.UpdateDashboard(
+                   _systemManager.Time,
+                   _networkManager.IpAddress,
+                   _weatherManager.Humidity,
+                   _weatherManager.Luminosity,
+                   _weatherManager.Temperature,
+                   _fileManager.TotalFreeSpaceInMb);
+
+                _displayManager.EnableBacklight();
+            }
+            else if (_displayManager.IsReadyForScreenTimeout)
+            {
+                _logger.Print("Triggering screen timeout events");
+                _displayManager.DismissBacklight();
+            }
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
