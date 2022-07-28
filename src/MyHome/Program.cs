@@ -99,7 +99,7 @@ namespace MyHome
                 _logger.Print("Triggering events [5th min]");
                 if (!_savePictureThread.IsRunning)
                 {
-                    _cameraManager.TakePicture();
+                    _cameraManager.TakePicture(_systemManager.Time);
                 }
             }
 

@@ -75,6 +75,42 @@ namespace MyHome.Modules
             }
         }
 
+        /// <summary>
+        /// Takes a picture provided that the camera is ready, and the timestamp is within the configured range.
+        /// </summary>
+        public void TakePicture(DateTime timestamp)
+        {
+            if (!_configuration.Enabled) return;
+
+            // Check the hardware is ready first as it's a less expensive operation
+            if (!_camera.CameraReady) return;
+
+            // Check day of week, .Contains() doesn't exist in .NetMF
+            var canTakePicture = false;
+            foreach (var dayOfWeek in _configuration.DaysToTakePicturesOn)
+            {
+                canTakePicture = dayOfWeek == timestamp.DayOfWeek;
+                if (canTakePicture) break;
+            }
+            if (!canTakePicture) return;
+
+            // Checking the current time is within the configured range
+            if (_configuration.TakePicturesFrom == _configuration.TakePicturesUntil) return;
+
+            var isFromEarlyTillLate = _configuration.TakePicturesFrom < _configuration.TakePicturesUntil;
+
+            // Allow morning till evening
+            if (isFromEarlyTillLate && (timestamp.TimeOfDay < _configuration.TakePicturesFrom || timestamp.TimeOfDay > _configuration.TakePicturesUntil)) return;
+
+            // Allow evening till afternoon
+            if (!isFromEarlyTillLate && (timestamp.TimeOfDay < _configuration.TakePicturesFrom && timestamp.TimeOfDay > _configuration.TakePicturesUntil)) return;
+
+            TakePicture();
+        }
+
+        /// <summary>
+        /// Takes the picture, providing that the camera is ready.
+        /// </summary>
         public void TakePicture()
         {
             if (_camera.CameraReady)
