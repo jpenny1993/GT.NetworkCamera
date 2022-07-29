@@ -34,6 +34,11 @@ namespace MyHome.Extensions
             return element.Value == "true" ? true : false;
         }
 
+        public static int GetIntAbs(this XmlElement element)
+        {
+            return Math.Abs(int.Parse(element.Value));
+        }
+
         public static DayOfWeek[] GetDayOfWeekArray(this XmlElement element)
         {
             var parts = element.Value.Split(',');

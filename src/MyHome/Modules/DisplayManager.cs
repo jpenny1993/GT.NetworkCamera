@@ -12,10 +12,13 @@ using GT = Gadgeteer;
 
 namespace MyHome.Modules
 {
-    public enum DisplayStatus
+    public enum DisplayState
     {
-        LoadingScreen = 0,
-        Dashboard = 1
+        Startup = 0,
+        Dashboard = 1,
+        Notification = 2,
+        Prompt = 3,
+        PromptComplete = 4,
     }
 
     public class DisplayManager
@@ -26,36 +29,42 @@ namespace MyHome.Modules
         private readonly Logger _logger;
         private readonly DisplayT35 _lcd;
         private readonly Window _window;
+        private readonly ISystemManager _system;
 
         private readonly TimeSpan _backlightTimeout;
-        private DateTime _lastTouch;
-        private DisplayStatus _status;
+
+        // Using uptime to avoid issues when time sync completes
+        private TimeSpan _lastTouch;
+        private TimeSpan _lastStateChange;
+
+        private UIElement _dashboard;
+
+        public DisplayState State { get; private set; }
 
         public bool IsDisplayActive { get { return _lcd.BacklightEnabled; } }
 
-        public TimeSpan TimeSinceLastTouch { get { return DateTime.Now - _lastTouch; } }
+        public TimeSpan TimeSinceLastTouch { get { return _system.Uptime - _lastTouch; } }
 
         public bool IsReadyForScreenWake { get { return !IsDisplayActive && TimeSinceLastTouch < OneSecond; } }
 
-        public bool IsReadyForScreenTimeout { get { return IsDisplayActive && TimeSinceLastTouch > _backlightTimeout; } }
+        public bool IsReadyForScreenTimeout { get { return IsDisplayActive && State == DisplayState.Dashboard && TimeSinceLastTouch > _backlightTimeout; } }
 
-        public bool IsLoadingScreen { get { return _status == DisplayStatus.LoadingScreen;  } }
-
-        public DisplayManager(DisplayT35 lcd)
+        public DisplayManager(DisplayT35 lcd, ISystemManager system)
         {
             _logger = Logger.ForContext(this);
+            _system = system;
             _backlightTimeout = new TimeSpan(0, 0, 30);
-            _status = DisplayStatus.LoadingScreen;
             _lcd = lcd;
             _window = lcd.WPFWindow;
             _window.TouchUp += Window_TouchUp;
 
-            UpdateStatus("Loading...");
+            SetState(DisplayState.Startup);
+            ShowStatusNotification("Loading...");
         }
 
         public void TouchScreen()
         {
-            _lastTouch = DateTime.Now;
+            _lastTouch = _system.Uptime;
         }
 
         public void EnableBacklight()
@@ -68,9 +77,19 @@ namespace MyHome.Modules
             _lcd.BacklightEnabled = false;
         }
 
-        public void UpdateStatus(string status)
+        public void SwitchToDashboard()
         {
-            if (!IsLoadingScreen) return;
+            SetState(DisplayState.Dashboard);
+        }
+
+        public void ShowStatusNotification(string status)
+        {
+             // Status notifications during startup should stay as startup notifications
+            var nextState = State == DisplayState.Startup
+                ? DisplayState.Startup
+                : DisplayState.Notification;
+
+            if (!CanChangeState(State, nextState)) return;
 
             var screen = GuiBuilder.Create()
                 .Panel(vp => vp.Vertical().VerticalAlignCenter().AddChild(c1 => c1
@@ -79,26 +98,26 @@ namespace MyHome.Modules
                     ))
                 ));
 
-            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+            SetState(nextState);
+
+            DispatchScreenUpdate(screen);
         }
 
-        public void UpdateDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
+        public void ShowDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
         {
-            if (_status == DisplayStatus.LoadingScreen)
-            {
-                _status = DisplayStatus.Dashboard;
-            }
-            else if (_status != DisplayStatus.Dashboard) // Placeholder for when extra screens
-            {
-                return;
-            }
+            if (!CanChangeState(State, DisplayState.Dashboard)) return;
 
-            var screen = BuildDashboard(now, ipAddress, humidity, luminosity, temperature, totalFreeSpaceInMb);
-            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+            _dashboard = BuildDashboard(now, ipAddress, humidity, luminosity, temperature, totalFreeSpaceInMb);
+
+            SetState(DisplayState.Dashboard);
+
+            DispatchScreenUpdate(_dashboard);
         }
 
-        public void ClockInOutDeniedScreen()
+        public void ShowAccessDenied()
         {
+            if (!CanChangeState(State, DisplayState.PromptComplete)) return;
+
             var screen = GuiBuilder.Create()
                 .Panel(vp => vp.Vertical().VerticalAlignCenter()
                     .AddChild(c1 => c1
@@ -113,27 +132,38 @@ namespace MyHome.Modules
                     )
                 );
 
-            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+            SetState(DisplayState.PromptComplete);
+
+            DispatchScreenUpdate(screen);
         }
 
-        public void ClockInOutOnTimeScreen(DateTime timestamp, string status, string displayName)
+        public void ShowClockInOrOut(DateTime timestamp, string attendanceStatus, string displayName)
         {
+            if (!CanChangeState(State, DisplayState.PromptComplete)) return;
+
             var screen = GuiBuilder.Create().Panel(c1 => c1.Vertical().VerticalAlignCenter().MarginLeftRight()
                 .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
                     .AddChild(c4 => c4.Image(Resources.GetBytes(Resources.BinaryResources.Clock)))
                     .AddChild(c7 => c7.Panel(cvp => cvp.Vertical().VerticalAlignCenter().MarginLeftRight()
                         .AddChild(c8 => c8.Label(l1 => l1.Text(displayName).TextAlignLeft().TextMarginLeft()))
-                        .AddChild(c8 => c8.Label(l1 => l1.Text(status).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(attendanceStatus).TextAlignLeft().TextMarginLeft()))
                         .AddChild(c8 => c8.Label(l1 => l1.Text(timestamp.TimeOfDay()).TextAlignLeft().TextMarginLeft()))
                     ))
                 ))
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Label(l => l.Text("{0} COMPLETE!".Format(attendanceStatus)).Foreground(GT.Color.Black)))
+                ))
             );
 
-            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+            SetState(DisplayState.PromptComplete);
+
+            DispatchScreenUpdate(screen);
         }
 
-        public void ClockInOutConfirmationScreen(DateTime timestamp, string status, string displayName, string question, TouchEventHandler acceptAction, TouchEventHandler denyAction)
+        public void ShowClockInOrOutPrompt(DateTime timestamp, string status, string displayName, string question, TouchEventHandler acceptAction, TouchEventHandler denyAction)
         {
+            if (!CanChangeState(State, DisplayState.Prompt)) return;
+
             var screen = GuiBuilder.Create().Panel(c1 => c1.Vertical().VerticalAlignCenter().MarginLeftRight()
                 .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
                     .AddChild(c4 => c4.Image(Resources.GetBytes(Resources.BinaryResources.Clock)))
@@ -162,7 +192,28 @@ namespace MyHome.Modules
                 ))
             );
 
-            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+            SetState(DisplayState.Prompt);
+
+            DispatchScreenUpdate(screen);
+        }
+
+        public void RefreshState(TimeSpan uptime)
+        {
+            var timeSinceStart = uptime - _lastStateChange;
+            var fiveSeconds = TimeSpan.FromTicks(TimeSpan.TicksPerSecond * 5);
+            if (timeSinceStart < fiveSeconds) return;
+
+            if (CanChangeState(State, DisplayState.Dashboard))
+            {
+                ReturnToDashboard();
+            }
+        }
+
+        public void ReturnToDashboard()
+        {
+            SetState(DisplayState.Dashboard);
+            if (_dashboard != null)
+                DispatchScreenUpdate(_dashboard);
         }
 
         private UIElement BuildDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
@@ -231,6 +282,11 @@ namespace MyHome.Modules
             );
         }
 
+        private void DispatchScreenUpdate(UIElement screen)
+        {
+            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
+        }
+
         private void DispatchScreenUpdate(Brush background, UIElement screen)
         {
             _window.Dispatcher.BeginInvoke((object obj) =>
@@ -245,54 +301,73 @@ namespace MyHome.Modules
             }, null);
         }
 
-        //private UIElement BackButtonPanel
-        //{
-        //    get
-        //    {
-        //        return GuiBuilder.Create()
-        //            .Panel(hp => hp
-        //                .Horizontal()
-        //                .HorizontalAlignRight()
-        //                .MarginAll()
-        //                .AddChild(hc => hc.Button(b => b
-        //                    .Content("Back")
-        //                    .Background(GT.Color.LightGray)
-        //                    .Foreground(GT.Color.Black)
-        //                    .OnPressed(GT.Color.DarkGray, NavigationEvent(ScreenDashboard)))));
-        //    }
-        //}
-
-        //private UIElement DashboardButton(Resources.BinaryResources icon, string text, TouchEventHandler onPressed)
-        //{
-        //    return GuiBuilder.Create()
-        //        .Button(b => b
-        //            .Background(GT.Color.White)
-        //            .MarginAll()
-        //            .OnPressed(GT.Color.DarkGray, onPressed)
-        //            .Content(bc => bc.Panel(vp => vp
-        //                .Vertical()
-        //                .VerticalAlignCenter()
-        //                .MarginTopBottom()
-        //                .AddChild(vc => vc.Panel(hp => hp
-        //                    .Horizontal()
-        //                    .HorizontalAlignCenter()
-        //                    .MarginLeftRight()
-        //                    .AddChild(hc => hc.Image(Resources.GetBytes(icon)))))
-        //                .AddChild(vc => vc.Panel(hp => hp
-        //                    .Horizontal()
-        //                    .HorizontalAlignCenter()
-        //                    .MarginLeftRight()
-        //                    .AddChild(hc => hc.Label(l => l.Text(text))))))));
-        //}
-
-        //private TouchEventHandler NavigationEvent(GuiBuilder.UiElementEvent pageBuilder)
-        //{
-        //    return new TouchEventHandler((sender, args) => _window.Child = pageBuilder.Invoke());
-        //}
+        private void SetState(DisplayState value)
+        {
+            State = value;
+            _lastStateChange = _system.Uptime;
+        }
 
         private void Window_TouchUp(object sender, TouchEventArgs e)
         {
             TouchScreen();
+        }
+
+        private static bool CanChangeState(DisplayState oldState, DisplayState newState)
+        {
+            switch (oldState)
+            {
+                default:                                    return false;
+                case DisplayState.Startup:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return true;
+                        case DisplayState.Dashboard:        return true;
+                        case DisplayState.Notification:     return false;
+                        case DisplayState.Prompt:           return false;
+                        case DisplayState.PromptComplete:   return false;
+                    }
+                case DisplayState.Dashboard:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return false;
+                        case DisplayState.Dashboard:        return true;
+                        case DisplayState.Notification:     return true;
+                        case DisplayState.Prompt:           return true;
+                        case DisplayState.PromptComplete:   return true;
+                    }
+                case DisplayState.Notification:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return false;
+                        case DisplayState.Dashboard:        return true;
+                        case DisplayState.Notification:     return false;
+                        case DisplayState.Prompt:           return false;
+                        case DisplayState.PromptComplete:   return false;
+                    }
+                case DisplayState.Prompt:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return false;
+                        case DisplayState.Dashboard:        return false;
+                        case DisplayState.Notification:     return false;
+                        case DisplayState.Prompt:           return false;
+                        case DisplayState.PromptComplete:   return true;
+                    }
+                case DisplayState.PromptComplete:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return false;
+                        case DisplayState.Dashboard:        return true;
+                        case DisplayState.Notification:     return false;
+                        case DisplayState.Prompt:           return false;
+                        case DisplayState.PromptComplete:   return false;
+                    }
+            }
         }
     }
 }

@@ -30,7 +30,8 @@ namespace MyHome.Configuration
                         AllowNewUsers = true,
                         WorkingDays = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday },
                         OpeningHours = new TimeSpan(9, 0, 0),
-                        ClosingHours = new TimeSpan(17, 30, 0)
+                        ClosingHours = new TimeSpan(17, 30, 0),
+                        GracePeriodInMinutes = 30
                     },
                     Camera = new CameraConfiguration
                     {

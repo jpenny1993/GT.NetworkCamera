@@ -66,6 +66,29 @@ namespace MyHome.Extensions
         }
 
         /// <summary>
+        /// Returns true if the TimeOfDay is within the given time range.
+        /// </summary>
+        public static bool IsInRange(this DateTime datetime, TimeSpan rangeStart, TimeSpan rangeEnd)
+        {
+            if (rangeStart == rangeEnd)
+                return false; // Same times means disabled
+
+            var isFromEarlyTillLate = rangeStart < rangeEnd;
+            if (isFromEarlyTillLate)
+            {
+                 // Allow morning till evening
+                return datetime.TimeOfDay >= rangeStart &&
+                       datetime.TimeOfDay <= rangeEnd;
+            }
+            else
+            {
+                // Allow evening till afternoon
+                return datetime.TimeOfDay >= rangeStart ||
+                       datetime.TimeOfDay <= rangeEnd;
+            }
+        }
+
+        /// <summary>
         /// Returns a timestamp as a string in the following format; yyMMddHHmmss.
         /// </summary>
         public static string Timestamp(this DateTime datetime)

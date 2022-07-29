@@ -98,17 +98,10 @@ namespace MyHome.Modules
             if (!canTakePicture) return;
 
             // Checking the current time is within the configured range
-            if (_configuration.TakePicturesFrom == _configuration.TakePicturesUntil) return;
-
-            var isFromEarlyTillLate = _configuration.TakePicturesFrom < _configuration.TakePicturesUntil;
-
-            // Allow morning till evening
-            if (isFromEarlyTillLate && (timestamp.TimeOfDay < _configuration.TakePicturesFrom || timestamp.TimeOfDay > _configuration.TakePicturesUntil)) return;
-
-            // Allow evening till afternoon
-            if (!isFromEarlyTillLate && (timestamp.TimeOfDay < _configuration.TakePicturesFrom && timestamp.TimeOfDay > _configuration.TakePicturesUntil)) return;
-
-            TakePicture();
+            if (timestamp.IsInRange(_configuration.TakePicturesFrom, _configuration.TakePicturesUntil))
+            {
+                TakePicture();
+            }
         }
 
         /// <summary>

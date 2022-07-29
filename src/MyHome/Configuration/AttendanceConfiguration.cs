@@ -9,6 +9,24 @@ namespace MyHome.Configuration
 {
     public sealed class AttendanceConfiguration
     {
+        public sealed class GracePeriod
+        {
+            public GracePeriod(TimeSpan time, int gracePeriodInMins)
+            {
+                Early = time.Subtract(TimeSpan.FromTicks(TimeSpan.TicksPerMinute * gracePeriodInMins));
+                Late = time.Add(TimeSpan.FromTicks(TimeSpan.TicksPerMinute * gracePeriodInMins));
+            }
+
+            public TimeSpan Early { get; private set; }
+
+            public TimeSpan Late { get; private set; }
+
+            public bool IsInRange(DateTime timestamp)
+            {
+                return timestamp.IsInRange(Early, Late);
+            }
+        }
+
         /// <summary>
         /// Allows for unregistered users to clock-in, and automatically be added to the system.
         /// </summary>
@@ -29,6 +47,36 @@ namespace MyHome.Configuration
         /// </summary>
         public TimeSpan ClosingHours;
 
+        public int GracePeriodInMinutes;
+
+        private GracePeriod _openingGracePeriod = null;
+        public GracePeriod OpeningGracePeriod 
+        { 
+            get
+            {
+                if (_openingGracePeriod == null) 
+                {
+                    _openingGracePeriod = new GracePeriod(OpeningHours, GracePeriodInMinutes);
+                }
+
+                return _openingGracePeriod;
+            } 
+        }
+
+        private GracePeriod _closingGracePeriod = null;
+        public GracePeriod ClosingGracePeriod 
+        {
+            get 
+            {
+                if (_closingGracePeriod == null)
+                {
+                    _closingGracePeriod = new GracePeriod(ClosingHours, GracePeriodInMinutes);
+                }
+
+                return _closingGracePeriod;
+            }
+        }
+
         public static AttendanceConfiguration Read(XmlReader reader)
         {
             reader.Read(); // <Attendance>
@@ -38,7 +86,8 @@ namespace MyHome.Configuration
                 AllowNewUsers = reader.ReadXmlElement().Validate("AllowNewUsers").GetBoolean(),
                 WorkingDays = reader.ReadXmlElement().Validate("WorkingDays").GetDayOfWeekArray(),
                 OpeningHours = reader.ReadXmlElement().Validate("OpeningHours").GetTimeSpan(),
-                ClosingHours = reader.ReadXmlElement().Validate("ClosingHours").GetTimeSpan()
+                ClosingHours = reader.ReadXmlElement().Validate("ClosingHours").GetTimeSpan(),
+                GracePeriodInMinutes = reader.ReadXmlElement().Validate("GracePeriodInMinutes").GetIntAbs(),
             };
 
             reader.Read(); // </Attendance>
@@ -64,6 +113,10 @@ namespace MyHome.Configuration
 
             writer.WriteStartElement("ClosingHours");
             writer.WriteString(new StringBuilder().WriteTimeSpan(attendance.ClosingHours).ToString());
+            writer.WriteEndElement();
+
+            writer.WriteStartElement("GracePeriodInMinutes");
+            writer.WriteString(attendance.GracePeriodInMinutes.ToString());
             writer.WriteEndElement();
 
             writer.WriteEndElement();

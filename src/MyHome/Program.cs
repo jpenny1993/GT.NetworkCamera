@@ -28,6 +28,8 @@ namespace MyHome
     {
         private static readonly string GlobalConfigFilePath = Path.Combine(Directories.Config, "system.xml");
 
+        private static bool IsFirstLoad = true;
+
         private GlobalConfiguration Configuration;
 
         private GT.Timer _eventTimer;
@@ -79,9 +81,9 @@ namespace MyHome
 
         private void SetupDevices()
         {
-            _displayManager = new DisplayManager(displayT35);
-
             _systemManager = new SystemManager();
+            _displayManager = new DisplayManager(displayT35, _systemManager);
+
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
             _fileManager = new FileManager(sdCard);
@@ -166,7 +168,7 @@ namespace MyHome
                 _logger.Print("Triggering events [60th sec]");
                 if (_displayManager.IsDisplayActive)
                 {
-                    _displayManager.UpdateDashboard(
+                    _displayManager.ShowDashboard(
                        _systemManager.Time,
                        _networkManager.IpAddress,
                        _weatherManager.Humidity,
@@ -195,13 +197,13 @@ namespace MyHome
                 _systemManager.SyncroniseInternetTime();
             }
 
-            // Keep screen active until first sensor reading has been done
-            if (_displayManager.IsLoadingScreen) return;
+            // Returns the state to dashboard after 5 seconds
+            _displayManager.RefreshState(_systemManager.Uptime);
 
             if (_displayManager.IsReadyForScreenWake)
             {
                 _logger.Print("Triggering screen wake-up events");
-                _displayManager.UpdateDashboard(
+                _displayManager.ShowDashboard(
                    _systemManager.Time,
                    _networkManager.IpAddress,
                    _weatherManager.Humidity,
@@ -239,28 +241,28 @@ namespace MyHome
             {
                 case NetworkStatus.Disabled:
                     networkLED.TurnRed();
-                    _displayManager.UpdateStatus("Network disabled");
+                    _displayManager.ShowStatusNotification("Network disabled");
                     break;
                 case NetworkStatus.Enabled:
                     networkLED.TurnColor(GT.Color.Orange);
-                    _displayManager.UpdateStatus("Ethernet cable disconnected");
+                    _displayManager.ShowStatusNotification("Ethernet cable disconnected");
                     break;
                 case NetworkStatus.NetworkStuck:
                     networkLED.BlinkRepeatedly(GT.Color.Yellow);
-                    _displayManager.UpdateStatus("Network stuck, reconnect ethernet cable");
+                    _displayManager.ShowStatusNotification("Network stuck, reconnect ethernet cable");
                     break;
                 case NetworkStatus.NetworkDown:
                     networkLED.TurnColor(GT.Color.Yellow);
-                    _displayManager.UpdateStatus("Ethernet cable connected");
+                    _displayManager.ShowStatusNotification("Ethernet cable connected");
                     break;
                 case NetworkStatus.NetworkUp:
                     networkLED.BlinkRepeatedly(GT.Color.Green);
-                    _displayManager.UpdateStatus("Network up, waiting for IP Address");
+                    _displayManager.ShowStatusNotification("Network up, waiting for IP Address");
                     break;
                 case NetworkStatus.NetworkAvailable:
                     networkLED.TurnGreen();
                     infoLED.BlinkRepeatedly(GT.Color.Blue);
-                    _displayManager.UpdateStatus("Network online, synchronising time");
+                    _displayManager.ShowStatusNotification("Network online, synchronising time");
                     if (!_systemManager.HasTimeSyncronised)
                     {
                         _systemManager.SyncroniseInternetTime();
@@ -272,7 +274,7 @@ namespace MyHome
 
         private void AttendanceManager_OnAccessDenied()
         {
-            _displayManager.ClockInOutDeniedScreen();
+            _displayManager.ShowAccessDenied();
             _prevColour = infoLED.GetCurrentColor();
             infoLED.BlinkOnce(GT.Color.Red, new TimeSpan(0, 0, 3), _prevColour);
         }
@@ -280,46 +282,93 @@ namespace MyHome
         private void AttendanceManager_OnScannedKeycard(string rfid, string displayName, string attendanceStatus)
         {
             var timestamp = _systemManager.Time;
+            var isWorkingHours = _attendanceManager.IsWithinWorkingHours(timestamp);
+            
             switch (attendanceStatus)
             {
                 case AttendanceStatus.ClockIn:
-                    _displayManager.ClockInOutOnTimeScreen(timestamp, attendanceStatus, displayName);
-                    _attendanceManager.ClockIn(timestamp, rfid);
-                    //_displayManager.ClockInOutConfirmationScreen(
-                    //    timestamp,
-                    //    attendanceStatus,
-                    //    displayName,
-                    //    "Its out of hours, please confirm to clock-in",
-                    //    new TouchEventHandler((sender, args) => 
-                    //    {
-                    //        _attendanceManager.ClockIn(timestamp, rfid);
-                    //    }),
-                    //    new TouchEventHandler((sender, args) => 
-                    //    {
-                    //        // cancel action
-                    //    }));
-                    _displayManager.TouchScreen();
-                    _displayManager.EnableBacklight();
+                    {
+                        var isOpeningGracePeriod = _attendanceManager.IsWithinOpeningGracePeriod(timestamp);
+                        var hasClockedInToday = _attendanceManager.HasUserClockedInOnDate(timestamp, rfid);
+
+                        if (isOpeningGracePeriod)
+                        {
+                            // Good boys get no prompts
+                            _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                            _attendanceManager.ClockIn(timestamp, rfid,  "On time");
+                        }
+                        if (hasClockedInToday && isWorkingHours)
+                        {
+                            _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                            _attendanceManager.ClockIn(timestamp, rfid, "Returning from break");
+                        }
+                        else if (isWorkingHours)
+                        {
+                            // Bad boys get the late screen
+                            _displayManager.ShowClockInOrOutPrompt(
+                                timestamp,
+                                attendanceStatus,
+                                displayName,
+                                "You've arrived late, please confirm to clock-in",
+                                new TouchEventHandler((sender, args) =>
+                                {
+                                    _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                                    _attendanceManager.ClockIn(timestamp, rfid, "Late");
+                                }),
+                                new TouchEventHandler((sender, args) => _displayManager.ReturnToDashboard()));
+                        }
+                        else
+                        {
+                            // Out of hours boys get the overtime screen
+                            _displayManager.ShowClockInOrOutPrompt(
+                                timestamp,
+                                attendanceStatus,
+                                displayName,
+                                "Its out of hours, please confirm to clock-in",
+                                new TouchEventHandler((sender, args) =>
+                                {
+                                    _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                                    _attendanceManager.ClockIn(timestamp, rfid, "Out of hours");
+                                }),
+                                new TouchEventHandler((sender, args) => _displayManager.ReturnToDashboard()));
+                        }
+
+                        _displayManager.TouchScreen();
+                        _displayManager.EnableBacklight();
+                    }
                     break;
 
                 case AttendanceStatus.ClockOut:
-                    _displayManager.ClockInOutOnTimeScreen(timestamp, attendanceStatus, displayName);
-                    _attendanceManager.ClockOut(timestamp, rfid);
-                    //_displayManager.ClockInOutConfirmationScreen(
-                    //    timestamp,
-                    //    attendanceStatus,
-                    //    displayName,
-                    //    "Its out of hours, please confirm to clock-out",
-                    //    new TouchEventHandler((sender, args) => 
-                    //    {
-                    //        _attendanceManager.ClockOut(timestamp, rfid);
-                    //    }),
-                    //    new TouchEventHandler((sender, args) =>
-                    //    {
-                    //        // cancel action
-                    //    }));
-                    _displayManager.TouchScreen();
-                    _displayManager.EnableBacklight();
+                    {
+                        var isClosingGracePeriod = _attendanceManager.IsWithinClosingGracePeriod(timestamp);
+                        if (isClosingGracePeriod)
+                        {
+                            _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                            _attendanceManager.ClockOut(timestamp, rfid, "On time");
+                        }
+                        else if (isWorkingHours)
+                        {
+                            _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                            _attendanceManager.ClockOut(timestamp, rfid, "Break-time");
+                        }
+                        else
+                        {
+                            _displayManager.ShowClockInOrOutPrompt(
+                                timestamp,
+                                attendanceStatus,
+                                displayName,
+                                "Its out of hours, please confirm to clock-out",
+                                new TouchEventHandler((sender, args) =>
+                                {
+                                    _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                                    _attendanceManager.ClockOut(timestamp, rfid, "Overtime");
+                                }),
+                                new TouchEventHandler((sender, args) => _displayManager.ReturnToDashboard()));
+                        }
+
+                        _displayManager.TouchScreen();
+                        _displayManager.EnableBacklight();
+                    }
                     break;
 
                 default: 
@@ -336,25 +385,32 @@ namespace MyHome
             if (synchronised)
             {
                 infoLED.TurnColor(GT.Color.Blue);
-                if (_displayManager.IsLoadingScreen)
+                if (IsFirstLoad)
                 { 
-                    _displayManager.UpdateStatus("Waiting for sensor readings");
+                    _displayManager.ShowStatusNotification("Waiting for sensor readings");
                     _weatherManager.TakeMeasurement();
                 }
             }
             else
             {
-                _displayManager.UpdateStatus("Unable to synchronise time");
+                _displayManager.ShowStatusNotification("Unable to synchronise time");
                 infoLED.TurnRed();
             }
         }
 
         private void WeatherManager_OnMeasurement(WeatherModel weather)
         {
-            if (_displayManager.IsLoadingScreen)
+            if (IsFirstLoad)
             {
-                _displayManager.EnableBacklight();
+                _displayManager.SwitchToDashboard();
                 _displayManager.TouchScreen();
+                _displayManager.ShowDashboard(
+                      _systemManager.Time,
+                      _networkManager.IpAddress,
+                      _weatherManager.Humidity,
+                      _weatherManager.Luminosity,
+                      _weatherManager.Temperature,
+                      _fileManager.TotalFreeSpaceInMb);
             }
 
             _weatherManager.SaveMeasurementToSdCard(_fileManager, weather, _systemManager.Time);

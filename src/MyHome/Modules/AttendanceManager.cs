@@ -156,6 +156,58 @@ namespace MyHome.Modules
             SaveUserAccountsToFile(_fm);
         }
 
+        /// <summary>
+        /// Check working hours to identify overtime.
+        /// </summary>
+        public bool IsWithinWorkingHours(DateTime timestamp)
+        {
+            // Check day of week, .Contains() doesn't exist in .NetMF
+            var isWorkingDay = false;
+            foreach (var dayOfWeek in _configuration.WorkingDays)
+            {
+                isWorkingDay = dayOfWeek == timestamp.DayOfWeek;
+                if (isWorkingDay) break;
+            }
+            if (!isWorkingDay) return false;
+
+            var isDuringWorkingHours = timestamp.IsInRange(_configuration.OpeningHours, _configuration.ClosingHours);
+            return isDuringWorkingHours;
+        }
+
+        public bool IsWithinOpeningGracePeriod(DateTime timestamp)
+        {
+            return _configuration.OpeningGracePeriod.IsInRange(timestamp);
+        }
+
+        public bool IsWithinClosingGracePeriod(DateTime timestamp)
+        {
+            return _configuration.ClosingGracePeriod.IsInRange(timestamp);
+        }
+
+        public bool HasUserClockedInOnDate(DateTime timestamp, string rfid)
+        {
+            var user = FindUser(rfid);
+
+            // Handle sensible hours
+            if (_configuration.OpeningHours < _configuration.ClosingHours)
+            {
+                return timestamp.Date == user.LastClockedIn.Date;
+            }
+
+            // Handle night shift
+            if (timestamp.TimeOfDay > _configuration.OpeningHours)
+            {
+                return timestamp.Date == user.LastClockedIn.Date;
+            }
+
+            if (timestamp.TimeOfDay < _configuration.ClosingHours)
+            {
+                return timestamp.Date == user.LastClockedIn.Date.Subtract(new TimeSpan(1, 0 , 0, 0));
+            }
+
+            return false; 
+        }
+
         private UserAccount AddUser(string rfid, string displayName = null, string lastClockedIn = null, string lastClockedOut = null)
         {
             if (StringExtensions.IsNullOrEmpty(rfid))
