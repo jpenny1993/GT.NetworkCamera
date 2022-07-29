@@ -401,6 +401,7 @@ namespace MyHome
         {
             if (IsFirstLoad)
             {
+                IsFirstLoad = false;
                 _displayManager.SwitchToDashboard();
                 _displayManager.TouchScreen();
                 _displayManager.ShowDashboard(
