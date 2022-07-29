@@ -105,9 +105,9 @@ namespace MyHome.Modules
 
         public void ShowDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
         {
-            if (!CanChangeState(State, DisplayState.Dashboard)) return;
-
             _dashboard = BuildDashboard(now, ipAddress, humidity, luminosity, temperature, totalFreeSpaceInMb);
+
+            if (!CanChangeState(State, DisplayState.Dashboard)) return;
 
             SetState(DisplayState.Dashboard);
 

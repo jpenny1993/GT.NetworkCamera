@@ -75,6 +75,7 @@
     <Compile Include="Modules\IAttendanceManager.cs" />
     <Compile Include="Modules\ISystemManager.cs" />
     <Compile Include="Modules\IWeatherManager.cs" />
+    <Compile Include="Modules\LightManager.cs" />
     <Compile Include="Modules\Logger.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
     <Compile Include="Modules\AttendanceManager.cs" />

@@ -38,6 +38,7 @@ namespace MyHome
         private CameraManager _cameraManager;
         private DisplayManager _displayManager;
         private FileManager _fileManager;
+        private LightManager _lightManager;
         private NetworkManager _networkManager;
         private SystemManager _systemManager;
         private WeatherManager _weatherManager;
@@ -48,7 +49,6 @@ namespace MyHome
         void ProgramStarted()
         {
             Debug.Print("Startup Initiated");
-            networkLED.TurnRed();
             _logger = Logger.ForContext(this);
 
             SetupDevices();
@@ -81,6 +81,9 @@ namespace MyHome
 
         private void SetupDevices()
         {
+            _lightManager = new LightManager(networkLED, infoLED);
+            _lightManager.NetworkLED.TurnRed();
+
             _systemManager = new SystemManager();
             _displayManager = new DisplayManager(displayT35, _systemManager);
 
@@ -148,11 +151,7 @@ namespace MyHome
         {
             var time = _systemManager.UtcTime;
 
-            if (time.Second % 5 == 0)
-            {
-                _logger.Print("Triggering events [5th sec]");
-                _networkManager.UpdateNetworkStatus();
-            }
+            _networkManager.UpdateNetworkStatus();
 
             // There is no point running any other events until time has been synchronised once
             if (!_systemManager.HasTimeSyncronised) return;
@@ -176,6 +175,8 @@ namespace MyHome
                        _weatherManager.Temperature,
                        _fileManager.TotalFreeSpaceInMb);
                 }
+
+                _lightManager.CheckScheduleForLightsOut(_systemManager.Time);
             }
 
             if (time.Minute % 5 == 0 && time.Second == 0)
@@ -240,28 +241,28 @@ namespace MyHome
             switch(status) 
             {
                 case NetworkStatus.Disabled:
-                    networkLED.TurnRed();
+                    _lightManager.NetworkLED.TurnRed();
                     _displayManager.ShowStatusNotification("Network disabled");
                     break;
                 case NetworkStatus.Enabled:
-                    networkLED.TurnColor(GT.Color.Orange);
+                    _lightManager.NetworkLED.TurnOrange();
                     _displayManager.ShowStatusNotification("Ethernet cable disconnected");
                     break;
                 case NetworkStatus.NetworkStuck:
-                    networkLED.BlinkRepeatedly(GT.Color.Yellow);
+                    _lightManager.NetworkLED.BlinkYellow();
                     _displayManager.ShowStatusNotification("Network stuck, reconnect ethernet cable");
                     break;
                 case NetworkStatus.NetworkDown:
-                    networkLED.TurnColor(GT.Color.Yellow);
+                    _lightManager.NetworkLED.TurnYellow();
                     _displayManager.ShowStatusNotification("Ethernet cable connected");
                     break;
                 case NetworkStatus.NetworkUp:
-                    networkLED.BlinkRepeatedly(GT.Color.Green);
+                    _lightManager.NetworkLED.BlinkGreen();
                     _displayManager.ShowStatusNotification("Network up, waiting for IP Address");
                     break;
                 case NetworkStatus.NetworkAvailable:
-                    networkLED.TurnGreen();
-                    infoLED.BlinkRepeatedly(GT.Color.Blue);
+                    _lightManager.NetworkLED.TurnGreen();
+                    _lightManager.InfoLED.BlinkBlue();
                     _displayManager.ShowStatusNotification("Network online, synchronising time");
                     if (!_systemManager.HasTimeSyncronised)
                     {
@@ -275,14 +276,15 @@ namespace MyHome
         private void AttendanceManager_OnAccessDenied()
         {
             _displayManager.ShowAccessDenied();
-            _prevColour = infoLED.GetCurrentColor();
-            infoLED.BlinkOnce(GT.Color.Red, new TimeSpan(0, 0, 3), _prevColour);
+            _lightManager.InfoLED.WinkRed();
         }
 
         private void AttendanceManager_OnScannedKeycard(string rfid, string displayName, string attendanceStatus)
         {
             var timestamp = _systemManager.Time;
             var isWorkingHours = _attendanceManager.IsWithinWorkingHours(timestamp);
+
+            _lightManager.InfoLED.WinkGreen();
             
             switch (attendanceStatus)
             {
@@ -375,16 +377,13 @@ namespace MyHome
                     _logger.Warning("Unhandled attendance status \"{0}\"", attendanceStatus);
                     break;
             }
-
-            _prevColour = infoLED.GetCurrentColor();
-            infoLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
         }
 
         private void SystemManager_OnTimeSynchronised(bool synchronised)
         {
             if (synchronised)
             {
-                infoLED.TurnColor(GT.Color.Blue);
+                _lightManager.InfoLED.TurnBlue();
                 if (IsFirstLoad)
                 { 
                     _displayManager.ShowStatusNotification("Waiting for sensor readings");
@@ -394,7 +393,7 @@ namespace MyHome
             else
             {
                 _displayManager.ShowStatusNotification("Unable to synchronise time");
-                infoLED.TurnRed();
+                _lightManager.InfoLED.TurnRed();
             }
         }
 
@@ -411,6 +410,7 @@ namespace MyHome
                       _weatherManager.Luminosity,
                       _weatherManager.Temperature,
                       _fileManager.TotalFreeSpaceInMb);
+                _lightManager.InfoLED.TurnOff();
             }
 
             _weatherManager.SaveMeasurementToSdCard(_fileManager, weather, _systemManager.Time);
