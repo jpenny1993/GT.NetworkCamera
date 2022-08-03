@@ -91,7 +91,7 @@ namespace MyHome
 
             _fileManager = new FileManager(sdCard);
 
-            _attendanceManager = new AttendanceManager(rfidReader, _fileManager);
+            _attendanceManager = new AttendanceManager(rfidReader, _systemManager, _fileManager);
             _attendanceManager.OnAccessDenied += AttendanceManager_OnAccessDenied;
             _attendanceManager.OnScannedKeycard += AttendanceManager_OnScannedKeycard;
 
@@ -283,9 +283,8 @@ namespace MyHome
             _lightManager.InfoLED.WinkRed();
         }
 
-        private void AttendanceManager_OnScannedKeycard(string rfid, string displayName, string attendanceStatus)
+        private void AttendanceManager_OnScannedKeycard(DateTime timestamp, string attendanceStatus, string rfid, string displayName)
         {
-            var timestamp = _systemManager.Time;
             var isWorkingHours = _attendanceManager.IsWithinWorkingHours(timestamp);
 
             _lightManager.InfoLED.WinkGreen();

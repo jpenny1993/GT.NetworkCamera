@@ -17,7 +17,7 @@ namespace MyHome.Modules
     public class AttendanceManager : IAttendanceManager
     {
         public delegate void EventHandler();
-        public delegate void ScanEventHandler(string rfid, string displayName, string status);
+        public delegate void ScanEventHandler(DateTime timestamp, string status, string rfid, string displayName);
 
         private const string UsersCsvFilePath = Directories.Config + "\\users.csv";
         private const string UsersCsvRowTemplate = "{0},{1},{2},{3}\r\n";
@@ -27,6 +27,7 @@ namespace MyHome.Modules
 
         private readonly Logger _logger;
         private readonly RFIDReader _rfid;
+        private readonly ISystemManager _system;
         private readonly IFileManager _fm;
         private readonly Hashtable _users;
 
@@ -36,9 +37,10 @@ namespace MyHome.Modules
 
         public event AttendanceManager.ScanEventHandler OnScannedKeycard;
 
-        public AttendanceManager(RFIDReader rfidReader, IFileManager fm)
+        public AttendanceManager(RFIDReader rfidReader, ISystemManager system, IFileManager fm)
         {
             _logger = Logger.ForContext(this);
+            _system = system;
             _fm = fm;
             _rfid = rfidReader;
             _rfid.IdReceived += Rfid_IdReceived;
@@ -327,6 +329,12 @@ namespace MyHome.Modules
                 return;
             }
 
+            if (!_system.HasTimeSyncronised)
+            {
+                _logger.Information("Cannot trigger clock-in/clock-out, time syncronisation is required");
+                return;
+            }
+
             _logger.Information("RFID received...");
             var user = FindUser(rfid);
             
@@ -347,11 +355,45 @@ namespace MyHome.Modules
 
             if (OnScannedKeycard != null && user != null)
             {
-                var clockInClockOut = user.LastClockedOut < user.LastClockedIn
-                    ? AttendanceStatus.ClockOut
-                    : AttendanceStatus.ClockIn;
+                var time = _system.Time;
+                var isLastRecordedAsClockedOut = user.LastClockedIn < user.LastClockedOut;
+                if (isLastRecordedAsClockedOut)
+                {
+                    // Genuine clock-in
+                    OnScannedKeycard.Invoke(time, AttendanceStatus.ClockIn, user.RFID, user.DisplayName);
+                    return;
+                }
 
-                OnScannedKeycard.Invoke(user.RFID, user.DisplayName, clockInClockOut);
+                var isStandardWorkingHours = _configuration.OpeningHours < _configuration.ClosingHours;
+                DateTime startOfWorkingDay;
+                if (isStandardWorkingHours)
+                {
+                    // Dayshift
+                    startOfWorkingDay = time.Date.Add(_configuration.OpeningHours);
+                }
+                else if (time.IsInRange(_configuration.OpeningHours, new TimeSpan(23, 59, 59)))
+                {
+                    // Early nightshift
+                    startOfWorkingDay = time.Date.Add(_configuration.OpeningHours);
+                }
+                else
+                {
+                    // Late nightshift
+                    startOfWorkingDay = time.Date.AddDays(-1).Add(_configuration.OpeningHours);
+                }
+
+                var isDuringThisWorkingDay = startOfWorkingDay <= user.LastClockedIn;
+                const int twelveHours = (60 * 12);
+                if (!isDuringThisWorkingDay &&
+                    !user.LastClockedIn.IsInRange(startOfWorkingDay, twelveHours))
+                {
+                    // Last clock-in was over 12 hours ago, the clock-out must have been missed somehow
+                    OnScannedKeycard.Invoke(time, AttendanceStatus.ClockIn, user.RFID, user.DisplayName);
+                    return;
+                }
+
+                // Otherwise it's a genuine clock-out
+                OnScannedKeycard.Invoke(time, AttendanceStatus.ClockOut, user.RFID, user.DisplayName);
             }
         }
     }

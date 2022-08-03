@@ -1,5 +1,4 @@
 using System;
-using Microsoft.SPOT;
 
 namespace MyHome.Extensions
 {
@@ -86,6 +85,16 @@ namespace MyHome.Extensions
                 return datetime.TimeOfDay >= rangeStart ||
                        datetime.TimeOfDay <= rangeEnd;
             }
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> if datetime is within the grace time of the target date time.
+        /// </summary>
+        public static bool IsInRange(this DateTime datetime, DateTime target, int graceTimeInMins)
+        {
+            var diffTicksAbs = Math.Abs(target.Ticks - datetime.Ticks);
+            var graceTicks = graceTimeInMins * TimeSpan.TicksPerMinute;
+            return diffTicksAbs <= graceTicks;
         }
 
         /// <summary>
