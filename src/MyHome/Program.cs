@@ -250,7 +250,7 @@ namespace MyHome
                     break;
                 case NetworkStatus.NetworkStuck:
                     _lightManager.NetworkLED.BlinkYellow();
-                    _displayManager.ShowStatusNotification("Network stuck, reconnect ethernet cable");
+                    _displayManager.ShowStatusNotification("Reconnect ethernet cable");
                     break;
                 case NetworkStatus.NetworkDown:
                     _lightManager.NetworkLED.TurnYellow();
@@ -258,15 +258,19 @@ namespace MyHome
                     break;
                 case NetworkStatus.NetworkUp:
                     _lightManager.NetworkLED.BlinkGreen();
-                    _displayManager.ShowStatusNotification("Network up, waiting for IP Address");
+                    _displayManager.ShowStatusNotification("Waiting for an IP Address");
                     break;
                 case NetworkStatus.NetworkAvailable:
                     _lightManager.NetworkLED.TurnGreen();
-                    _lightManager.InfoLED.BlinkBlue();
-                    _displayManager.ShowStatusNotification("Network online, synchronising time");
-                    if (!_systemManager.HasTimeSyncronised)
+                    if (!_systemManager.HasTimeSyncronised && IsFirstLoad)
                     {
+                        _displayManager.ShowStatusNotification("Waiting for time to synchronise");
+                        _lightManager.InfoLED.BlinkBlue();
                         _systemManager.SyncroniseInternetTime();
+                    }
+                    else 
+                    {
+                        _displayManager.ShowStatusNotification("Network online");
                     }
                     _websiteManager.Start(_networkManager.IpAddress);
                     break;
@@ -383,9 +387,9 @@ namespace MyHome
         {
             if (synchronised)
             {
-                _lightManager.InfoLED.TurnBlue();
                 if (IsFirstLoad)
                 { 
+                    _lightManager.InfoLED.TurnBlue();
                     _displayManager.ShowStatusNotification("Waiting for sensor readings");
                     _weatherManager.TakeMeasurement();
                 }
@@ -399,6 +403,8 @@ namespace MyHome
 
         private void WeatherManager_OnMeasurement(WeatherModel weather)
         {
+            if (!_systemManager.HasTimeSyncronised) return;
+
             if (IsFirstLoad)
             {
                 IsFirstLoad = false;
