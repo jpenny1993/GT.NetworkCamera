@@ -6,6 +6,7 @@ using Gadgeteer.Networking;
 
 using GT = Gadgeteer;
 using GTM = Gadgeteer.Modules;
+using MyHome.Configuration;
 
 namespace MyHome.Modules
 {
@@ -21,12 +22,10 @@ namespace MyHome.Modules
 
     public sealed class NetworkManager : INetworkManager
     {
-        private const int TimerTickMs = 5000; // Every 5 seconds
         private const string EmptyIpAddress = "0.0.0.0";
         private const string DefaultSubnet = "255.255.255.0";
         private readonly Logger _logger;
         private readonly EthernetJ11D _ethernet;
-        private readonly GT.Timer _networkTimer;
         private NetworkStatus _prevStatus;
         private NetworkStatus _status;
 
@@ -39,12 +38,26 @@ namespace MyHome.Modules
             _logger = Logger.ForContext(this);
             _ethernet = ethernetJ11D;
             _prevStatus = _status = NetworkStatus.Disabled;
-            _networkTimer = new GT.Timer(TimerTickMs);
-            _networkTimer.Tick += NetworkTimer_Tick;
-            _networkTimer.Start();
         }
 
         public string IpAddress { get { return _ethernet.NetworkSettings.IPAddress; } }
+
+        public void Initialise(NetworkConfiguration configuration)
+        {
+            if (configuration.UseDHCP)
+            {
+                ModeDhcp();
+            }
+            else
+            { 
+                ModeStatic(
+                    configuration.IPAddress,
+                    configuration.SubnetMask,
+                    configuration.Gateway);
+            }
+
+            Enable();
+        }
 
         public void ModeDhcp()
         {
@@ -91,7 +104,7 @@ namespace MyHome.Modules
             _status = NetworkStatus.NetworkUp;
         }
 
-        private void NetworkTimer_Tick(GT.Timer timer)
+        public void UpdateNetworkStatus()
         {
             // Manually handle network state
             var networkStatus = _status;

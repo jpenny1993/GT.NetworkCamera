@@ -1,6 +1,10 @@
 using System;
 using Microsoft.SPOT;
 using Gadgeteer.Modules.GHIElectronics;
+using MyHome.Configuration;
+using MyHome.Constants;
+using MyHome.Extensions;
+using MyHome.Utilities;
 
 using GT = Gadgeteer;
 
@@ -15,6 +19,9 @@ namespace MyHome.Modules
         private GT.Picture _picture;
         private DateTime _pictureLastTaken;
 
+        private CameraConfiguration _configuration;
+        private IAwaitable _savePictureThread = Awaitable.Default;
+
         public event CameraManager.PictureTakenEventHandler OnPictureTaken;
 
         public delegate void PictureTakenEventHandler(GT.Picture picture);
@@ -27,6 +34,11 @@ namespace MyHome.Modules
             _camera.CameraConnected += Camera_CameraConnected;
             _camera.CameraDisconnected += Camera_CameraDisconnected;
             _camera.PictureCaptured += Camera_PictureCaptured;
+        }
+
+        public void Initialise(CameraConfiguration configuration)
+        {
+            _configuration = configuration;
         }
 
         public bool Ready
@@ -67,9 +79,37 @@ namespace MyHome.Modules
             }
         }
 
+        /// <summary>
+        /// Takes a picture provided that the camera is ready, and the timestamp is within the configured range.
+        /// </summary>
+        public void TakePicture(DateTime timestamp)
+        {
+            if (!_configuration.Enabled) return;
+            if (_savePictureThread.IsRunning) return;
+            if (!_camera.CameraReady) return;
+
+            // Check day of week, .Contains() doesn't exist in .NetMF
+            var canTakePicture = false;
+            foreach (var dayOfWeek in _configuration.DaysToTakePicturesOn)
+            {
+                canTakePicture = dayOfWeek == timestamp.DayOfWeek;
+                if (canTakePicture) break;
+            }
+            if (!canTakePicture) return;
+
+            // Checking the current time is within the configured range
+            if (timestamp.IsInRange(_configuration.TakePicturesFrom, _configuration.TakePicturesUntil))
+            {
+                TakePicture();
+            }
+        }
+
+        /// <summary>
+        /// Takes the picture, providing that the camera is ready.
+        /// </summary>
         public void TakePicture()
         {
-            if (_camera.CameraReady)
+            if (_camera.CameraReady && !_savePictureThread.IsRunning)
             {
                 _logger.Information("Take picture");
                 _camera.TakePicture();
@@ -78,6 +118,16 @@ namespace MyHome.Modules
             {
                 _logger.Information("Not ready to take picture");
             }
+        }
+
+        public void SavePictureToSdCard(IFileManager fm, GT.Picture picture, DateTime timestamp)
+        {
+            if (!_configuration.SavePicturesToSdCard) return;
+            if (!fm.HasFileSystem) return;
+
+            var filename = string.Concat("IMG_", timestamp.Timestamp(), FileExtensions.Bitmap);
+            var filepath = MyPath.Combine(Directories.Camera, timestamp.Datestamp(), filename);
+            _savePictureThread = new Awaitable(() => fm.SaveFile(filepath, picture));
         }
     }
 #pragma warning restore 0612, 0618

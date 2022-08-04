@@ -31,6 +31,7 @@ namespace MyHome.Modules
 
         private static LogInstance Instance { get; set; }
 
+        private const string LogFileExtension = ".log";
         private const string DebugMessageTemplate = "{0}: {1}";
         private const string FileMessageTemplate = "{0}|{1}|{2}|{3}\r\n";
 
@@ -39,6 +40,26 @@ namespace MyHome.Modules
         private Logger(string context)
         {
             _context = context;
+
+            if (Instance == null)
+            {
+                Instance = new LogInstance
+                {
+                    ConsoleLogsEnabled = true,
+                    FileLogsEnabled = false,
+                    FileWriteMutex = new object()
+                };
+            }
+        }
+
+        public void Print(string messageTemplate, params object[] args)
+        {
+            if (Instance.ConsoleLogsEnabled)
+            {
+                var formatetdMessage = messageTemplate.Format(args);
+                var logMessage = DebugMessageTemplate.Format(_context, formatetdMessage);
+                Microsoft.SPOT.Debug.Print(logMessage);
+            }
         }
 
         public void Debug(string messageTemplate, params object[] args)
@@ -63,13 +84,7 @@ namespace MyHome.Modules
 
         public static void Initialise(IFileManager fm)
         {
-            Instance = new LogInstance
-            {
-                FileManager = fm,
-                ConsoleLogsEnabled = true,
-                FileLogsEnabled = false,
-                FileWriteMutex = new object()
-            };
+            Instance.FileManager = fm;
         }
 
         public static Logger ForContext(object caller)
@@ -77,8 +92,9 @@ namespace MyHome.Modules
             return new Logger(caller.GetType().Name);
         }
 
-        public static void SetupFileLogging(bool enabled)
+        public static void SetupFileLogging(bool enableFileLogging, bool enableConsoleLogging = true)
         {
+            Instance.ConsoleLogsEnabled = enableConsoleLogging;
             Instance.FileLogsEnabled = false;
             lock (Instance.FileWriteMutex)
             {
@@ -98,13 +114,13 @@ namespace MyHome.Modules
                 }
 
                 // Start new log file
-                if (enabled)
+                if (enableFileLogging)
                 {
                     LogInternal("Enabling file logging");
                     Instance.FileLogCounter = 0;
                     Instance.FileLogFlushThreshold = 50;
                     Instance.FileDate = DateTime.Today;
-                    Instance.FileLogPath = Path.Combine(Directories.Logs, Instance.FileDate.ToString("yyyyMMdd.log"));
+                    Instance.FileLogPath = Path.Combine(Directories.Logs, Instance.FileDate.Datestamp() + LogFileExtension);
                     Instance.FileStream = Instance.FileManager.GetFileStream(Instance.FileLogPath, FileMode.Append, FileAccess.Write);
                     Instance.FileLogsEnabled = true;
                 }
@@ -132,7 +148,7 @@ namespace MyHome.Modules
 
             if (Instance.FileLogsEnabled)
             {
-                var fileLog = FileMessageTemplate.Format(now.ToString("yyyy/MM/dd HH:mm:ss"), status, context, message);
+                var fileLog = FileMessageTemplate.Format(now.SortableDateTime(), status, context, message);
                 var bytes = fileLog.GetBytes();
 
                 if (Instance.FileDate < DateTime.Today)

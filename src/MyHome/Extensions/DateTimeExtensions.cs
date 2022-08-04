@@ -1,5 +1,4 @@
 using System;
-using Microsoft.SPOT;
 
 namespace MyHome.Extensions
 {
@@ -11,6 +10,22 @@ namespace MyHome.Extensions
         public static string Datestamp(this DateTime datetime)
         {
             return datetime.ToString("yyMMdd");
+        }
+
+        /// <summary>
+        /// Returns a timestamp as a string in the following format; yyMM.
+        /// </summary>
+        public static string Monthstamp(this DateTime datetime)
+        {
+            return datetime.ToString("yyMM");
+        }
+
+        /// <summary>
+        /// Returns a a string in the following format; HH:mm.
+        /// </summary>
+        public static string TimeOfDay(this DateTime datetime)
+        {
+            return datetime.ToString("HH:mm");
         }
 
         /// <summary>
@@ -50,6 +65,39 @@ namespace MyHome.Extensions
         }
 
         /// <summary>
+        /// Returns true if the TimeOfDay is within the given time range.
+        /// </summary>
+        public static bool IsInRange(this DateTime datetime, TimeSpan rangeStart, TimeSpan rangeEnd)
+        {
+            if (rangeStart == rangeEnd)
+                return false; // Same times means disabled
+
+            var isFromEarlyTillLate = rangeStart < rangeEnd;
+            if (isFromEarlyTillLate)
+            {
+                 // Allow morning till evening
+                return datetime.TimeOfDay >= rangeStart &&
+                       datetime.TimeOfDay <= rangeEnd;
+            }
+            else
+            {
+                // Allow evening till afternoon
+                return datetime.TimeOfDay >= rangeStart ||
+                       datetime.TimeOfDay <= rangeEnd;
+            }
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> if datetime is within the grace time of the target date time.
+        /// </summary>
+        public static bool IsInRange(this DateTime datetime, DateTime target, int graceTimeInMins)
+        {
+            var diffTicksAbs = Math.Abs(target.Ticks - datetime.Ticks);
+            var graceTicks = graceTimeInMins * TimeSpan.TicksPerMinute;
+            return diffTicksAbs <= graceTicks;
+        }
+
+        /// <summary>
         /// Returns a timestamp as a string in the following format; yyMMddHHmmss.
         /// </summary>
         public static string Timestamp(this DateTime datetime)
@@ -60,9 +108,11 @@ namespace MyHome.Extensions
         /// <summary>
         /// Returns a datetime as a string in a sortable datetime format.
         /// </summary>
-        public static string SortableDateTime(this DateTime datetime)
+        public static string SortableDateTime(this DateTime datetime, bool includeSeconds = true)
         {
-            return datetime.ToString("yyyy-MM-dd HH:mm:ss");
+            return includeSeconds
+                ? datetime.ToString("yyyy-MM-dd HH:mm:ss")
+                : datetime.ToString("yyyy-MM-dd HH:mm");
         }
     }
 }

@@ -79,6 +79,13 @@ namespace MyHome.Modules
 
         public void Stop()
         {
+            if (!_isRunning)
+            {
+                _logger.Information("The web server is already stopped");
+                return;
+            }
+
+            _logger.Information("Stopping web server");
             WebServer.StopLocalServer();
             _isRunning = false;
         }
@@ -106,7 +113,7 @@ namespace MyHome.Modules
         private WebsiteReponse GetFileResponse(string area, string path)
         {
             var response = new WebsiteReponse();
-            if (!_fm.HasFileSystem()) return response;
+            if (!_fm.HasFileSystem) return response;
 
             // Check area exists on the device
             if (!_fm.RootDirectoryExists(area)) return response;

@@ -11,7 +11,11 @@ namespace MyHome.Utilities
         {
             return ISO8601(str, out datetime) ||
                    RFC822(str, out datetime) ||
-                   UnixTimestamp(str, out datetime);
+                   UnixTimestamp(str, out datetime) ||
+                   SortableDateTime(str, out datetime) ||
+                   ISO_UK(str, out datetime) ||
+                   NTP(str, out datetime) ||
+                   NIST(str, out datetime);
         }
 
         /// <summary>
@@ -51,17 +55,16 @@ namespace MyHome.Utilities
 
             try
             {
-                if (parts.Length > 0)
+                if (parts.Length == 0)
                 {
-                    var dateParts = parts[0].Split('/');
-                    year = int.Parse(dateParts[0]);
-                    month = int.Parse(dateParts[1]);
-                    day = int.Parse(dateParts[2]);
+                    datetime = DateTime.MinValue;
+                    return false;
                 }
-                else 
-                {
-                    throw new InvalidCastException();
-                }
+
+                var dateParts = parts[0].Split('/');
+                year = int.Parse(dateParts[0]);
+                month = int.Parse(dateParts[1]);
+                day = int.Parse(dateParts[2]);
 
                 if (parts.Length > 1)
                 {
@@ -225,6 +228,45 @@ namespace MyHome.Utilities
             {
                 datetime = DateTime.MinValue;
             }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parse format dd/MM/yyyy HH:mm:ss 
+        /// For when excel changes your date format in a .csv file
+        /// </summary>
+        public static bool ISO_UK(string str, out DateTime datetime)
+        {
+            datetime = DateTime.MinValue;
+            try
+            {
+                var parts = str.Split(' ');
+                if (parts.Length == 0) return false;
+
+                var dateParts = parts[0].Split('/');
+
+                int day = int.Parse(dateParts[0]);
+                int month = int.Parse(dateParts[1]);
+                int year = int.Parse(dateParts[2]);
+
+                int hour = 0, minute = 0, second = 0;
+                if (parts.Length > 1)
+                {
+                    var timeParts = parts[1].Split(':');
+                    hour = int.Parse(timeParts[0]);
+                    minute = int.Parse(timeParts[1]);
+
+                    if (timeParts.Length > 2)
+                    {
+                        second = int.Parse(timeParts[2].Substring(0, 2));
+                    }
+                }
+
+                datetime = new DateTime(year, month, day, hour, minute, second);
+                return true;
+            }
+            catch { }
 
             return false;
         }

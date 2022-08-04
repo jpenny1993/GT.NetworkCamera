@@ -192,6 +192,12 @@ namespace MyHome.Utilities
             return this;
         }
 
+        public ButtonBuilder MarginLeft()
+        {
+            _lm = GuiBuilder.Margin;
+            return this;
+        }
+
         public ButtonBuilder MarginRight()
         {
             _rm = GuiBuilder.Margin;

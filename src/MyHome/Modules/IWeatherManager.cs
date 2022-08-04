@@ -8,8 +8,6 @@ namespace MyHome.Modules
         double Luminosity { get; }
         double Humidity { get; }
         double Temperature { get; }
-        void Start();
-        void Stop();
         void TakeMeasurement();
     }
 }

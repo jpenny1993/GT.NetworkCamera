@@ -12,236 +12,362 @@ using GT = Gadgeteer;
 
 namespace MyHome.Modules
 {
+    public enum DisplayState
+    {
+        Startup = 0,
+        Dashboard = 1,
+        Notification = 2,
+        Prompt = 3,
+        PromptComplete = 4,
+    }
+
     public class DisplayManager
     {
-        private const int TimerTickMs = 20000;
-        private const string Humidity = "Humidity";
-        private const string LightLevel = "Light Level";
-        private const string Temperature = "Temperature";
+        private static readonly Brush WhiteBackgroundBrush = new SolidColorBrush(GT.Color.White);
+        private static readonly TimeSpan OneSecond = TimeSpan.FromTicks(TimeSpan.TicksPerSecond);
 
         private readonly Logger _logger;
         private readonly DisplayT35 _lcd;
         private readonly Window _window;
-        private readonly GT.Timer _timer;
+        private readonly ISystemManager _system;
 
-        private readonly INetworkManager _networkManager;
-        private readonly IWeatherManager _weatherManager;
+        private readonly TimeSpan _backlightTimeout;
 
-        private TimeSpan _backlightTimeout = new TimeSpan(0, 0, 20);
-        private DateTime _lastTouch;
+        // Using uptime to avoid issues when time sync completes
+        private TimeSpan _lastTouch;
+        private TimeSpan _lastStateChange;
 
-        public DisplayManager(DisplayT35 lcd,
-            INetworkManager networkManager,
-            IWeatherManager weatherManager)
+        private UIElement _dashboard;
+
+        public DisplayState State { get; private set; }
+
+        public bool IsDisplayActive { get { return _lcd.BacklightEnabled; } }
+
+        public TimeSpan TimeSinceLastTouch { get { return _system.Uptime - _lastTouch; } }
+
+        public bool IsReadyForScreenWake { get { return !IsDisplayActive && TimeSinceLastTouch < OneSecond; } }
+
+        public bool IsReadyForScreenTimeout { get { return IsDisplayActive && State == DisplayState.Dashboard && TimeSinceLastTouch > _backlightTimeout; } }
+
+        public DisplayManager(DisplayT35 lcd, ISystemManager system)
         {
             _logger = Logger.ForContext(this);
+            _system = system;
+            _backlightTimeout = new TimeSpan(0, 0, 30);
             _lcd = lcd;
             _window = lcd.WPFWindow;
-            _networkManager = networkManager;
-            _weatherManager = weatherManager;
-
             _window.TouchUp += Window_TouchUp;
-            _window.Dispatcher.BeginInvoke((object obj) =>
-            {
-                _window.Background = new SolidColorBrush(GT.Color.White);
-                _window.Child = ScreenDashboard();
-                return null;
-            }, null);
 
-            _lastTouch = DateTime.Now;
-            _timer = new GT.Timer(TimerTickMs);
-            _timer.Tick += Timer_Tick;
-            _timer.Start();
+            SetState(DisplayState.Startup);
+            ShowStatusNotification("Loading...");
         }
 
-        private UIElement BackButtonPanel
+        public void TouchScreen()
         {
-            get
+            _lastTouch = _system.Uptime;
+        }
+
+        public void EnableBacklight()
+        {
+            _lcd.BacklightEnabled = true;
+        }
+
+        public void DismissBacklight()
+        {
+            _lcd.BacklightEnabled = false;
+        }
+
+        public void SwitchToDashboard()
+        {
+            SetState(DisplayState.Dashboard);
+        }
+
+        public void ShowStatusNotification(string status)
+        {
+             // Status notifications during startup should stay as startup notifications
+            var nextState = State == DisplayState.Startup
+                ? DisplayState.Startup
+                : DisplayState.Notification;
+
+            if (!CanChangeState(State, nextState)) return;
+
+            var screen = GuiBuilder.Create()
+                .Panel(vp => vp.Vertical().VerticalAlignCenter().AddChild(c1 => c1
+                    .Panel(hp => hp.Horizontal().HorizontalAlignCenter().AddChild(c2 => c2
+                        .Label(l => l.Text(status).Foreground(GT.Color.Black))
+                    ))
+                ));
+
+            SetState(nextState);
+
+            DispatchScreenUpdate(screen);
+        }
+
+        public void ShowDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
+        {
+            _dashboard = BuildDashboard(now, ipAddress, humidity, luminosity, temperature, totalFreeSpaceInMb);
+
+            if (!CanChangeState(State, DisplayState.Dashboard)) return;
+
+            SetState(DisplayState.Dashboard);
+
+            DispatchScreenUpdate(_dashboard);
+        }
+
+        public void ShowAccessDenied()
+        {
+            if (!CanChangeState(State, DisplayState.PromptComplete)) return;
+
+            var screen = GuiBuilder.Create()
+                .Panel(vp => vp.Vertical().VerticalAlignCenter()
+                    .AddChild(c1 => c1
+                        .Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                            .AddChild(c2 => c2.Image(Resources.GetBytes(Resources.BinaryResources.Deny)))
+                        )
+                    )
+                    .AddChild(c1 => c1
+                        .Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                            .AddChild(c2 => c2.Label(l => l.Text("Access Denied").Foreground(GT.Color.Black)))
+                        )
+                    )
+                );
+
+            SetState(DisplayState.PromptComplete);
+
+            DispatchScreenUpdate(screen);
+        }
+
+        public void ShowClockInOrOut(DateTime timestamp, string attendanceStatus, string displayName)
+        {
+            if (!CanChangeState(State, DisplayState.PromptComplete)) return;
+
+            var screen = GuiBuilder.Create().Panel(c1 => c1.Vertical().VerticalAlignCenter().MarginLeftRight()
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Image(Resources.GetBytes(Resources.BinaryResources.Clock)))
+                    .AddChild(c7 => c7.Panel(cvp => cvp.Vertical().VerticalAlignCenter().MarginLeftRight()
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(displayName).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(attendanceStatus).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(timestamp.TimeOfDay()).TextAlignLeft().TextMarginLeft()))
+                    ))
+                ))
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Label(l => l.Text("{0} COMPLETE!".Format(attendanceStatus)).Foreground(GT.Color.Black)))
+                ))
+            );
+
+            SetState(DisplayState.PromptComplete);
+
+            DispatchScreenUpdate(screen);
+        }
+
+        public void ShowClockInOrOutPrompt(DateTime timestamp, string status, string displayName, string question, TouchEventHandler acceptAction, TouchEventHandler denyAction)
+        {
+            if (!CanChangeState(State, DisplayState.Prompt)) return;
+
+            var screen = GuiBuilder.Create().Panel(c1 => c1.Vertical().VerticalAlignCenter().MarginLeftRight()
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Image(Resources.GetBytes(Resources.BinaryResources.Clock)))
+                    .AddChild(c7 => c7.Panel(cvp => cvp.Vertical().VerticalAlignCenter().MarginLeftRight()
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(displayName).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(status).TextAlignLeft().TextMarginLeft()))
+                        .AddChild(c8 => c8.Label(l1 => l1.Text(timestamp.TimeOfDay()).TextAlignLeft().TextMarginLeft()))
+                    ))
+                ))
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Label(l => l.Text(question).Foreground(GT.Color.Black)))
+                ))
+                .AddChild(c3 => c3.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                    .AddChild(c4 => c4.Button(b => b
+                        .Content(c5 => c5.Image(Resources.GetBytes(Resources.BinaryResources.Accept)))
+                        .Background(GT.Color.White)
+                        .MarginRight()
+                        .OnPressed(GT.Color.Blue, acceptAction)
+                    ))
+                    .AddChild(c4 => c4.Button(b => b
+                        .Content(c5 => c5.Image(Resources.GetBytes(Resources.BinaryResources.Deny)))
+                        .Background(GT.Color.White)
+                        .MarginRight()
+                        .OnPressed(GT.Color.Blue, denyAction)
+                    ))
+                ))
+            );
+
+            SetState(DisplayState.Prompt);
+
+            DispatchScreenUpdate(screen);
+        }
+
+        public void RefreshState(TimeSpan uptime)
+        {
+            var timeSinceStart = uptime - _lastStateChange;
+            var fiveSeconds = TimeSpan.FromTicks(TimeSpan.TicksPerSecond * 5);
+            if (timeSinceStart < fiveSeconds) return;
+
+            if (CanChangeState(State, DisplayState.Dashboard))
             {
-                return GuiBuilder.Create()
-                    .Panel(hp => hp
-                        .Horizontal()
-                        .HorizontalAlignRight()
-                        .MarginAll()
-                        .AddChild(hc => hc.Button(b => b
-                            .Content("Back")
-                            .Background(GT.Color.LightGray)
-                            .Foreground(GT.Color.Black)
-                            .OnPressed(GT.Color.DarkGray, NavigationEvent(ScreenDashboard)))));
+                ReturnToDashboard();
             }
         }
 
-        private UIElement PageHeader
+        public void ReturnToDashboard()
         {
-            get
-            {
-                return GuiBuilder.Create()
-                    .Panel(hp => hp
-                        .Horizontal()
-                        .HorizontalAlignStretch()
-                        .AddChild(hc => hc.Label(l => l
+            SetState(DisplayState.Dashboard);
+            if (_dashboard != null)
+                DispatchScreenUpdate(_dashboard);
+        }
+
+        private UIElement BuildDashboard(DateTime now, string ipAddress, double humidity, double luminosity, double temperature, double totalFreeSpaceInMb)
+        {
+            return GuiBuilder.Create().Panel(root => root
+                // Page header
+                .AddChild(c1 => c1.Panel(vp => vp.Vertical().VerticalAlignTop().AddChild(c2 => c2
+                    .Panel(hp => hp.Horizontal().HorizontalAlignStretch().AddChild(c3 => c3
+                        .Label(l => l
+                            .Text(now.SortableDateTime(includeSeconds: false))
                             .Width(GuiBuilder.DeviceWidth)
                             .Background(GT.Color.Blue)
                             .Foreground(GT.Color.White)
-                            .TextMarginLeft(GuiBuilder.DeviceWidth / 2)
-                            .TextAlignLeft()
-                            .Text(DateTime.Now.SortableDateTime()))));
-            }
-        }
-
-        private UIElement PageFooter
-        {
-            get
-            {
-                return GuiBuilder.Create()
-                    .Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignBottom()
-                        .AddChild(c => c.Panel(hp => hp
-                            .Horizontal()
-                            .HorizontalAlignStretch()
-                            .AddChild(x => x.Label(l => l
-                                .Width(GuiBuilder.DeviceWidth)
-                                .Background(GT.Color.Gray)
-                                .Foreground(GT.Color.White)
-                                .TextMarginLeft()
-                                .TextAlignLeft()
-                                .Text("IP Address: {0}".Format(_networkManager.IpAddress)))))));
-            }
-        }
-
-        private UIElement PageBody(Resources.BinaryResources icon, string title, string value)
-        {
-            return GuiBuilder.Create()
-                .Panel(hp => hp
-                    .Horizontal()
-                    .HorizontalAlignCenter()
-                    .MarginTopBottom()
-                    .AddChild(x => x.Image(Resources.GetBytes(icon)))
-                    .AddChild(hc => hc.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignCenter()
-                        .MarginLeftRight()
-                        .AddChild(x => x.Label(l => l.Text(title)))
-                        .AddChild(x => x.Label(l => l.Text(value))))));
-        }
-
-        private UIElement DashboardButton(Resources.BinaryResources icon, string text, TouchEventHandler onPressed)
-        {
-            return GuiBuilder.Create()
-                .Button(b => b
-                    .Background(GT.Color.White)
-                    .MarginAll()
-                    .OnPressed(GT.Color.DarkGray, onPressed)
-                    .Content(bc => bc.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignCenter()
-                        .MarginTopBottom()
-                        .AddChild(vc => vc.Panel(hp => hp
-                            .Horizontal()
-                            .HorizontalAlignCenter()
-                            .MarginLeftRight()
-                            .AddChild(hc => hc.Image(Resources.GetBytes(icon)))))
-                        .AddChild(vc => vc.Panel(hp => hp
-                            .Horizontal()
-                            .HorizontalAlignCenter()
-                            .MarginLeftRight()
-                            .AddChild(hc => hc.Label(l => l.Text(text))))))));
-        }
-
-        private TouchEventHandler NavigationEvent(GuiBuilder.UiElementEvent pageBuilder)
-        {
-            return new TouchEventHandler((sender, args) => _window.Child = pageBuilder.Invoke());
-        }
-
-        private UIElement ScreenDashboard()
-        {
-            return GuiBuilder.Create()
-                .Panel(root => root
-                    .AddChild(c => c.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignTop()
-                        .AddChild(PageHeader)))
-                    .AddChild(main => main.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignCenter()
-                        .MarginLeftRight()
-                        .AddChild(c => c.Panel(hp => hp
-                            .Horizontal()
-                            .HorizontalAlignCenter()
-                            .MarginTopBottom()
-                            .AddChild(DashboardButton(Resources.BinaryResources.Thermometer_Small, Temperature, NavigationEvent(ScreenTemperature)))
-                            .AddChild(DashboardButton(Resources.BinaryResources.Humidity_Small, Humidity, NavigationEvent(ScreenHumidity)))
+                            .TextMarginRight(GuiBuilder.Margin * 3)
+                            .TextAlignRight()
                         ))
-                        .AddChild(c => c.Panel(hp => hp
-                            .Horizontal()
-                            .HorizontalAlignCenter()
-                            .MarginTopBottom()
-                            .AddChild(DashboardButton(Resources.BinaryResources.Sunshine_Small, LightLevel, NavigationEvent(ScreenLight)))
-                            //.AddChild(DashboardButton(Resources.BinaryResources.Padlock_Small, "Lock Device", NavigationEvent(ScreenLock)))
-                        ))))
-                    .AddChild(PageFooter));
+                    ))
+                ))
+                // Page body
+                .AddChild(c1 => c1.Panel(vp => vp.Vertical().VerticalAlignCenter()
+                    // Humidity widget
+                    .AddChild(c2 => c2.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                        .AddChild(c3 => c3.Image(Resources.GetBytes(Resources.BinaryResources.Humidity_Small)))
+                        .AddChild(c4 => c4.Panel(vp2 => vp2.Vertical().VerticalAlignCenter().MarginLeftRight()
+                            .AddChild(c5 => c5.Label(l => l.Text("Humidity").TextAlignLeft().TextMarginLeft()))
+                            .AddChild(c5 => c5.Label(l => l.Text("{0} g.m-3".Format(humidity.ToString("N2"))).TextAlignLeft().TextMarginLeft()))
+                        ))
+                    ))
+                    // Illuminance widget
+                    .AddChild(c2 => c2.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                        .AddChild(c3 => c3.Image(Resources.GetBytes(Resources.BinaryResources.Sunshine_Small)))
+                        .AddChild(c4 => c4.Panel(vp2 => vp2.Vertical().VerticalAlignCenter().MarginLeftRight()
+                            .AddChild(c5 => c5.Label(l => l.Text("Illuminance").TextAlignLeft().TextMarginLeft()))
+                            .AddChild(c5 => c5.Label(l => l.Text("{0} Lux".Format(luminosity.ToString("N2"))).TextAlignLeft().TextMarginLeft()))
+                        ))
+                    ))
+                    // Temperature widget
+                    .AddChild(c2 => c2.Panel(hp => hp.Horizontal().HorizontalAlignCenter().MarginTopBottom()
+                        .AddChild(c3 => c3.Image(Resources.GetBytes(Resources.BinaryResources.Thermometer_Small)))
+                        .AddChild(c4 => c4.Panel(vp2 => vp2.Vertical().VerticalAlignCenter().MarginLeftRight()
+                            .AddChild(c5 => c5.Label(l => l.Text("Temperature").TextAlignLeft().TextMarginLeft()))
+                            .AddChild(c5 => c5.Label(l => l.Text("{0} °C".Format(temperature.ToString("N2"))).TextAlignLeft().TextMarginLeft()))
+                        ))
+                    ))
+                ))
+                // Page footer
+                .AddChild(c1 => c1.Panel(vp => vp.Vertical().VerticalAlignBottom().AddChild(c2 => c2
+                    .Panel(hp => hp.Horizontal().HorizontalAlignStretch().AddChild(c3 => c3
+                        .Label(l => l
+                            .Text(ipAddress)
+                            .Width(GuiBuilder.DeviceWidth / 2)
+                            .Background(GT.Color.Gray)
+                            .Foreground(GT.Color.White)
+                            .TextMarginLeft()
+                            .TextAlignLeft()
+                        )).AddChild(c4 => c4.Label(l => l
+                            .Text("{0} MB Free".Format(totalFreeSpaceInMb.ToString("N2")))
+                            .Width(GuiBuilder.DeviceWidth / 2)
+                            .Background(GT.Color.Gray)
+                            .Foreground(GT.Color.White)
+                            .TextMarginRight(GuiBuilder.Margin * 3)
+                            .TextAlignRight()
+                        ))
+                    ))
+                ))
+            );
         }
 
-        private UIElement ScreenLight()
+        private void DispatchScreenUpdate(UIElement screen)
         {
-            return GuiBuilder.Create()
-                .Panel(root => root
-                    .AddChild(main => main.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignTop()
-                        .AddChild(PageHeader)
-                        .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Sunshine, LightLevel, "{0} Lux".Format(_weatherManager.Luminosity.ToString("N2"))))))
-                    .AddChild(PageFooter));
+            DispatchScreenUpdate(WhiteBackgroundBrush, screen);
         }
 
-        private UIElement ScreenHumidity()
+        private void DispatchScreenUpdate(Brush background, UIElement screen)
         {
-            return GuiBuilder.Create()
-                .Panel(root => root
-                    .AddChild(main => main.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignTop()
-                        .AddChild(PageHeader)
-                        .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Humidity, Humidity, "{0} g.m-3".Format(_weatherManager.Humidity.ToString("N2"))))))
-                    .AddChild(PageFooter));
-        }
-
-        private UIElement ScreenTemperature()
-        {
-            return GuiBuilder.Create()
-                .Panel(root => root
-                    .AddChild(main => main.Panel(vp => vp
-                        .Vertical()
-                        .VerticalAlignTop()
-                        .AddChild(PageHeader)
-                        .AddChild(BackButtonPanel)
-                        .AddChild(PageBody(Resources.BinaryResources.Thermometer, Temperature, "{0} °C".Format(_weatherManager.Temperature.ToString("N2"))))))
-                    .AddChild(PageFooter));
-        }
-
-        private void Timer_Tick(GT.Timer timer)
-        {
-            var diff = DateTime.Now - _lastTouch;
-            if (diff > _backlightTimeout)
+            _window.Dispatcher.BeginInvoke((object obj) =>
             {
-                _lcd.BacklightEnabled = false;
-                _timer.Stop();
-            }
+                if (_window.Background != background)
+                {
+                    _window.Background = background;
+                }
+
+                _window.Child = screen;
+                return null;
+            }, null);
+        }
+
+        private void SetState(DisplayState value)
+        {
+            State = value;
+            _lastStateChange = _system.Uptime;
         }
 
         private void Window_TouchUp(object sender, TouchEventArgs e)
         {
-            if (!_lcd.BacklightEnabled)
-            {
-                _window.Child = ScreenDashboard();
-                _lcd.BacklightEnabled = true;
-                _timer.Start();
-            }
+            TouchScreen();
+        }
 
-            _lastTouch = DateTime.Now;
+        private static bool CanChangeState(DisplayState oldState, DisplayState newState)
+        {
+            switch (oldState)
+            {
+                default:                                    return false;
+                case DisplayState.Startup:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return true;
+                        case DisplayState.Dashboard:        return true;
+                        case DisplayState.Notification:     return false;
+                        case DisplayState.Prompt:           return false;
+                        case DisplayState.PromptComplete:   return false;
+                    }
+                case DisplayState.Dashboard:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return false;
+                        case DisplayState.Dashboard:        return true;
+                        case DisplayState.Notification:     return true;
+                        case DisplayState.Prompt:           return true;
+                        case DisplayState.PromptComplete:   return true;
+                    }
+                case DisplayState.Notification:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return false;
+                        case DisplayState.Dashboard:        return true;
+                        case DisplayState.Notification:     return false;
+                        case DisplayState.Prompt:           return false;
+                        case DisplayState.PromptComplete:   return false;
+                    }
+                case DisplayState.Prompt:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return false;
+                        case DisplayState.Dashboard:        return false;
+                        case DisplayState.Notification:     return false;
+                        case DisplayState.Prompt:           return false;
+                        case DisplayState.PromptComplete:   return true;
+                    }
+                case DisplayState.PromptComplete:
+                    switch (newState)
+                    {
+                        default:                            return false;
+                        case DisplayState.Startup:          return false;
+                        case DisplayState.Dashboard:        return true;
+                        case DisplayState.Notification:     return false;
+                        case DisplayState.Prompt:           return false;
+                        case DisplayState.PromptComplete:   return false;
+                    }
+            }
         }
     }
 }

@@ -94,7 +94,7 @@ namespace MyHome.Modules
             var folderPath = responder.QueryString(QueryStrings.Directory);
             var recursive = responder.QueryBoolean(QueryStrings.Recursive);
 
-            if (!_fm.HasFileSystem())
+            if (!_fm.HasFileSystem)
             {
                 responder.NotFound();
                 return;
@@ -155,7 +155,7 @@ namespace MyHome.Modules
 
         private void WebEvent_WeatherMeasuerments(string path, WebServer.HttpMethod method, Responder responder)
         {
-            if (!_fm.HasFileSystem())
+            if (!_fm.HasFileSystem)
             {
                 responder.NotFound();
                 return;

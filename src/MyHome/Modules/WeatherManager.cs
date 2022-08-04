@@ -2,21 +2,27 @@ using System;
 using System.Collections;
 using Microsoft.SPOT;
 using Gadgeteer.Modules.GHIElectronics;
+using MyHome.Configuration;
+using MyHome.Constants;
+using MyHome.Extensions;
 using MyHome.Models;
+using MyHome.Utilities;
 
 using GT = Gadgeteer;
+using System.IO;
 
 namespace MyHome.Modules
 {
 #pragma warning disable 0612, 0618 // Ignore TempHumidity obsolete warning
     public sealed class WeatherManager : IWeatherManager
     {
-        private const int TimerTickMs = 5000; // Every 5 seconds
+        private readonly Logger _logger;
         private readonly LightSense _light;
         private readonly TempHumidity _sensor;
-        private readonly GT.Timer _updateTimer;
-        private bool _started;
         private WeatherModel _weather;
+
+        private SensorConfiguration _configuration;
+        private IAwaitable _saveMeasurementThread = Awaitable.Default;
 
         public event WeatherManager.Measurement OnMeasurement;
 
@@ -24,13 +30,11 @@ namespace MyHome.Modules
 
         public WeatherManager(TempHumidity tempHumidity, LightSense lightSense)
         {
+            _logger = Logger.ForContext(this);
             _light = lightSense;
             _sensor = tempHumidity;
             _sensor.MeasurementComplete += Sensor_MeasurementComplete;
-            _updateTimer = new GT.Timer(TimerTickMs);
-            _updateTimer.Tick += UpdateTimer_Tick;
             _weather = new WeatherModel();
-            _started = false;
         }
 
         public double Luminosity
@@ -48,45 +52,60 @@ namespace MyHome.Modules
             get { return _weather.Temperature; }
         }
 
-        public void Start()
+        public void Initialise(SensorConfiguration configuration)
         {
-            if (!_started)
-            { 
-                _sensor.StartTakingMeasurements();
-                _updateTimer.Start();
-                _started = true;
-            }
-        }
-
-        public void Stop()
-        {
-            if (_started)
-            { 
-                _sensor.StopTakingMeasurements();
-                _updateTimer.Stop();
-                _started = false;
-            }
+            _configuration = configuration;
         }
 
         public void TakeMeasurement()
         {
             if (!_sensor.IsTakingMeasurements)
-            { 
+            {
+                _logger.Information("Taking measurements from sensors");
                 _sensor.RequestSingleMeasurement();
             }
         }
 
         private void Sensor_MeasurementComplete(TempHumidity sender, TempHumidity.MeasurementCompleteEventArgs e)
         {
+            _logger.Information("Updated sensor readings");
             _weather = new WeatherModel(_light.GetIlluminance(), e.RelativeHumidity, e.Temperature);
-        }
-
-        private void UpdateTimer_Tick(GT.Timer timer)
-        {
             if (OnMeasurement != null)
             {
                 OnMeasurement.Invoke(_weather);
             }
+        }
+
+        public void SaveMeasurementToSdCard(IFileManager _fileManager, WeatherModel weather, DateTime timestamp)
+        {
+            if (!_configuration.SaveMeasurementsToSdCard) return;
+            if (_saveMeasurementThread.IsRunning) return;
+            if (!_fileManager.HasFileSystem) return;
+
+            _saveMeasurementThread = new Awaitable(() =>
+            {
+                var filename = string.Concat("measurements_", timestamp.Datestamp(), FileExtensions.Csv);
+                var filepath = MyPath.Combine(Directories.Weather, filename);
+                var fileExists = _fileManager.FileExists(filepath);
+
+                using (var fs = _fileManager.GetFileStream(filepath, FileMode.Append, FileAccess.Write))
+                {
+                    if (!fileExists)
+                    {
+                        fs.WriteText("DateTime, Humidity, Luminosity, Temperature\r\n");
+                    }
+
+                    fs.WriteText(
+                        "{0}, {1}, {2}, {3}\r\n",
+                        timestamp.SortableDateTime(),
+                        weather.Humidity,
+                        weather.Luminosity,
+                        weather.Temperature
+                    );
+                }
+
+                _logger.Information("{0} updated", filename);
+            });
         }
     }
 #pragma warning restore 0612, 0618

@@ -39,32 +39,46 @@
   <!-- Everything below here is custom to .NET MF / Gadgeteer template-->
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
+    <Compile Include="Configuration\CameraConfiguration.cs" />
+    <Compile Include="Configuration\LightConfiguration.cs" />
+    <Compile Include="Configuration\LoggerConfiguration.cs" />
+    <Compile Include="Configuration\NetworkConfiguration.cs" />
+    <Compile Include="Configuration\SensorConfiguration.cs" />
+    <Compile Include="Configuration\AttendanceConfiguration.cs" />
+    <Compile Include="Constants\AttendanceStatus.cs" />
     <Compile Include="Constants\ContentTypes.cs" />
+    <Compile Include="Constants\DateTypes.cs" />
     <Compile Include="Constants\Directories.cs" />
     <Compile Include="Constants\FileExtensions.cs" />
     <Compile Include="Constants\QueryStrings.cs" />
     <Compile Include="Constants\WebRoutes.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />
+    <Compile Include="Extensions\FileStreamExtensions.cs" />
     <Compile Include="Extensions\ResponderExtensions.cs" />
     <Compile Include="Extensions\StringCollectionExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Extensions\XmlReaderExtensions.cs" />
+    <Compile Include="Models\Attendance.cs" />
+    <Compile Include="Configuration\GlobalConfiguration.cs" />
     <Compile Include="Models\UserAccount.cs" />
     <Compile Include="Models\GalleryObject.cs" />
     <Compile Include="Models\PathObject.cs" />
     <Compile Include="Models\WeatherModel.cs" />
+    <Compile Include="Models\XmlElement.cs" />
     <Compile Include="Modules\CameraManager.cs" />
     <Compile Include="Modules\DisplayManager.cs" />
     <Compile Include="Modules\FileManager.cs" />
     <Compile Include="Modules\ICameraManager.cs" />
     <Compile Include="Modules\IFileManager.cs" />
     <Compile Include="Modules\INetworkManager.cs" />
-    <Compile Include="Modules\ISecurityManager.cs" />
+    <Compile Include="Modules\IAttendanceManager.cs" />
     <Compile Include="Modules\ISystemManager.cs" />
     <Compile Include="Modules\IWeatherManager.cs" />
+    <Compile Include="Modules\LightManager.cs" />
     <Compile Include="Modules\Logger.cs" />
     <Compile Include="Modules\NetworkManager.cs" />
-    <Compile Include="Modules\SecurityManager.cs" />
+    <Compile Include="Modules\AttendanceManager.cs" />
     <Compile Include="Modules\SystemManager.cs" />
     <Compile Include="Modules\WeatherManager.cs" />
     <Compile Include="Modules\WebsiteManager.Events.cs" />
@@ -144,8 +158,10 @@
     <Reference Include="GTM.GHIElectronics.USBClientDP, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="MFDpwsExtensions" />
     <Reference Include="Microsoft.SPOT.Graphics" />
     <Reference Include="Microsoft.SPOT.Hardware" />
+    <Reference Include="Microsoft.SPOT.IO" />
     <Reference Include="Microsoft.SPOT.Native" />
     <Reference Include="Microsoft.SPOT.Net" />
     <Reference Include="Microsoft.SPOT.TinyCore" />
@@ -153,6 +169,7 @@
     <Reference Include="System" />
     <Reference Include="System.Http" />
     <Reference Include="System.IO" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources.resx">
@@ -183,15 +200,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Humidity.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Sunshine.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Thermometer.jpg" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\Humidity_Small.jpg" />
   </ItemGroup>
   <ItemGroup>
@@ -199,5 +207,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Thermometer_Small.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Accept.jpg" />
+    <Content Include="Resources\Clock.jpg" />
+    <Content Include="Resources\Deny.jpg" />
   </ItemGroup>
 </Project>

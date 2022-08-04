@@ -8,14 +8,20 @@ namespace MyHome.Modules
     {
         event FileManager.DeviceSwapEnventHandler OnDeviceSwap;
 
+        bool HasFileSystem { get; }
+        double TotalSizeInMb { get; }
+        double TotalFreeSpaceInMb { get; }
+        double TotalUsedSpaceInMb { get; }
+
         int CountFiles(string folderPath, bool recursive);
         void CreateDirectory(string folderPath);
+        void DeleteDirectory(string folderPath);
+        void DeleteFile(string filePath);
         bool DirectoryExists(string folderPath);
         bool FileExists(string filePath);
         byte[] GetFileContent(string filePath);
         string GetFileString(string filePath);
         FileStream GetFileStream(string filePath, FileMode mode, FileAccess access);
-        bool HasFileSystem();
         string[] ListDirectories(string directory);
         ArrayList ListDirectoriesRecursive(string directory);
         string[] ListFiles(string directory);

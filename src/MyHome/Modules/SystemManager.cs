@@ -6,16 +6,27 @@ using Microsoft.SPOT.Hardware;
 using Json.Lite;
 using MyHome.Extensions;
 using MyHome.Utilities;
+using MyHome.Constants;
 
 namespace MyHome.Modules
 {
     public sealed class SystemManager : ISystemManager
     {
-        private static readonly string[] TimeServers = { "time.nist.gov", "time-c.nist.gov", "0.uk.pool.ntp.org" };
+        private static readonly string[] NistTimeServers = {
+                                                               "time.nist.gov", 
+                                                               "time-a-b.nist.gov", "time-a-g.nist.gov", "time-a-wwv.nist.gov",
+                                                               "time-b-b.nist.gov", "time-b-g.nist.gov", "time-b-wwv.nist.gov",
+                                                               "time-c-b.nist.gov", "time-c-g.nist.gov", "time-c-wwv.nist.gov",
+                                                               "time-d-b.nist.gov", "time-d-g.nist.gov", "time-d-wwv.nist.gov"
+                                                           };
+        private static readonly string[] NtpTimeServers = { "time.windows.com", "time.cloudflare.com", "time.google.com", "time.apple.com" };
         private readonly Logger _logger;
         private DateTime _deviceStartTime;
         private bool _syncronisingTime;
-        private bool _isTimeSynchronised;
+
+        public DateTime TimeLastSyncronised { get; private set; }
+
+        public bool HasTimeSyncronised { get { return TimeLastSyncronised != DateTime.MinValue; } }
 
         public event SystemManager.TimeSynchronised OnTimeSynchronised;
 
@@ -23,15 +34,10 @@ namespace MyHome.Modules
 
         public SystemManager()
         {
+            TimeLastSyncronised = DateTime.MinValue;
             _logger = Logger.ForContext(this);
             _deviceStartTime = DateTime.Now;
-            _isTimeSynchronised = false;
             _syncronisingTime = false;
-        }
-
-        public bool IsTimeSynchronised
-        {
-            get { return _isTimeSynchronised; }
         }
 
         public DateTime StartTime
@@ -39,9 +45,19 @@ namespace MyHome.Modules
             get { return _deviceStartTime; }
         }
 
+        public DateTime Date
+        {
+            get { return DateTime.Today; }
+        }
+
         public DateTime Time
         {
             get { return DateTime.Now; }
+        }
+
+        public DateTime UtcTime 
+        {
+            get { return DateTime.UtcNow; }
         }
 
         public TimeSpan Uptime
@@ -55,34 +71,18 @@ namespace MyHome.Modules
 
             _syncronisingTime = true;
             DateTime timeBeforeSync = Time;
-            DateTime currentTime;
-            bool success = false;
+            
 
             _logger.Information("Attempting to synchronise time...");
-            foreach (var hostname in TimeServers)
-            {
-                _logger.Information("Using server: {0}", hostname);
-                if (GetTime(hostname, 13, out currentTime))
-                {
-                    if (Time != currentTime)
-                    {
-                        Utility.SetLocalTime(currentTime); // set the system time
-                    }
-                    _isTimeSynchronised = success = true;
-                    break;
-                }
-                else
-                {
-                    _logger.Information("Time synchronisation failed");
-                }
-            }
+            bool success = UpdateTimeFromServerList(DateTypes.NIST, NistTimeServers) ||
+                           UpdateTimeFromServerList(DateTypes.NTP, NtpTimeServers);
 
             if (success)
             {
                 // Recalculate the start time using the current known uptime
                 _deviceStartTime = Time - (timeBeforeSync - _deviceStartTime);
-                _logger.Information("Synchronised time: ", JsonConvert.SerializeObject(Time));
-                _logger.Information("Recalculated uptime: ", JsonConvert.SerializeObject(Uptime));
+                _logger.Information("Synchronised time: {0}", JsonConvert.SerializeObject(Time));
+                _logger.Information("Recalculated uptime: {0}", JsonConvert.SerializeObject(Uptime));
             }
             else
             {
@@ -92,13 +92,43 @@ namespace MyHome.Modules
             if (OnTimeSynchronised != null)
             {
                 OnTimeSynchronised.Invoke(success);
+                TimeLastSyncronised = Time;
             }
 
             _syncronisingTime = false;
-            return _isTimeSynchronised;
+            return success;
         }
 
-        private static bool GetTime(string hostname, ushort port, out DateTime datetime)
+        private void SetTime(DateTime currentTime)
+        {
+            if (Time != currentTime)
+            {
+                Utility.SetLocalTime(currentTime); // sets the system time
+            }
+        }
+
+        private bool UpdateTimeFromServerList(string dateType, string[] serverList)
+        {
+            DateTime currentTime;
+            foreach (var hostname in serverList)
+            {
+                _logger.Information("Using server: {0}", hostname);
+                const int ntpPort = 13;
+                if (GetTime(dateType, hostname, ntpPort, out currentTime))
+                {
+                    SetTime(currentTime);
+                    return true;
+                }
+                else
+                {
+                    _logger.Information("Time synchronisation failed");
+                }
+            }
+
+            return false;
+        }
+
+        private static bool GetTime(string dateType, string hostname, ushort port, out DateTime datetime)
         {
             string timeStr = null;
             var networkThread = new Awaitable(() =>
@@ -115,8 +145,8 @@ namespace MyHome.Modules
             networkThread.Await(3000); // Timeout network request after 3 seconds
 
             if (!timeStr.IsNullOrEmpty() &&
-                (hostname.Contains("nist") && DateTimeParser.NIST(timeStr, out datetime) ||
-                 hostname.Contains("ntp") && DateTimeParser.NTP(timeStr, out datetime)))
+                (dateType == DateTypes.NIST && DateTimeParser.NIST(timeStr, out datetime) ||
+                 dateType == DateTypes.NTP && DateTimeParser.NTP(timeStr, out datetime)))
             {
                 // Convert UTC/GMT to BST
                 if (datetime.IsBST())

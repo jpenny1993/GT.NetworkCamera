@@ -19,76 +19,84 @@ using MyHome.Extensions;
 using MyHome.Modules;
 using MyHome.Utilities;
 using MyHome.Models;
+using MyHome.Configuration;
+using Microsoft.SPOT.Input;
     
 namespace MyHome
 {
     public partial class Program
     {
-        private GT.Timer _timer;
+        private static readonly string GlobalConfigFilePath = Path.Combine(Directories.Config, "system.xml");
+
+        private static bool IsFirstLoad = true;
+
+        private GlobalConfiguration Configuration;
+
+        private GT.Timer _eventTimer;
         private GT.Color _prevColour;
         private Logger _logger;
         private CameraManager _cameraManager;
         private DisplayManager _displayManager;
         private FileManager _fileManager;
+        private LightManager _lightManager;
         private NetworkManager _networkManager;
         private SystemManager _systemManager;
         private WeatherManager _weatherManager;
         private WebsiteManager _websiteManager;
-        private SecurityManager _securityManager;
-
-        private IAwaitable _saveMeasurementThread = Awaitable.Default;
-        private IAwaitable _savePictureThread = Awaitable.Default;
+        private AttendanceManager _attendanceManager;
 
         // This method is run when the mainboard is powered up or reset.   
         void ProgramStarted()
         {
-            // DO NOT PUT BLOCKING CODE IN THE MAIN THREAD
             Debug.Print("Startup Initiated");
             _logger = Logger.ForContext(this);
 
             SetupDevices();
 
-            // Create timer to action events on a loop
-            _timer = new GT.Timer(60000); // every 60 seconds
-            _timer.Tick += Update_Tick;
-            _timer.Start();
-
+            const int OneSecondInterval = 1000;
+            _eventTimer = new GT.Timer(OneSecondInterval);
+            _eventTimer.Tick += EventTimer_Tick;
+            _eventTimer.Start();
             _logger.Information("Startup Complete");
+        }
+
+        private void ReadGlobalConfigurationFile()
+        {
+            if (!_fileManager.FileExists(GlobalConfigFilePath))
+            {
+                using (var fs = _fileManager.GetFileStream(GlobalConfigFilePath, FileMode.CreateNew, FileAccess.Write))
+                {
+                    Configuration = GlobalConfiguration.DefaultConfiguration;
+                    GlobalConfiguration.Write(fs, Configuration);
+                }
+            }
+            else
+            {
+                using (var fs = _fileManager.GetFileStream(GlobalConfigFilePath, FileMode.Open, FileAccess.Read))
+                {
+                    Configuration = GlobalConfiguration.Read(fs);
+                }
+            }
         }
 
         private void SetupDevices()
         {
+            _lightManager = new LightManager(networkLED, infoLED);
+            _lightManager.NetworkLED.TurnRed();
+
             _systemManager = new SystemManager();
+            _displayManager = new DisplayManager(displayT35, _systemManager);
+
             _systemManager.OnTimeSynchronised += SystemManager_OnTimeSynchronised;
 
-            multicolorLED.TurnRed();
-
             _fileManager = new FileManager(sdCard);
-            _securityManager = new SecurityManager(rfidReader, _fileManager);
-            _securityManager.OnAccessDenied += SecurityManager_OnAccessDenied;
-            _securityManager.OnAccessGranted += SecurityManager_OnAccessGranted;
-            _securityManager.OnScanEnabled += SecurityManager_OnScanEnabled;
-            _securityManager.OnScanCompleted += SecurityManager_OnScanCompleted;
 
-            Logger.Initialise(_fileManager);
-
-            _fileManager.OnDeviceSwap += (bool diskInserted) =>
-            {
-                Logger.SetupFileLogging(diskInserted);
-
-                if (diskInserted)
-                {
-                    _securityManager.Initialise();
-                }
-            };
-
-            new Awaitable(() => _fileManager.Remount());
+            _attendanceManager = new AttendanceManager(rfidReader, _systemManager, _fileManager);
+            _attendanceManager.OnAccessDenied += AttendanceManager_OnAccessDenied;
+            _attendanceManager.OnScannedKeycard += AttendanceManager_OnScannedKeycard;
 
             _networkManager = new NetworkManager(ethernetJ11D);
             _networkManager.OnStatusChanged += NetworkManager_OnStatusChanged;
-            //_networkManager.ModeStatic("192.168.1.69", gateway: "192.168.1.1");
-            _networkManager.ModeDhcp();
-            _networkManager.Enable();
 
             _cameraManager = new CameraManager(camera, _systemManager);
             _cameraManager.OnPictureTaken += CameraManager_OnPictureTaken;
@@ -100,7 +108,117 @@ namespace MyHome
             _weatherManager.OnMeasurement += WeatherManager_OnMeasurement;
 
             _websiteManager = new WebsiteManager(_systemManager, _cameraManager, _fileManager, _weatherManager);
-            _displayManager = new DisplayManager(displayT35, _networkManager, _weatherManager);
+
+            Logger.Initialise(_fileManager);
+
+            // Code to trigger once the SD card is ready
+            _fileManager.OnDeviceSwap += (bool diskInserted) =>
+            {
+                // First time global configuration
+                if (diskInserted && Configuration == null)
+                {
+                    ReadGlobalConfigurationFile();
+
+                    Logger.SetupFileLogging(
+                        Configuration.Logging.FileLogsEnabled,
+                        Configuration.Logging.ConsoleLogsEnabled);
+
+                    _attendanceManager.Initialise(Configuration.Attendance);
+                    _cameraManager.Initialise(Configuration.Camera);
+                    _weatherManager.Initialise(Configuration.Sensors);
+                    _networkManager.Initialise(Configuration.Network);
+                }
+                else if (diskInserted)
+                {
+                    // Re-enable file logging on disk restoration
+                    Logger.SetupFileLogging(
+                        Configuration.Logging.FileLogsEnabled,
+                        Configuration.Logging.ConsoleLogsEnabled);
+                }
+                else
+                {
+                    // Disable file logging on disk removal
+                    Logger.SetupFileLogging(false);
+                }
+
+            };
+
+            // Fix SD card mount being unreliable on startup
+            _fileManager.Remount();
+        }
+
+        private void EventTimer_Tick(GT.Timer timer)
+        {
+            var time = _systemManager.UtcTime;
+
+            _networkManager.UpdateNetworkStatus();
+
+            // There is no point running any other events until time has been synchronised once
+            if (!_systemManager.HasTimeSyncronised) return;
+
+            if (time.Second % 30 == 0)
+            {
+                _logger.Print("Triggering events [30th sec]");
+                _weatherManager.TakeMeasurement();
+            }
+
+            if (time.Second == 0)
+            {
+                _logger.Print("Triggering events [60th sec]");
+                if (_displayManager.IsDisplayActive)
+                {
+                    _displayManager.ShowDashboard(
+                       _systemManager.Time,
+                       _networkManager.IpAddress,
+                       _weatherManager.Humidity,
+                       _weatherManager.Luminosity,
+                       _weatherManager.Temperature,
+                       _fileManager.TotalFreeSpaceInMb);
+                }
+
+                _lightManager.CheckScheduleForLightsOut(_systemManager.Time);
+            }
+
+            if (time.Minute % 5 == 0 && time.Second == 0)
+            {
+                _logger.Print("Triggering events [5th min]");
+                _cameraManager.TakePicture(_systemManager.Time);
+            }
+
+            if (time.Minute % 58 == 0 && time.Second == 0)
+            {
+                _logger.Print("Triggering events [58th min]");
+                _attendanceManager.AutoClockOut(_systemManager.Date, _systemManager.Time);
+            }
+
+            // At 3 AM UTC every morning
+            if (time.Hour == 3 && time.Minute == 0 && time.Second == 0)
+            {
+                _logger.Print("Triggering events [Maintenance]");
+                _systemManager.SyncroniseInternetTime();
+            }
+
+            // Returns the state to dashboard after 5 seconds
+            _displayManager.RefreshState(_systemManager.Uptime);
+
+            if (_displayManager.IsReadyForScreenWake)
+            {
+                _logger.Print("Triggering screen wake-up events");
+                _displayManager.ShowDashboard(
+                   _systemManager.Time,
+                   _networkManager.IpAddress,
+                   _weatherManager.Humidity,
+                   _weatherManager.Luminosity,
+                   _weatherManager.Temperature,
+                   _fileManager.TotalFreeSpaceInMb);
+
+                _displayManager.EnableBacklight();
+            }
+            else if (_displayManager.IsReadyForScreenTimeout)
+            {
+                _logger.Print("Triggering screen timeout events");
+                _displayManager.DismissBacklight();
+            }
         }
 
         private void Button_ButtonReleased(Button sender, Button.ButtonState state)
@@ -110,10 +228,7 @@ namespace MyHome
 
         private void CameraManager_OnPictureTaken(GT.Picture picture)
         {
-            var now = _systemManager.Time;
-            var filename = string.Concat("IMG_", now.Timestamp(), FileExtensions.Bitmap);
-            var filepath = MyPath.Combine(Directories.Camera, now.Datestamp(), filename);
-            _savePictureThread = new Awaitable(() => _fileManager.SaveFile(filepath, picture));
+            _cameraManager.SavePictureToSdCard(_fileManager, picture, _systemManager.Time);
         }
 
         private void NetworkManager_OnStatusChanged(NetworkStatus status, NetworkStatus previousStatus)
@@ -126,122 +241,185 @@ namespace MyHome
             switch(status) 
             {
                 case NetworkStatus.Disabled:
-                    multicolorLED.TurnRed();
+                    _lightManager.NetworkLED.TurnRed();
+                    _displayManager.ShowStatusNotification("Network disabled");
                     break;
                 case NetworkStatus.Enabled:
-                    multicolorLED.TurnColor(GT.Color.Orange);
+                    _lightManager.NetworkLED.TurnOrange();
+                    _displayManager.ShowStatusNotification("Ethernet cable disconnected");
                     break;
                 case NetworkStatus.NetworkStuck:
-                    multicolorLED.BlinkRepeatedly(GT.Color.Yellow);
+                    _lightManager.NetworkLED.BlinkYellow();
+                    _displayManager.ShowStatusNotification("Reconnect ethernet cable");
                     break;
                 case NetworkStatus.NetworkDown:
-                    multicolorLED.TurnColor(GT.Color.Yellow);
+                    _lightManager.NetworkLED.TurnYellow();
+                    _displayManager.ShowStatusNotification("Ethernet cable connected");
                     break;
                 case NetworkStatus.NetworkUp:
-                    multicolorLED.BlinkRepeatedly(GT.Color.Green);
+                    _lightManager.NetworkLED.BlinkGreen();
+                    _displayManager.ShowStatusNotification("Waiting for an IP Address");
                     break;
                 case NetworkStatus.NetworkAvailable:
-                    multicolorLED.BlinkRepeatedly(GT.Color.Blue);
-                    _systemManager.SyncroniseInternetTime();
+                    _lightManager.NetworkLED.TurnGreen();
+                    if (!_systemManager.HasTimeSyncronised && IsFirstLoad)
+                    {
+                        _displayManager.ShowStatusNotification("Waiting for time to synchronise");
+                        _lightManager.InfoLED.BlinkBlue();
+                        _systemManager.SyncroniseInternetTime();
+                    }
+                    else 
+                    {
+                        _displayManager.ShowStatusNotification("Network online");
+                    }
                     _websiteManager.Start(_networkManager.IpAddress);
                     break;
             }
         }
 
-        private void SecurityManager_OnAccessDenied()
+        private void AttendanceManager_OnAccessDenied()
         {
-            _logger.Information("RFID login failed");
-            _prevColour = multicolorLED.GetCurrentColor();
-            multicolorLED.BlinkOnce(GT.Color.Red, new TimeSpan(0, 0, 3), _prevColour);
+            _displayManager.ShowAccessDenied();
+            _lightManager.InfoLED.WinkRed();
         }
 
-        private void SecurityManager_OnAccessGranted(string username)
+        private void AttendanceManager_OnScannedKeycard(DateTime timestamp, string attendanceStatus, string rfid, string displayName)
         {
-            _logger.Information("Hello {0}", username);
-            _prevColour = multicolorLED.GetCurrentColor();
-            multicolorLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
-        }
+            var isWorkingHours = _attendanceManager.IsWithinWorkingHours(timestamp);
 
-        private void SecurityManager_OnScanCompleted(bool timeoutOccurred)
-        {
-            if (timeoutOccurred)
+            _lightManager.InfoLED.WinkGreen();
+            
+            switch (attendanceStatus)
             {
-                _logger.Information("RFID scan timed out");
-                multicolorLED.BlinkOnce(GT.Color.Magenta, new TimeSpan(0, 0, 3), _prevColour);
-            }
-            else
-            { 
-                _logger.Information("RFID user scanned");
-                multicolorLED.BlinkOnce(GT.Color.Green, new TimeSpan(0, 0, 3), _prevColour);
-            }
-        }
+                case AttendanceStatus.ClockIn:
+                    {
+                        var isOpeningGracePeriod = _attendanceManager.IsWithinOpeningGracePeriod(timestamp);
+                        var hasClockedInToday = _attendanceManager.HasUserClockedInOnDate(timestamp, rfid);
 
-        private void SecurityManager_OnScanEnabled()
-        {
-            _logger.Information("RFID scan enabled");
-            _prevColour = multicolorLED.GetCurrentColor();
-            multicolorLED.TurnColor(GT.Color.Magenta);
+                        if (isOpeningGracePeriod)
+                        {
+                            // Good boys get no prompts
+                            _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                            _attendanceManager.ClockIn(timestamp, rfid,  "On time");
+                        }
+                        if (hasClockedInToday && isWorkingHours)
+                        {
+                            _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                            _attendanceManager.ClockIn(timestamp, rfid, "Returning from break");
+                        }
+                        else if (isWorkingHours)
+                        {
+                            // Bad boys get the late screen
+                            _displayManager.ShowClockInOrOutPrompt(
+                                timestamp,
+                                attendanceStatus,
+                                displayName,
+                                "You've arrived late, please confirm to clock-in",
+                                new TouchEventHandler((sender, args) =>
+                                {
+                                    _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                                    _attendanceManager.ClockIn(timestamp, rfid, "Late");
+                                }),
+                                new TouchEventHandler((sender, args) => _displayManager.ReturnToDashboard()));
+                        }
+                        else
+                        {
+                            // Out of hours boys get the overtime screen
+                            _displayManager.ShowClockInOrOutPrompt(
+                                timestamp,
+                                attendanceStatus,
+                                displayName,
+                                "Its out of hours, please confirm to clock-in",
+                                new TouchEventHandler((sender, args) =>
+                                {
+                                    _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                                    _attendanceManager.ClockIn(timestamp, rfid, "Out of hours");
+                                }),
+                                new TouchEventHandler((sender, args) => _displayManager.ReturnToDashboard()));
+                        }
+
+                        _displayManager.TouchScreen();
+                        _displayManager.EnableBacklight();
+                    }
+                    break;
+
+                case AttendanceStatus.ClockOut:
+                    {
+                        var isClosingGracePeriod = _attendanceManager.IsWithinClosingGracePeriod(timestamp);
+                        if (isClosingGracePeriod)
+                        {
+                            _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                            _attendanceManager.ClockOut(timestamp, rfid, "On time");
+                        }
+                        else if (isWorkingHours)
+                        {
+                            _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                            _attendanceManager.ClockOut(timestamp, rfid, "Break-time");
+                        }
+                        else
+                        {
+                            _displayManager.ShowClockInOrOutPrompt(
+                                timestamp,
+                                attendanceStatus,
+                                displayName,
+                                "Its out of hours, please confirm to clock-out",
+                                new TouchEventHandler((sender, args) =>
+                                {
+                                    _displayManager.ShowClockInOrOut(timestamp, attendanceStatus, displayName);
+                                    _attendanceManager.ClockOut(timestamp, rfid, "Overtime");
+                                }),
+                                new TouchEventHandler((sender, args) => _displayManager.ReturnToDashboard()));
+                        }
+
+                        _displayManager.TouchScreen();
+                        _displayManager.EnableBacklight();
+                    }
+                    break;
+
+                default: 
+                    _logger.Warning("Unhandled attendance status \"{0}\"", attendanceStatus);
+                    break;
+            }
         }
 
         private void SystemManager_OnTimeSynchronised(bool synchronised)
         {
             if (synchronised)
             {
-                multicolorLED.TurnColor(GT.Color.Blue);
-                _weatherManager.Start();
+                if (IsFirstLoad)
+                { 
+                    _lightManager.InfoLED.TurnBlue();
+                    _displayManager.ShowStatusNotification("Waiting for sensor readings");
+                    _weatherManager.TakeMeasurement();
+                }
             }
             else
             {
-                multicolorLED.TurnGreen();
+                _displayManager.ShowStatusNotification("Unable to synchronise time");
+                _lightManager.InfoLED.TurnRed();
             }
-        }
-
-        private void TakeSnapshot()
-        {
-            if (button.IsLedOn &&
-                _systemManager.IsTimeSynchronised &&
-                !_savePictureThread.IsRunning)
-            {
-                _cameraManager.TakePicture();
-            }
-        }
-
-        private void Update_Tick(GT.Timer timer)
-        {
-            _logger.Information("Tick: {0}", JsonConvert.SerializeObject(_systemManager.Uptime));
-            TakeSnapshot();
         }
 
         private void WeatherManager_OnMeasurement(WeatherModel weather)
         {
-            if (_saveMeasurementThread.IsRunning || !_fileManager.HasFileSystem()) { return; }
+            if (!_systemManager.HasTimeSyncronised) return;
 
-            _saveMeasurementThread = new Awaitable(() =>
+            if (IsFirstLoad)
             {
-                var now = _systemManager.Time;
-                var filename = string.Concat("Measurements_", now.Datestamp(), FileExtensions.Csv);
-                var filepath = MyPath.Combine(Directories.Weather, filename);
-                var fileExists = _fileManager.FileExists(filepath);
+                IsFirstLoad = false;
+                _displayManager.SwitchToDashboard();
+                _displayManager.TouchScreen();
+                _displayManager.ShowDashboard(
+                      _systemManager.Time,
+                      _networkManager.IpAddress,
+                      _weatherManager.Humidity,
+                      _weatherManager.Luminosity,
+                      _weatherManager.Temperature,
+                      _fileManager.TotalFreeSpaceInMb);
+                _lightManager.InfoLED.TurnOff();
+            }
 
-                using (var fs = _fileManager.GetFileStream(filepath, FileMode.Append, FileAccess.Write))
-                {
-                     // Setup column headers when creating a new CSV file
-                    if (!fileExists)
-                    {
-                        _fileManager.WriteToFileStream(fs, "DateTime, Humidity, Luminosity, Temperature\r\n");
-                    }
-
-                    // Append line to existing CSV
-                    _fileManager.WriteToFileStream(fs, 
-                        "{0}, {1}, {2}, {3}\r\n".Format(
-                            now.SortableDateTime(),
-                            weather.Humidity,
-                            weather.Luminosity,
-                            weather.Temperature));
-                }
-
-                _logger.Information("{0} updated", filename);
-            });
+            _weatherManager.SaveMeasurementToSdCard(_fileManager, weather, _systemManager.Time);
         }
     }
 }

@@ -7,12 +7,10 @@ namespace MyHome.Models
     {
         public string RFID { get; set; }
 
-        public string Username { get; set; }
+        public string DisplayName { get; set; }
 
-        public DateTime Allocated { get; set; }
+        public DateTime LastClockedIn { get; set; }
 
-        public DateTime Expired { get; set; }
-
-        public bool IsExpired { get { return Expired != DateTime.MinValue; } }
+        public DateTime LastClockedOut { get; set; }
     }
 }

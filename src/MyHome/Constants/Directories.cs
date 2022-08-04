@@ -5,6 +5,8 @@ namespace MyHome.Constants
 {
     public static class Directories
     {
+        public const string Attendance = "ATTENDANCE";
+
         public const string Camera = "DCIM";
 
         public const string Config = "CONFIG";
