@@ -22,10 +22,10 @@ Since I had an RFID card reader handing around, I developed a clocking system to
 
 ## GUI on LCD Screen
 
-![Dashboard](./img/screen_dashboard.png)
+![Dashboard](./img/screen_dashboard.jpg)
 
-![Temperature](./img/screen_temperature.png)
+![Dialog-Prompt](./img/screen_prompt.jpg)
 
-![Humidity](./img/screen_humidity.png)
+![Clock-In](./img/screen_clockin.jpg)
 
-![Lightlevel](./img/screen_lightlevel.png)
+![Clock-Out](./img/screen_clockout.jpg)
