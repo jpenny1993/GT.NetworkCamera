@@ -40,6 +40,16 @@ namespace MyHome.Modules
         private Logger(string context)
         {
             _context = context;
+
+            if (Instance == null)
+            {
+                Instance = new LogInstance
+                {
+                    ConsoleLogsEnabled = true,
+                    FileLogsEnabled = false,
+                    FileWriteMutex = new object()
+                };
+            }
         }
 
         public void Print(string messageTemplate, params object[] args)
@@ -74,13 +84,7 @@ namespace MyHome.Modules
 
         public static void Initialise(IFileManager fm)
         {
-            Instance = new LogInstance
-            {
-                FileManager = fm,
-                ConsoleLogsEnabled = true,
-                FileLogsEnabled = false,
-                FileWriteMutex = new object()
-            };
+            Instance.FileManager = fm;
         }
 
         public static Logger ForContext(object caller)
